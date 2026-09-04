@@ -10,10 +10,11 @@ async function matchesAdminPassword(
   password: string,
   configuredPassword: string
 ): Promise<boolean> {
-  if (/^\$2[aby]\$\d{2}\$/.test(configuredPassword)) {
-    return bcrypt.compare(password, configuredPassword).catch(() => false);
+  const clean = configuredPassword.replace(/\\(\$)/g, "$1");
+  if (/^\$2[aby]\$\d{2}\$/.test(clean)) {
+    return bcrypt.compare(password, clean).catch(() => false);
   }
-  return password === configuredPassword;
+  return password === clean || password === configuredPassword;
 }
 
 export async function POST(request: NextRequest) {
