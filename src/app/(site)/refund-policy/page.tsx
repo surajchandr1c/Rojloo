@@ -1,0 +1,48 @@
+import type { Metadata } from "next";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { SectionPanel } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Refund Policy | Rojlo",
+  description: "Read Rojlo's refund policy for payments, coins, and listings.",
+};
+
+export default function RefundPolicy() {
+  return (
+    <main className="px-4 py-10 sm:px-6 lg:px-8">
+      <SectionPanel>
+        <Eyebrow>Refund Policy</Eyebrow>
+        <h1 className="mt-3 text-3xl font-black text-red-950 sm:text-4xl">
+          Refund Policy
+        </h1>
+        <p className="mt-4 max-w-3xl text-lg leading-8 text-red-900">
+          This policy explains when and how refunds are processed on Rojlo.
+        </p>
+
+        <div className="mt-8 space-y-6">
+          <section>
+            <h2 className="text-xl font-black text-red-950">1. Refund Eligibility</h2>
+            <p className="mt-2 max-w-3xl text-base leading-7 text-red-900">
+              Refunds are considered for duplicate charges, failed deliveries, or
+              cancelled orders as described at the time of purchase.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-xl font-black text-red-950">2. Processing Time</h2>
+            <p className="mt-2 max-w-3xl text-base leading-7 text-red-900">
+              Approved refunds are processed to the original payment method
+              within the timeframe required by your payment provider.
+            </p>
+          </section>
+          <section>
+            <h2 className="text-xl font-black text-red-950">3. Coin Purchases</h2>
+            <p className="mt-2 max-w-3xl text-base leading-7 text-red-900">
+              Coin purchases used to promote listings are generally
+              non-refundable once consumed, unless required by applicable law.
+            </p>
+          </section>
+        </div>
+      </SectionPanel>
+    </main>
+  );
+}

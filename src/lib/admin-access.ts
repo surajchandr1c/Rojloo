@@ -1,0 +1,81 @@
+import "server-only";
+
+import { NextRequest } from "next/server";
+import {
+  getAdminBySession,
+} from "@/lib/models/admin-user";
+
+export type AdminContext =
+  | { role: "main" }
+  | { role: "subadmin"; id: string; email: string; permissions: string[] };
+
+export const ADMIN_SECTIONS = [
+  { key: "dashboard", name: "Dashboard" },
+  { key: "city", name: "City" },
+  { key: "city-seo", name: "City SEO" },
+  { key: "ads", name: "Ads" },
+  { key: "users", name: "Users" },
+  { key: "set-coins", name: "Set Coins" },
+  { key: "vip", name: "VIP" },
+  { key: "admin-control", name: "Admin Control" },
+  { key: "sub-admins", name: "Sub Admin List" },
+] as const;
+
+export function sectionFromHref(href: string): string | null {
+  if (href === "/admin") return "dashboard";
+  const match = ADMIN_SECTIONS.find(
+    (s) =>
+      s.key !== "dashboard" &&
+      (href === `/admin/${s.key}` || href.startsWith(`/admin/${s.key}/`))
+  );
+  return match ? match.key : null;
+}
+
+function normalizeEnvValue(value?: string): string {
+  return (value ?? "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+const adminToken = normalizeEnvValue(process.env.ADMIN_TOKEN);
+
+export async function getAdminContext(
+  request: NextRequest
+): Promise<AdminContext | null> {
+  const token = adminToken;
+  if (token && request.cookies.get("rojlo_admin")?.value === token) {
+    return { role: "main" };
+  }
+  const subToken = request.cookies.get("rojlo_subadmin")?.value;
+  if (subToken) {
+    const admin = await getAdminBySession(subToken);
+    if (admin) {
+      if (admin.role === "main") {
+        return { role: "main" };
+      }
+      return {
+        role: "subadmin",
+        id: admin._id,
+        email: admin.email,
+        permissions: admin.permissions ?? [],
+      };
+    }
+  }
+  return null;
+}
+
+export function isAuthenticated(request: NextRequest): boolean {
+  const token = adminToken;
+  if (token && request.cookies.get("rojlo_admin")?.value === token) {
+    return true;
+  }
+  return Boolean(request.cookies.get("rojlo_subadmin")?.value);
+}
+
+export function canAccess(
+  context: AdminContext | null,
+  section: string
+): boolean {
+  if (!context) return false;
+  if (context.role === "main") return true;
+  if (section === "admin-control" || section === "sub-admins") return false;
+  return context.permissions.includes(section);
+}
