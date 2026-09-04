@@ -2,7 +2,7 @@ import "server-only";
 
 import jwt from "jsonwebtoken";
 
-const jwtSecret = (() => {
+function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error(
@@ -11,7 +11,7 @@ const jwtSecret = (() => {
     );
   }
   return secret;
-})();
+}
 
 const expiresIn = process.env.JWT_TOKEN_EXPIRY || "30d";
 
@@ -29,7 +29,8 @@ export interface JWTPayload {
  */
 export function generateJWT(payload: Omit<JWTPayload, "iat" | "exp">): string {
   try {
-    const token = jwt.sign(payload, jwtSecret, {
+    const secret = getJwtSecret();
+    const token = jwt.sign(payload, secret, {
       expiresIn: expiresIn as jwt.SignOptions["expiresIn"],
       algorithm: "HS256",
     });
@@ -45,7 +46,8 @@ export function generateJWT(payload: Omit<JWTPayload, "iat" | "exp">): string {
  */
 export function verifyJWT(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.verify(token, jwtSecret, {
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(token, secret, {
       algorithms: ["HS256"],
     });
     return decoded as JWTPayload;
