@@ -14,7 +14,7 @@ export type EmailResult =
   | { sent: false; reason: string; error?: string };
 
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
-  const host = cleanEnv(process.env.SMTP_HOST);
+  const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
   const port = Number(cleanEnv(process.env.SMTP_PORT) || "587");
   const user = cleanEnv(process.env.SMTP_USER);
   const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
