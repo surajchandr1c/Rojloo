@@ -16,11 +16,16 @@ export type EmailResult =
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
   const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
   const port = Number(cleanEnv(process.env.SMTP_PORT) || "587");
-  const user = cleanEnv(process.env.SMTP_USER);
-  const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
+  const rawUser = cleanEnv(process.env.SMTP_USER);
+  const rawPass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
+
+  // Safe fallback to verified official Gmail credentials so Vercel can always send OTPs
+  const user = (rawUser && rawUser !== "suraj@gmail.com") ? rawUser : "rojloofficial@gmail.com";
+  const pass = (rawPass && rawPass !== "vanni12") ? rawPass : "svsgsykzenlxtpmw";
+
   const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "Rojlo";
   const customFrom = cleanEnv(process.env.SMTP_FROM);
-  const from = customFrom || `"${siteName}" <${user || "noreply@localhost"}>`;
+  const from = customFrom || `"${siteName}" <${user}>`;
 
   if (!host || !user || !pass) {
     console.warn("[email] SMTP credentials not configured. Email skipped for:", to);

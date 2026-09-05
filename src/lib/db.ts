@@ -1,4 +1,12 @@
 import { MongoClient, Db } from "mongodb";
+import dns from "dns";
+
+// Fix for environments/ISPs where default DNS fails to resolve MongoDB Atlas SRV records (ECONNREFUSED)
+try {
+  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+} catch {
+  // Ignore in restricted environments
+}
 
 const uri = process.env.MONGODB_URI?.trim().replace(/^['"]|['"]$/g, "");
 const dbName = (process.env.MONGODB_DB || "rojlo")

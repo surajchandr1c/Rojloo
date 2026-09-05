@@ -214,12 +214,13 @@ function AuthPage() {
       return;
     }
     if (!otpSent || otpEmail !== email) {
-      setError("Please send the verification code to your email first.");
+      await handleSendCode();
+      setError("We just sent a 6-digit verification code to your email. Enter it below to finish creating your account.");
       return;
     }
     const otp = digits.join("");
     if (!/^\d{6}$/.test(otp)) {
-      setError("Enter the 6-digit verification code.");
+      setError("Enter the 6-digit verification code sent to your email.");
       return;
     }
 
@@ -360,6 +361,24 @@ function AuthPage() {
                 </Button>
               )}
             </div>
+            {mode === "signup" && (
+              <div className="mt-1.5">
+                {otpSent ? (
+                  <p className="text-xs font-semibold text-green-700">
+                    ✓ Code sent to {otpEmail}. Check your inbox or spam folder.
+                  </p>
+                ) : (
+                  <p className="text-xs text-red-800">
+                    Click <strong>&quot;Send Code&quot;</strong> to receive your 6-digit verification code.
+                  </p>
+                )}
+                {otpError && (
+                  <p className="mt-1 text-xs font-semibold text-red-600">
+                    {otpError}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {mode === "signup" && (
