@@ -1,3 +1,5 @@
+import nodemailer from "nodemailer";
+
 export type EmailPayload = {
   to: string;
   subject: string;
@@ -14,6 +16,7 @@ export type EmailResult =
   | { sent: false; reason: string; error?: string };
 
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
+  const cleanTo = to.trim().toLowerCase();
   const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
   const port = Number(cleanEnv(process.env.SMTP_PORT) || "587");
   const rawUser = cleanEnv(process.env.SMTP_USER);
@@ -28,7 +31,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   const from = customFrom || `"${siteName}" <${user}>`;
 
   if (!host || !user || !pass) {
-    console.warn("[email] SMTP credentials not configured. Email skipped for:", to);
+    console.warn("[email] SMTP credentials not configured. Email skipped for:", cleanTo);
     return {
       sent: false,
       reason: "missing-smtp-config",
@@ -37,8 +40,6 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   }
 
   try {
-    const nodemailer = await import("nodemailer");
-
     const isGmail =
       host.toLowerCase().includes("gmail") ||
       user.toLowerCase().endsWith("@gmail.com");
@@ -47,25 +48,36 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       ? {
           service: "gmail",
           auth: { user, pass },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
         }
       : {
           host,
           port,
           secure: port === 465,
           auth: { user, pass },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
         };
 
     const transporter = nodemailer.createTransport(transportOptions);
 
     await transporter.sendMail({
       from,
-      to,
+      to: cleanTo,
       subject,
       text,
       html: html ?? text,
+      headers: {
+        "X-Priority": "1",
+        "X-MSMail-Priority": "High",
+        Importance: "high",
+      },
     });
 
-    console.log(`[email] Verification email sent successfully to ${to}`);
+    console.log(`[email] Verification email sent successfully to ${cleanTo}`);
     return { sent: true };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);

@@ -38,21 +38,11 @@ export async function POST(request: NextRequest) {
     }
 
     const existing = await findUserByEmail(normalizedEmail);
-
-    if (existing && existing.emailVerified !== false) {
-      // Already verified (active or completed) → do not create another account.
-      return NextResponse.json(
-        { error: "An account with this email already exists. Please log in." },
-        { status: 409 }
-      );
-    }
-
     const now = new Date();
 
     let userId: string;
     if (existing && existing._id) {
-      // Pending registration already started → enforce the resend cooldown.
-      userId = existing._id;
+      userId = String(existing._id);
       const cooldown = otpCooldownRemainingMs(existing.otpLastSentAt, now);
       if (cooldown > 0) {
         return NextResponse.json(
@@ -80,7 +70,7 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-      userId = user._id;
+      userId = String(user._id);
     }
 
     const otpResult = await createAndSendOtp(userId, normalizedEmail, now);
@@ -92,12 +82,13 @@ export async function POST(request: NextRequest) {
       {
         message: otpResult.sent
           ? "We sent a verification code to your email."
-          : otpResult.message || "We couldn't send the verification code right now. Please try Resend below.",
+          : otpResult.message || "We couldn't send the verification code right now. Please check your email configuration.",
         needsVerification: true,
         email: normalizedEmail,
         emailSent: otpResult.sent,
+        isExistingUser: Boolean(existing?.emailVerified && existing?.passwordHash),
       },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);

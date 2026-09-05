@@ -3,7 +3,10 @@ import {
   clearUserOtp,
   findUserByEmail,
   incrementUserOtpAttempts,
+  issueUserSession,
   normalizeEmail,
+  setUserEmailVerified,
+  toPublicUser,
 } from "@/lib/models/user";
 import { OTP_MAX_ATTEMPTS } from "@/lib/otp";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -36,8 +39,8 @@ export async function POST(request: NextRequest) {
 
     const user = await findUserByEmail(normalizedEmail);
 
-    // Do not reveal whether the email exists.
-    if (!user || !user._id || user.emailVerified === true) {
+    // User must exist and have an active OTP
+    if (!user || !user._id) {
       return NextResponse.json(
         { error: "Invalid verification code." },
         { status: 400 }
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Expired OTP — clear it and ask for a new one.
     if (!user.otpHash || !user.otpExpires || new Date(user.otpExpires).getTime() < now.getTime()) {
-      await clearUserOtp(user._id);
+      await clearUserOtp(String(user._id));
       return NextResponse.json(
         { error: "This verification code has expired. Please request a new code." },
         { status: 400 }
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Too many failed attempts — invalidate and require a new OTP.
     if (Number(user.otpAttempts ?? 0) >= OTP_MAX_ATTEMPTS) {
-      await clearUserOtp(user._id);
+      await clearUserOtp(String(user._id));
       return NextResponse.json(
         { error: "Too many incorrect attempts. Please request a new code." },
         { status: 429 }
@@ -65,9 +68,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!verifyOtp(otp, user.otpHash, normalizedEmail)) {
-      const attempts = await incrementUserOtpAttempts(user._id);
+      const attempts = await incrementUserOtpAttempts(String(user._id));
       if (attempts >= OTP_MAX_ATTEMPTS) {
-        await clearUserOtp(user._id);
+        await clearUserOtp(String(user._id));
         return NextResponse.json(
           { error: "Too many incorrect attempts. Please request a new code." },
           { status: 429 }
@@ -79,14 +82,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // OTP correct → the email is proven. Invalidate the OTP and issue a
-    // short-lived signup token so the final step ("create account") can be
-    // completed only by someone who verified this email. We do NOT create the
-    // account or start a session here (password/name aren't known yet).
-    await clearUserOtp(user._id);
+    // OTP correct -> invalidate the OTP
+    await clearUserOtp(String(user._id));
+    await setUserEmailVerified(String(user._id), true);
 
+    // If this is an existing user who already set up a password, log them in immediately!
+    if (user.passwordHash) {
+      const sessionToken = await issueUserSession(String(user._id));
+      const jwtToken = generateJWT({
+        _id: String(user._id),
+        email: user.email,
+        name: user.name || "User",
+      });
+
+      const response = NextResponse.json({
+        message: "Logged in successfully.",
+        otpVerified: true,
+        isNewUser: false,
+        user: toPublicUser({ ...user, emailVerified: true }),
+        token: jwtToken,
+      });
+
+      response.cookies.set("rojlo_auth", sessionToken || jwtToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 30 * 24 * 60 * 60,
+        secure: process.env.NODE_ENV === "production",
+      });
+
+      return response;
+    }
+
+    // Otherwise, this is a new user -> issue short-lived signupToken to complete registration
     const signupToken = generateJWT({
-      _id: user._id,
+      _id: String(user._id),
       email: user.email,
       name: "signup",
       purpose: "signup",
@@ -95,6 +125,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: "Email verified successfully.",
       otpVerified: true,
+      isNewUser: true,
       email: user.email,
       signupToken,
     });

@@ -234,13 +234,28 @@ function AuthPage() {
         body: JSON.stringify({ email, otp }),
       });
       const verifyData = await verifyRes.json();
-      if (!verifyRes.ok || !verifyData.signupToken) {
+      if (!verifyRes.ok) {
         setError(
           verifyData.error || verifyData.message || "Invalid verification code."
         );
         if (verifyData.resendInMs) setResendIn(Math.ceil(verifyData.resendInMs / 1000));
         setDigits(["", "", "", "", "", ""]);
         digitRefs.current[0]?.focus();
+        setBusy(false);
+        return;
+      }
+
+      // If user is an existing verified user, log them in immediately!
+      if (verifyData.user) {
+        if (verifyData.token) setToken(verifyData.token);
+        setUser(verifyData.user);
+        router.push(returnTo);
+        router.refresh();
+        return;
+      }
+
+      if (!verifyData.signupToken) {
+        setError("Verification failed. Please try sending a new code.");
         setBusy(false);
         return;
       }
