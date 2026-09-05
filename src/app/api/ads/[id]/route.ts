@@ -4,7 +4,7 @@ import { softDeleteAd } from "@/lib/models/ad";
 
 export async function DELETE(
   request: NextRequest,
-  ctx: RouteContext<"/api/ads/[id]">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const raw = request.cookies.get("rojlo_auth")?.value;
 

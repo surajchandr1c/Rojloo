@@ -4,7 +4,7 @@ import { restoreAd } from "@/lib/models/ad";
 
 export async function POST(
   request: NextRequest,
-  ctx: RouteContext<"/api/ads/[id]/restore">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const raw = request.cookies.get("rojlo_auth")?.value;
 

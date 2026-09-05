@@ -1,31 +1,52 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 const STORAGE_KEY = "rojlo_age_verified";
+const DECLINED_KEY = "rojlo_age_declined";
 
 export default function AgeGate() {
+  const pathname = usePathname();
+  const router = useRouter();
   // Default to hidden so the server render is identical to a fresh client
   // render (avoids a hydration mismatch that would disable the buttons).
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Defer the localStorage read until after hydration (same pattern as
+    // Defer the storage read until after hydration (same pattern as
     // auth-context.tsx) so the modal decision never happens during SSR.
     queueMicrotask(() => {
       let verified = false;
+      let declined = false;
       try {
         verified = localStorage.getItem(STORAGE_KEY) === "true";
+        declined = sessionStorage.getItem(DECLINED_KEY) === "true";
       } catch {
         verified = false;
+        declined = false;
       }
-      setShow(!verified);
+
+      if (verified) {
+        setShow(false);
+        return;
+      }
+
+      // If the user already indicated they are under 18 and is on the home page,
+      // allow them to browse the home page without re-showing the modal.
+      if (declined && pathname === "/") {
+        setShow(false);
+        return;
+      }
+
+      setShow(true);
     });
-  }, []);
+  }, [pathname]);
 
   function acceptAge() {
     try {
       localStorage.setItem(STORAGE_KEY, "true");
+      sessionStorage.removeItem(DECLINED_KEY);
     } catch {
       // ignore storage failures
     }
@@ -33,7 +54,15 @@ export default function AgeGate() {
   }
 
   function declineAge() {
-    window.location.href = "https://www.google.com";
+    try {
+      sessionStorage.setItem(DECLINED_KEY, "true");
+    } catch {
+      // ignore storage failures
+    }
+    setShow(false);
+    if (pathname !== "/") {
+      router.push("/");
+    }
   }
 
   if (!show) return null;
