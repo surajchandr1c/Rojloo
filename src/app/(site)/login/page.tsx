@@ -149,7 +149,8 @@ function AuthPage() {
       setExpiresIn(OTP_TTL_SECONDS);
       if (data.emailSent === false) {
         setOtpError(
-          "We couldn't send the code right now. Please check your email/network and resend below."
+          data.message ||
+          "We couldn't send the code right now. Please check your email configuration and resend below."
         );
       } else {
         setResendIn(RESEND_COOLDOWN_SECONDS);

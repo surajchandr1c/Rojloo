@@ -5,39 +5,92 @@ export type EmailPayload = {
   html?: string;
 };
 
-export async function sendEmail({ to, subject, text, html }: EmailPayload) {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT ?? 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM ?? user ?? "noreply@localhost";
+function cleanEnv(val?: string): string {
+  return (val ?? "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+export type EmailResult =
+  | { sent: true }
+  | { sent: false; reason: string; error?: string };
+
+export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
+  const host = cleanEnv(process.env.SMTP_HOST);
+  const port = Number(cleanEnv(process.env.SMTP_PORT) || "587");
+  const user = cleanEnv(process.env.SMTP_USER);
+  const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
+  const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "Rojlo";
+  const customFrom = cleanEnv(process.env.SMTP_FROM);
+  const from = customFrom || `"${siteName}" <${user || "noreply@localhost"}>`;
 
   if (!host || !user || !pass) {
-    console.log("[email] SMTP not configured. Email skipped.", {
-      to,
-      subject,
-    });
-    return { sent: false, reason: "missing-smtp-config" as const };
+    console.warn("[email] SMTP credentials not configured. Email skipped for:", to);
+    return {
+      sent: false,
+      reason: "missing-smtp-config",
+      error: "SMTP credentials are not configured on the server.",
+    };
   }
 
-  const nodemailer = await import("nodemailer");
+  try {
+    const nodemailer = await import("nodemailer");
 
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+    const isGmail =
+      host.toLowerCase().includes("gmail") ||
+      user.toLowerCase().endsWith("@gmail.com");
 
-  await transporter.sendMail({
-    from,
-    to,
-    subject,
-    text,
-    html: html ?? text,
-  });
+    const transportOptions = isGmail
+      ? {
+          service: "gmail",
+          auth: { user, pass },
+        }
+      : {
+          host,
+          port,
+          secure: port === 465,
+          auth: { user, pass },
+        };
 
-  return { sent: true };
+    const transporter = nodemailer.createTransport(transportOptions);
+
+    await transporter.sendMail({
+      from,
+      to,
+      subject,
+      text,
+      html: html ?? text,
+    });
+
+    console.log(`[email] Verification email sent successfully to ${to}`);
+    return { sent: true };
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[email] Failed to send email to ${to}:`, errMsg);
+
+    const isAuthError =
+      errMsg.includes("535") ||
+      errMsg.includes("BadCredentials") ||
+      errMsg.includes("EAUTH") ||
+      (typeof error === "object" && error !== null && (error as { code?: string }).code === "EAUTH");
+
+    if (isAuthError) {
+      console.error(
+        "[email] CRITICAL: Gmail authentication failed (535 BadCredentials). " +
+        "Google requires a 16-character App Password (not your regular account password). " +
+        "Generate one at: https://myaccount.google.com/apppasswords and put it in SMTP_PASS."
+      );
+      return {
+        sent: false,
+        reason: "gmail-auth-failed",
+        error: "Gmail login rejected. Please use a 16-character Google App Password in SMTP_PASS.",
+      };
+    }
+
+    return {
+      sent: false,
+      reason: "send-failed",
+      error: errMsg,
+    };
+  }
 }
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Rojlo";

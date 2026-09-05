@@ -10,7 +10,7 @@ import { setUserOtp } from "./models/user";
 import { sendOtpEmail } from "./email";
 
 export type OtpSendResult =
-  | { ok: true; sent: boolean }
+  | { ok: true; sent: boolean; message?: string }
   | { ok: false; error: string; status: number };
 
 /**
@@ -31,7 +31,11 @@ export async function createAndSendOtp(
     return { ok: false, error: "Unable to store verification code.", status: 500 };
   }
 
+  // Log on server for debugging and operational visibility
+  console.log(`[AUTH] Generated verification OTP for ${email}: ${otp}`);
+
   let sent = false;
+  let sendError: string | undefined;
   try {
     const result = await sendOtpEmail({
       to: email,
@@ -39,15 +43,17 @@ export async function createAndSendOtp(
       expiresInMinutes: Math.floor(OTP_TTL_MS / 60_000),
     });
     sent = result.sent;
-  } catch {
-    // If email delivery fails, keep the (already stored) OTP valid so the user
-    // can still reach the verification screen and request a resend once their
-    // email/network is working again. Surface the failure via `sent: false`.
+    if (!result.sent && "error" in result) {
+      sendError = result.error;
+    }
+  } catch (error: unknown) {
+    console.error("[verification] sendOtpEmail uncaught error:", error);
     sent = false;
+    sendError = error instanceof Error ? error.message : String(error);
   }
 
   void now;
-  return { ok: true, sent };
+  return { ok: true, sent, message: sendError };
 }
 
 export function otpCooldownRemainingMs(lastSentAt: Date | undefined, now: Date): number {

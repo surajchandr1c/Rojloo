@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       {
         message: otpResult.sent
           ? "A new verification code has been sent to your email."
-          : "We couldn't send the code right now. Please check your connection and try again.",
+          : otpResult.message || "We couldn't send the code right now. Please check your email configuration.",
         emailSent: otpResult.sent,
       },
       { status: 200 }
