@@ -164,21 +164,113 @@ export async function createPaymentHistory(payment: {
 }
 
 export async function getPaymentHistoryByUserId(userId: string): Promise<PaymentHistory[]> {
-  const history = await listPaymentHistory();
-  return history.filter((p) => String(p.userId) === String(userId));
+  const cleanId = String(userId || "").trim();
+  if (!cleanId) return [];
+
+  const col = await getPaymentHistoryCollection();
+  if (col) {
+    try {
+      const docs = await col.find({ userId: cleanId }).sort({ createdAt: -1 }).limit(100).toArray();
+      return docs.map((doc) => ({
+        _id: doc._id.toString(),
+        userEmail: String(doc.userEmail || ""),
+        userName: doc.userName ? String(doc.userName) : undefined,
+        userId: String(doc.userId || ""),
+        transactionId: String(doc.transactionId || ""),
+        upiId: String(doc.upiId || ""),
+        upiName: doc.upiName ? String(doc.upiName) : undefined,
+        coins: Number(doc.coins || 0),
+        amount: Number(doc.amount || 0),
+        discount: doc.discount ? Number(doc.discount) : undefined,
+        finalAmount: Number(doc.finalAmount ?? doc.amount ?? 0),
+        couponCode: doc.couponCode ? String(doc.couponCode) : undefined,
+        paymentRequestId: String(doc.paymentRequestId || ""),
+        createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || new Date().toISOString()),
+      }));
+    } catch (err) {
+      console.error("[payment-history] getByUserId failed:", err);
+    }
+  }
+
+  const store = await readStore();
+  const history = (store.paymentHistory ?? []) as unknown as PaymentHistory[];
+  return history
+    .filter((p) => String(p.userId) === cleanId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getPaymentHistoryByEmail(email: string): Promise<PaymentHistory[]> {
-  const history = await listPaymentHistory();
-  return history.filter((p) => p.userEmail.toLowerCase() === email.toLowerCase());
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) return [];
+
+  const col = await getPaymentHistoryCollection();
+  if (col) {
+    try {
+      const docs = await col.find({ userEmail: cleanEmail }).sort({ createdAt: -1 }).limit(100).toArray();
+      return docs.map((doc) => ({
+        _id: doc._id.toString(),
+        userEmail: String(doc.userEmail || ""),
+        userName: doc.userName ? String(doc.userName) : undefined,
+        userId: String(doc.userId || ""),
+        transactionId: String(doc.transactionId || ""),
+        upiId: String(doc.upiId || ""),
+        upiName: doc.upiName ? String(doc.upiName) : undefined,
+        coins: Number(doc.coins || 0),
+        amount: Number(doc.amount || 0),
+        discount: doc.discount ? Number(doc.discount) : undefined,
+        finalAmount: Number(doc.finalAmount ?? doc.amount ?? 0),
+        couponCode: doc.couponCode ? String(doc.couponCode) : undefined,
+        paymentRequestId: String(doc.paymentRequestId || ""),
+        createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || new Date().toISOString()),
+      }));
+    } catch (err) {
+      console.error("[payment-history] getByEmail failed:", err);
+    }
+  }
+
+  const store = await readStore();
+  const history = (store.paymentHistory ?? []) as unknown as PaymentHistory[];
+  return history
+    .filter((p) => p.userEmail.toLowerCase() === cleanEmail)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getTotalPaymentAmount(): Promise<number> {
+  const col = await getPaymentHistoryCollection();
+  if (col) {
+    try {
+      const res = await col.aggregate([
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ]).toArray();
+      if (res.length > 0 && typeof res[0].total === "number") {
+        return res[0].total;
+      }
+      return 0;
+    } catch (err) {
+      console.error("[payment-history] getTotalPaymentAmount aggregation failed:", err);
+    }
+  }
+
   const history = await listPaymentHistory();
   return history.reduce((sum, p) => sum + p.amount, 0);
 }
 
 export async function getTotalCoinsIssued(): Promise<number> {
+  const col = await getPaymentHistoryCollection();
+  if (col) {
+    try {
+      const res = await col.aggregate([
+        { $group: { _id: null, total: { $sum: "$coins" } } }
+      ]).toArray();
+      if (res.length > 0 && typeof res[0].total === "number") {
+        return res[0].total;
+      }
+      return 0;
+    } catch (err) {
+      console.error("[payment-history] getTotalCoinsIssued aggregation failed:", err);
+    }
+  }
+
   const history = await listPaymentHistory();
   return history.reduce((sum, p) => sum + p.coins, 0);
 }

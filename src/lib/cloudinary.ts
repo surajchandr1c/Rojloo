@@ -17,14 +17,26 @@ async function getCloudinary(): Promise<Cloudinary> {
 
 export async function uploadImageToCloudinary(
   buffer: Buffer,
-  folder = "rojlo"
+  folder = "rojlo",
+  timeoutMs = 25000
 ): Promise<string> {
   const cloudinary = await getCloudinary();
 
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error("Cloudinary upload timed out after 25 seconds"));
+      }
+    }, timeoutMs);
+
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder, resource_type: "image" },
       (error, result) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         if (error || !result) {
           reject(error ?? new Error("Cloudinary upload failed"));
           return;
@@ -35,3 +47,4 @@ export async function uploadImageToCloudinary(
     uploadStream.end(buffer);
   });
 }
+

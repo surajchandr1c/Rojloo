@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/admin-access";
 import { findUserById, findUserBySessionToken } from "@/lib/models/user";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
+import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
+
+function isValidImageMagicBytes(buffer: Buffer): boolean {
+  if (buffer.length < 4) return false;
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return true;
+  // PNG: 89 50 4E 47
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return true;
+  // GIF: 47 49 46 38
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) return true;
+  // WEBP: RIFF....WEBP
+  if (
+    buffer.length >= 12 &&
+    buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+  ) {
+    return true;
+  }
+  return false;
+}
 
 async function isAuthorizedUploader(request: NextRequest): Promise<boolean> {
   const admin = await getAdminContext(request);
@@ -26,6 +46,15 @@ async function isAuthorizedUploader(request: NextRequest): Promise<boolean> {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = clientIp(request);
+    const rate = await checkRateLimitAsync(`upload:${ip}`, 20, 5 * 60 * 1000);
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: "Too many uploads. Please wait a few minutes before trying again." },
+        { status: 429 }
+      );
+    }
+
     if (!(await isAuthorizedUploader(request))) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
@@ -57,6 +86,13 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    if (!isValidImageMagicBytes(buffer)) {
+      return NextResponse.json(
+        { error: "Invalid image file format." },
+        { status: 400 }
+      );
+    }
+
     const url = await uploadImageToCloudinary(buffer);
 
     return NextResponse.json({ success: true, url });
@@ -68,3 +104,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

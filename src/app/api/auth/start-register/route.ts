@@ -4,7 +4,7 @@ import {
   findUserByEmail,
   normalizeEmail,
 } from "@/lib/models/user";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 import {
   createAndSendOtp,
   otpCooldownRemainingMs,
@@ -18,7 +18,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = checkRateLimit(`start-register:${ip}`, 5);
+    const rate = await checkRateLimitAsync(`start-register:${ip}`, 5);
     if (!rate.ok) {
       return NextResponse.json(
         { error: "Too many requests. Please try again in a few minutes." },

@@ -9,14 +9,14 @@ import {
   toPublicUser,
 } from "@/lib/models/user";
 import { OTP_MAX_ATTEMPTS } from "@/lib/otp";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 import { generateJWT } from "@/lib/jwt";
 import { verifyOtp } from "@/lib/otp";
 
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = checkRateLimit(`verify-otp:${ip}`, 10);
+    const rate = await checkRateLimitAsync(`verify-otp:${ip}`, 10);
     if (!rate.ok) {
       return NextResponse.json(
         {

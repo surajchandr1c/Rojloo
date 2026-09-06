@@ -8,8 +8,10 @@ import {
 import { extractJWTFromHeader, verifyJWT } from "@/lib/jwt";
 import {
   createPaymentRequest,
-  listPaymentRequests,
+  findPaymentRequestByTransactionId,
+  listPaymentRequestsByUser,
 } from "@/lib/models/payment-request";
+import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 
 async function getAuthUser(req: NextRequest): Promise<User | null> {
   // 1. Try Authorization header
@@ -75,12 +77,7 @@ export async function GET(req: NextRequest) {
     const userIdStr = String(user._id || "");
     const userEmailStr = (user.email || "").toLowerCase();
 
-    const requests = await listPaymentRequests();
-    const myRequests = requests.filter(
-      (request) =>
-        (userIdStr && String(request.userId) === userIdStr) ||
-        (userEmailStr && String(request.userEmail || "").toLowerCase() === userEmailStr)
-    );
+    const myRequests = await listPaymentRequestsByUser(userIdStr, userEmailStr);
 
     return NextResponse.json({ requests: myRequests, success: true });
   } catch (error) {
@@ -91,6 +88,15 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = clientIp(req);
+    const rate = await checkRateLimitAsync(`payment-submit:${ip}`, 10, 60 * 1000);
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: "Too many payment submissions. Please wait a moment." },
+        { status: 429 }
+      );
+    }
+
     const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -127,12 +133,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Deduplicate: reject an already-used transaction id.
-    const existing = await listPaymentRequests();
-    const duplicate = existing.some(
-      (r) => r.transactionId.trim().toLowerCase() === String(transactionId).trim().toLowerCase()
-    );
-    if (duplicate) {
+    // Deduplicate: reject an already-used transaction id using direct indexed query
+    const existing = await findPaymentRequestByTransactionId(String(transactionId).trim());
+    if (existing) {
       return NextResponse.json(
         { error: "This transaction has already been recorded." },
         { status: 409 }

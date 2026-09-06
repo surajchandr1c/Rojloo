@@ -1,32 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findUserById, findUserBySessionToken } from "@/lib/models/user";
+import { getAuthenticatedUserId } from "@/lib/auth-user";
 import { listAds, createAd, updateAd } from "@/lib/models/ad";
 import type { ServiceRate } from "@/components/post-ad/types";
 
-async function getUserId(request: NextRequest): Promise<string | null> {
-  const raw = request.cookies.get("rojlo_auth")?.value;
-  if (!raw) return null;
-
-  const sessionUser = await findUserBySessionToken(raw);
-  if (sessionUser?._id) return String(sessionUser._id);
-
-  let id: string | undefined;
-  try {
-    const decoded = JSON.parse(decodeURIComponent(raw));
-    if (decoded && decoded._id) id = String(decoded._id);
-  } catch {
-    // Legacy id-only cookie.
-    id = raw;
-  }
-
-  if (!id) return null;
-  const user = await findUserById(id);
-  if (!user) return null;
-  return String(user._id);
-}
-
 export async function GET(request: NextRequest) {
-  const userId = await getUserId(request);
+  const userId = await getAuthenticatedUserId(request);
   if (!userId) {
     return NextResponse.json({ ads: [] }, { status: 401 });
   }
@@ -36,7 +14,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const userId = await getUserId(request);
+  const userId = await getAuthenticatedUserId(request);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }

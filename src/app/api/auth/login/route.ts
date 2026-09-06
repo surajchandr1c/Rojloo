@@ -7,12 +7,12 @@ import {
   toPublicUser,
 } from "@/lib/models/user";
 import { generateJWT } from "@/lib/jwt";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = checkRateLimit(`login:${ip}`, 10);
+    const rate = await checkRateLimitAsync(`login:${ip}`, 10);
     if (!rate.ok) {
       return NextResponse.json(
         {

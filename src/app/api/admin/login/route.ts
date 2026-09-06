@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 
 function normalizeEnvValue(value?: string): string {
   return (value ?? "").trim().replace(/^['"]|['"]$/g, "");
@@ -20,7 +20,7 @@ async function matchesAdminPassword(
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = checkRateLimit(`admin-login:${ip}`, 10);
+    const rate = await checkRateLimitAsync(`admin-login:${ip}`, 10);
     if (!rate.ok) {
       return NextResponse.json(
         {

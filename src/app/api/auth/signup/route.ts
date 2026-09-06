@@ -9,7 +9,7 @@ import {
   updateUserFields,
 } from "@/lib/models/user";
 import { generateJWT, verifyJWT } from "@/lib/jwt";
-import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 
 /**
  * Final step of the signup flow: the user submits name/password/service plus a
@@ -19,7 +19,7 @@ import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = checkRateLimit(`signup:${ip}`, 10);
+    const rate = await checkRateLimitAsync(`signup:${ip}`, 10);
     if (!rate.ok) {
       return NextResponse.json(
         { error: "Too many signup attempts. Please try again in a few minutes." },

@@ -74,7 +74,11 @@ async function collectionListByUser(userId: string): Promise<Ad[]> {
   const collection = await getAdsCollection();
   if (!collection) return [];
 
-  const docs = await collection.find({ userId }).sort({ createdAt: -1 }).toArray();
+  const docs = await collection
+    .find({ userId })
+    .sort({ createdAt: -1 })
+    .limit(150)
+    .toArray();
   return docs.map((doc) => doc as unknown as Ad);
 }
 
@@ -89,6 +93,7 @@ async function collectionListByCity(city: string): Promise<Ad[]> {
       status: { $ne: "deleted" },
     })
     .sort({ createdAt: -1 })
+    .limit(200)
     .toArray();
   return docs.map((doc) => doc as unknown as Ad);
 }
@@ -390,7 +395,7 @@ export async function restoreAd(
   return true;
 }
 
-export async function listAllAds(): Promise<PublicAd[]> {
+export async function listAllAds(limit = 500): Promise<PublicAd[]> {
   const collection = await getAdsCollection();
   if (!collection) {
     const store = await readStore();
@@ -400,12 +405,14 @@ export async function listAllAds(): Promise<PublicAd[]> {
         (a, b) =>
           (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime()
       )
+      .slice(0, limit)
       .map((ad) => toPublicAd(ad as unknown as Ad));
   }
 
   const docs = await collection
     .find({ status: { $ne: "deleted" } })
     .sort({ createdAt: -1 })
+    .limit(limit)
     .toArray();
   return docs.map((doc) => toPublicAd(doc as unknown as Ad));
 }
@@ -495,23 +502,38 @@ export function toPublicAd(ad: Ad): PublicAd {
 
 export async function countAdsPerUser(): Promise<Record<string, number>> {
   const collection = await getAdsCollection();
-  const store = await readStore();
-
-  const all: Ad[] = [];
-  if (collection) {
-    const docs = await collection.find({}).toArray();
-    all.push(...(docs as unknown as Ad[]));
-  }
-  all.push(...((store.ads ?? []) as unknown as Ad[]));
-
   const counts: Record<string, number> = {};
+
+  if (collection) {
+    try {
+      const results = await collection
+        .aggregate([
+          { $match: { status: { $ne: "deleted" } } },
+          { $group: { _id: "$userId", count: { $sum: 1 } } },
+        ])
+        .toArray();
+
+      for (const item of results) {
+        if (item._id && typeof item.count === "number") {
+          counts[String(item._id)] = item.count;
+        }
+      }
+      return counts;
+    } catch (err) {
+      console.error("[ad] countAdsPerUser aggregation failed:", err);
+    }
+  }
+
+  const store = await readStore();
   const seen = new Set<string>();
-  for (const ad of all) {
+  for (const ad of store.ads ?? []) {
     if ((ad.status ?? "active") === "deleted") continue;
     if (!ad._id || seen.has(ad._id)) continue;
     seen.add(ad._id);
     if (!ad.userId) continue;
-    counts[ad.userId] = (counts[ad.userId] ?? 0) + 1;
+    const uid = String(ad.userId);
+    counts[uid] = (counts[uid] ?? 0) + 1;
   }
   return counts;
 }
+
