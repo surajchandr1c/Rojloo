@@ -10,70 +10,10 @@ import { useAuth } from "@/lib/auth-context";
 import { authenticatedFetch } from "@/lib/auth-fetch";
 import type { Ad } from "./types";
 
-interface PromoPackage {
-  id: string;
-  title: string;
-  durationDays: number;
-  coinsCost: number;
-  tag?: string;
-  highlight?: boolean;
-  features: string[];
-}
-
-const PROMO_PACKAGES: PromoPackage[] = [
-  {
-    id: "vip-1-day",
-    title: "VIP Top 1 Day (3 TOP-US)",
-    durationDays: 1,
-    coinsCost: 5,
-    tag: "Quick Boost",
-    features: [
-      "Top VIP placement in your city",
-      "Highlighted card badge",
-      "2x higher search visibility",
-      "Instant activation",
-    ],
-  },
-  {
-    id: "vip-3-days",
-    title: "VIP Super 3 Days (3 TOP-US)",
-    durationDays: 3,
-    coinsCost: 12,
-    tag: "Most Popular",
-    highlight: true,
-    features: [
-      "3x visibility across city listings",
-      "Unlocks all ad gallery images",
-      "VIP 1x3 rotation slot",
-      "High priority lead placement",
-    ],
-  },
-  {
-    id: "vip-7-days",
-    title: "VIP Premium 7 Days (VIP 1x3)",
-    durationDays: 7,
-    coinsCost: 25,
-    tag: "Best Value",
-    features: [
-      "Maximum exposure for 7 full days",
-      "Prime VIP carousel rotation",
-      "All gallery photos unlocked",
-      "Priority WhatsApp & call display",
-    ],
-  },
-  {
-    id: "unlock-images",
-    title: "Unlock Images Pack (30 Days)",
-    durationDays: 30,
-    coinsCost: 3,
-    tag: "Photo Pack",
-    features: [
-      "Instantly unlock all photos",
-      "Visible to all potential clients",
-      "Valid for full 30 days",
-    ],
-  },
-];
+import {
+  DEFAULT_PROMO_PACKAGES,
+  type PromotionPackage,
+} from "@/lib/promotion-packages";
 
 export default function PromotedAdView() {
   const router = useRouter();
@@ -84,6 +24,7 @@ export default function PromotedAdView() {
   const { user, refreshAuth } = useAuth();
 
   const [ads, setAds] = useState<Ad[]>([]);
+  const [promoPackages, setPromoPackages] = useState<PromotionPackage[]>(DEFAULT_PROMO_PACKAGES);
   const [selectedAdId, setSelectedAdId] = useState<string>(adIdParam);
   const [selectedPackageId, setSelectedPackageId] = useState<string>("vip-3-days");
   const [loading, setLoading] = useState(true);
@@ -111,6 +52,28 @@ export default function PromotedAdView() {
   };
 
   useEffect(() => {
+    fetch(`/api/promotion-packages?_t=${Date.now()}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data?.packages) && data.packages.length > 0) {
+          setPromoPackages(data.packages);
+          setSelectedPackageId((prevId) => {
+            if (data.packages.some((p: PromotionPackage) => p.id === prevId)) {
+              return prevId;
+            }
+            const defaultPick =
+              data.packages.find((p: PromotionPackage) => p.highlight) ||
+              data.packages[0];
+            return defaultPick ? defaultPick.id : prevId;
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load promotion packages:", err);
+      });
+  }, []);
+
+  useEffect(() => {
     if (ready) {
       loadAds();
     }
@@ -125,7 +88,10 @@ export default function PromotedAdView() {
   if (!ready) return null;
 
   const selectedAd = ads.find((a) => a._id === selectedAdId);
-  const selectedPkg = PROMO_PACKAGES.find((p) => p.id === selectedPackageId) || PROMO_PACKAGES[1];
+  const selectedPkg =
+    promoPackages.find((p) => p.id === selectedPackageId) ||
+    promoPackages[0] ||
+    DEFAULT_PROMO_PACKAGES[0];
   const userCoins = Number(user?.coins ?? 0);
   const hasEnoughCoins = userCoins >= selectedPkg.coinsCost;
 
@@ -224,9 +190,10 @@ export default function PromotedAdView() {
 
           <Link
             href="/post-ad/buy-coin"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] text-white px-4 py-2 text-xs font-bold transition shadow-xs"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] !text-white hover:!text-white visited:!text-white px-4 py-2 text-xs font-bold transition shadow-xs"
+            style={{ color: "#ffffff" }}
           >
-            <span>+ Buy More Coins</span>
+            <span className="!text-white text-white" style={{ color: "#ffffff" }}>+ Buy More Coins</span>
           </Link>
         </div>
 
@@ -358,7 +325,7 @@ export default function PromotedAdView() {
           </p>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {PROMO_PACKAGES.map((pkg) => {
+            {promoPackages.map((pkg) => {
               const isSelected = selectedPackageId === pkg.id;
               return (
                 <div
@@ -394,7 +361,7 @@ export default function PromotedAdView() {
                     </div>
 
                     <ul className="mt-3 space-y-1.5 text-[11px] text-gray-600">
-                      {pkg.features.map((feat, idx) => (
+                      {(pkg.features || []).map((feat, idx) => (
                         <li key={idx} className="flex items-start gap-1.5">
                           <span className="text-emerald-600 font-bold">✓</span>
                           <span>{feat}</span>

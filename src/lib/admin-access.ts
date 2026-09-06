@@ -16,6 +16,7 @@ export const ADMIN_SECTIONS = [
   { key: "ads", name: "Ads" },
   { key: "users", name: "Users" },
   { key: "set-coins", name: "Set Coins" },
+  { key: "promotion-packages", name: "Promotion Package" },
   { key: "vip", name: "VIP" },
   { key: "phone-control", name: "Phone No. Control" },
   { key: "admin-control", name: "Admin Control" },

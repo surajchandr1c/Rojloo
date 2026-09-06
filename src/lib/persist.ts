@@ -27,6 +27,7 @@ type StoreData = {
   paymentRequests: StoreRecord[];
   paymentHistory: StoreRecord[];
   coinPackages: StoreRecord[];
+  promotionPackages?: StoreRecord[];
   deletedCities: string[];
   admins: StoreRecord[];
   upiRotation: {
@@ -62,6 +63,7 @@ function defaults(): StoreData {
     paymentRequests: [],
     paymentHistory: [],
     coinPackages: [],
+    promotionPackages: [],
     deletedCities: [],
     admins: [],
     upiRotation: {
@@ -88,6 +90,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
     paymentRequests: raw.paymentRequests ?? [],
     paymentHistory: raw.paymentHistory ?? [],
     coinPackages: raw.coinPackages ?? [],
+    promotionPackages: raw.promotionPackages ?? [],
     deletedCities: raw.deletedCities ?? [],
     admins: raw.admins ?? [],
     upiRotation: raw.upiRotation ?? {

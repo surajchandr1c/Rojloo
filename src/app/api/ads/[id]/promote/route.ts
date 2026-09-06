@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-user";
 import { getAdById, updateAd } from "@/lib/models/ad";
 import { findUserById, updateUserCoins } from "@/lib/models/user";
+import { getPromotionPackages } from "@/lib/models/promotion-package";
 
 export async function POST(
   request: NextRequest,
@@ -15,9 +16,16 @@ export async function POST(
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
 
-  const durationDays = Number(body?.durationDays ?? 1);
-  const coinsCost = Number(body?.coinsCost ?? 5);
-  const packageName = typeof body?.title === "string" ? body.title : "VIP 1 Day";
+  const packages = await getPromotionPackages();
+  const matchedPkg = packages.find(
+    (p) =>
+      (body?.packageId && p.id === body.packageId) ||
+      (body?.title && p.title === body.title)
+  );
+
+  const durationDays = Number(matchedPkg ? matchedPkg.durationDays : (body?.durationDays ?? 1));
+  const coinsCost = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
+  const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "VIP 1 Day");
 
   if (!id) {
     return NextResponse.json({ error: "Ad ID is required." }, { status: 400 });

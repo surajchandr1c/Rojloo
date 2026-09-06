@@ -17,6 +17,7 @@ const PERMISSION_OPTIONS = [
   { key: "payment-request", label: "Payment Request" },
   { key: "payment-history", label: "Payment History" },
   { key: "set-coins", label: "Set Coins" },
+  { key: "promotion-packages", label: "Promotion Package" },
   { key: "vip", label: "VIP" },
 ];
 
