@@ -88,6 +88,12 @@ export const adminNavItems: NavItem[] = [
     mainOnly: true,
   },
   {
+    name: "404 Pages",
+    href: "/admin/not-found",
+    key: "not-found",
+    icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
+  },
+  {
     name: "Admin Control",
     href: "/admin/admin-control",
     key: "admin-control",
@@ -100,12 +106,6 @@ export const adminNavItems: NavItem[] = [
     key: "sub-admins",
     icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
     mainOnly: true,
-  },
-  {
-    name: "404 Pages",
-    href: "/admin/not-found",
-    key: "not-found",
-    icon: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
   },
 ];
 
