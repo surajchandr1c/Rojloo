@@ -18,9 +18,12 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   applicationName: siteConfig.name,
   icons: {
-    icon: "/rojlo.png",
-    shortcut: "/rojlo.png",
-    apple: "/rojlo.png",
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
   robots: { index: true, follow: true },
   openGraph: {

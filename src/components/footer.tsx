@@ -5,22 +5,24 @@ import { navLinks, policyLinks } from "@/lib/nav";
 export default function Footer() {
   return (
     <footer className="border-t border-red-950/30 bg-red-950 px-4 py-8 text-white w-full">
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6 lg:gap-12">
-        <div>
-          <Link href="/" className="inline-block hover:opacity-90 transition">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
+        <div className="flex items-center gap-4 sm:col-span-2">
+          <Link href="/" className="shrink-0 hover:opacity-90 transition">
             <Image
-              src="/rojlo.png"
+              src="/favicon.png"
               alt="Rojlo Logo"
-              width={56}
-              height={56}
-              className="h-14 w-14 rounded-full object-cover shadow-md ring-2 ring-red-800"
+              width={120}
+              height={120}
+              className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 object-contain drop-shadow-md"
             />
           </Link>
-          <p className="mt-2.5 text-lg font-black !text-white">rojlo</p>
-          <p className="mt-2 max-w-md text-sm leading-6 !text-white">
-            Find services, explore places, and post ads in one simple local
-            marketplace.
-          </p>
+          <div>
+            <p className="text-xl sm:text-2xl font-black !text-white">rojlo</p>
+            <p className="mt-1.5 max-w-sm text-xs sm:text-sm leading-relaxed text-red-100">
+              Find services, explore places, and post ads in one simple local
+              marketplace.
+            </p>
+          </div>
         </div>
 
         <div>
