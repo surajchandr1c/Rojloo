@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
     const phone = String(body?.phone ?? "").trim();
     const type = (body?.type === "state" ? "state" : "city") as "state" | "city";
     const expiresInDays = Number(body?.expiresInDays ?? 7);
-    const origin = request.nextUrl.origin;
+    const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
+    const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/+$/, "");
+    const origin = siteUrl || (forwardedHost ? `${forwardedProto}://${forwardedHost}` : request.nextUrl.origin);
 
     if (!email) {
       return NextResponse.json(
