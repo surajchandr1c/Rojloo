@@ -1,15 +1,31 @@
+import bcrypt from "bcryptjs";
+import { randomBytes, randomUUID } from "crypto";
 import { readStore, writeStore } from "@/lib/persist";
 
 export type CityVipAssignment = {
   _id?: string;
-  cityName: string;
+  type?: "city" | "state";
+  cityName?: string;
   citySlug?: string;
+  stateName?: string;
   email: string;
   status: "pending" | "active" | "inactive" | "expired";
   assignedBy?: string;
   assignedAt: Date | string;
   expiresAt: Date | string;
   lastReminderSentAt?: Date | string;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+};
+
+export type VipUser = {
+  _id: string;
+  email: string;
+  passwordHash?: string;
+  setupToken?: string;
+  setupTokenExpires?: Date | string;
+  sessionToken?: string;
+  lastLogin?: Date | string;
   createdAt: Date | string;
   updatedAt?: Date | string;
 };
@@ -24,7 +40,6 @@ export async function listVipAssignments(): Promise<CityVipAssignment[]> {
   const store = await readStore();
   const items: CityVipAssignment[] = ((store.cityVipAssignments ?? []) as CityVipAssignment[]).map((item) => {
     const normalizedStatus = normalizeVipStatus(item.status);
-
     return {
       ...item,
       status: normalizedStatus,
@@ -35,8 +50,10 @@ export async function listVipAssignments(): Promise<CityVipAssignment[]> {
 }
 
 export async function createVipAssignment(input: {
-  cityName: string;
+  type?: "city" | "state";
+  cityName?: string;
   citySlug?: string;
+  stateName?: string;
   email: string;
   assignedBy?: string;
   expiresInDays?: number;
@@ -46,9 +63,11 @@ export async function createVipAssignment(input: {
   expiresAt.setDate(expiresAt.getDate() + (input.expiresInDays ?? 7));
 
   const assignment: CityVipAssignment = {
-    _id: `vip_${Date.now()}`,
+    _id: `vip_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    type: input.type || (input.stateName ? "state" : "city"),
     cityName: input.cityName,
     citySlug: input.citySlug,
+    stateName: input.stateName,
     email: input.email.trim().toLowerCase(),
     status: "pending",
     assignedBy: input.assignedBy,
@@ -131,11 +150,6 @@ export async function deleteVipAssignment(id: string): Promise<boolean> {
   return true;
 }
 
-export async function getVipAssignmentsForCity(citySlug: string): Promise<CityVipAssignment[]> {
-  const assignments = await listVipAssignments();
-  return assignments.filter((item) => item.citySlug === citySlug);
-}
-
 export async function getVipAssignmentsForEmail(email: string): Promise<CityVipAssignment[]> {
   const assignments = await listVipAssignments();
   return assignments.filter((item) => item.email.toLowerCase() === email.trim().toLowerCase());
@@ -153,4 +167,392 @@ export async function syncVipStatus() {
       await updateVipAssignment(String(item._id), { status: "active" });
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// VIP User Authentication & Password Creation
+// ---------------------------------------------------------------------------
+
+export async function createVipSetupToken(email: string): Promise<string> {
+  const store = await readStore();
+  const cleanEmail = email.trim().toLowerCase();
+  const token = randomBytes(24).toString("hex");
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+  const vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
+  const existingIdx = vipUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
+
+  if (existingIdx >= 0) {
+    vipUsers[existingIdx] = {
+      ...vipUsers[existingIdx],
+      setupToken: token,
+      setupTokenExpires: expiresAt,
+      updatedAt: new Date(),
+    };
+  } else {
+    vipUsers.push({
+      _id: `vipu_${Date.now()}_${randomUUID().substring(0, 8)}`,
+      email: cleanEmail,
+      setupToken: token,
+      setupTokenExpires: expiresAt,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  store.vipUsers = vipUsers as unknown as typeof store.vipUsers;
+  await writeStore(store);
+  return token;
+}
+
+export async function verifyVipSetupToken(token: string, email: string): Promise<boolean> {
+  if (!token || !email) return false;
+  const store = await readStore();
+  const cleanEmail = email.trim().toLowerCase();
+  const vipUsers = (store.vipUsers ?? []) as unknown as VipUser[];
+  const user = vipUsers.find(
+    (u) => u.email.toLowerCase() === cleanEmail && u.setupToken === token
+  );
+
+  if (!user || !user.setupTokenExpires) return false;
+  return new Date(user.setupTokenExpires).getTime() > Date.now();
+}
+
+export async function setVipPassword(
+  email: string,
+  token: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!password || password.length < 6) {
+    return { success: false, error: "Password must be at least 6 characters." };
+  }
+
+  const isValid = await verifyVipSetupToken(token, email);
+  if (!isValid) {
+    return { success: false, error: "Invalid or expired password creation link." };
+  }
+
+  const store = await readStore();
+  const cleanEmail = email.trim().toLowerCase();
+  const vipUsers = (store.vipUsers ?? []) as unknown as VipUser[];
+  const userIdx = vipUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
+  if (userIdx < 0) {
+    return { success: false, error: "VIP user record not found." };
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  vipUsers[userIdx] = {
+    ...vipUsers[userIdx],
+    passwordHash,
+    setupToken: undefined,
+    setupTokenExpires: undefined,
+    updatedAt: new Date(),
+  };
+
+  store.vipUsers = vipUsers as unknown as typeof store.vipUsers;
+
+  // Activate pending assignments for this VIP
+  const assignments = (store.cityVipAssignments ?? []) as CityVipAssignment[];
+  let updatedAssignments = false;
+  for (const a of assignments) {
+    if (a.email.toLowerCase() === cleanEmail && a.status === "pending") {
+      a.status = "active";
+      a.updatedAt = new Date();
+      updatedAssignments = true;
+    }
+  }
+  if (updatedAssignments) {
+    store.cityVipAssignments = assignments;
+  }
+
+  await writeStore(store);
+  return { success: true };
+}
+
+export async function verifyVipCredentials(
+  email: string,
+  password: string
+): Promise<{
+  success: boolean;
+  user?: VipUser;
+  error?: string;
+  sessionToken?: string;
+}> {
+  const cleanEmail = email.trim().toLowerCase();
+  await syncVipStatus();
+
+  // Check that the VIP has at least one active assignment
+  const assignments = await getVipAssignmentsForEmail(cleanEmail);
+  const hasActive = assignments.some((a) => a.status === "active");
+  if (!hasActive) {
+    return {
+      success: false,
+      error: "Your VIP access is inactive or expired. Please contact support.",
+    };
+  }
+
+  const store = await readStore();
+  const vipUsers = (store.vipUsers ?? []) as unknown as VipUser[];
+  const user = vipUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+
+  if (!user || !user.passwordHash) {
+    return {
+      success: false,
+      error: "Password not set. Please use the password creation link sent to your email.",
+    };
+  }
+
+  const matches = await bcrypt.compare(password, user.passwordHash);
+  if (!matches) {
+    return { success: false, error: "Invalid email or password." };
+  }
+
+  const sessionToken = randomUUID();
+  const userIdx = vipUsers.findIndex((u) => u._id === user._id);
+  vipUsers[userIdx] = {
+    ...vipUsers[userIdx],
+    sessionToken,
+    lastLogin: new Date(),
+    updatedAt: new Date(),
+  };
+
+  store.vipUsers = vipUsers as unknown as typeof store.vipUsers;
+  await writeStore(store);
+
+  return { success: true, user: vipUsers[userIdx], sessionToken };
+}
+
+export async function getVipBySession(sessionToken: string): Promise<VipUser | null> {
+  if (!sessionToken) return null;
+  const store = await readStore();
+  const vipUsers = (store.vipUsers ?? []) as unknown as VipUser[];
+  const user = vipUsers.find((u) => u.sessionToken === sessionToken);
+  return user ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Scoped Data Aggregation for VIP Control Panel
+// ---------------------------------------------------------------------------
+
+export type VipScope = {
+  hasStateAccess: boolean;
+  states: string[];
+  cities: string[];
+  assignments: CityVipAssignment[];
+};
+
+export async function getVipScope(email: string): Promise<VipScope> {
+  await syncVipStatus();
+  const assignments = (await getVipAssignmentsForEmail(email)).filter(
+    (a) => a.status === "active"
+  );
+
+  const stateSet = new Set<string>();
+  const citySet = new Set<string>();
+
+  for (const a of assignments) {
+    if (a.type === "state" && a.stateName) {
+      stateSet.add(a.stateName.trim());
+    } else if (a.cityName) {
+      citySet.add(a.cityName.trim());
+    }
+  }
+
+  const states = Array.from(stateSet);
+  const hasStateAccess = states.length > 0;
+
+  // If VIP has state access, all cities in that state are also accessible to them
+  const store = await readStore();
+  const allCities = [
+    ...(store.cities ?? []).map((c) => ({
+      name: String(c.name ?? ""),
+      state: String(c.state ?? ""),
+      slug: String(c.slug ?? ""),
+    })),
+  ];
+
+  // Include static cities from cityPlaces
+  try {
+    const { cityPlaces } = await import("@/lib/places");
+    for (const c of cityPlaces) {
+      allCities.push({
+        name: c.name,
+        state: c.state ?? "",
+        slug: c.slug,
+      });
+    }
+  } catch {}
+
+  const stateLower = new Set(states.map((s) => s.toLowerCase()));
+  for (const c of allCities) {
+    if (c.state && stateLower.has(c.state.toLowerCase())) {
+      citySet.add(c.name);
+    }
+  }
+
+  return {
+    hasStateAccess,
+    states,
+    cities: Array.from(citySet),
+    assignments,
+  };
+}
+
+export async function getVipScopedStats(email: string) {
+  const scope = await getVipScope(email);
+  const store = await readStore();
+
+  const cityLowerSet = new Set(scope.cities.map((c) => c.toLowerCase()));
+  const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
+
+  // Filter ads within scope
+  const ads = (store.ads ?? []).filter((ad) => {
+    const adCity = String(ad.city ?? "").trim().toLowerCase();
+    const adState = String(ad.state ?? "").trim().toLowerCase();
+    return cityLowerSet.has(adCity) || (adState && stateLowerSet.has(adState));
+  });
+
+  // Filter users who posted ads within scope
+  const scopedUserIds = new Set(ads.map((ad) => String(ad.userId ?? "")).filter(Boolean));
+  const usersCount = scopedUserIds.size;
+
+  return {
+    statesCount: scope.states.length,
+    citiesCount: scope.cities.length,
+    usersCount,
+    adsCount: ads.length,
+    hasStateAccess: scope.hasStateAccess,
+    assignments: scope.assignments,
+  };
+}
+
+export async function getVipScopedStates(email: string) {
+  const scope = await getVipScope(email);
+  if (!scope.hasStateAccess) return [];
+
+  const store = await readStore();
+  const storeStates = (store.states ?? []).map((s) => ({
+    name: String(s.name ?? ""),
+    slug: String(s.slug ?? ""),
+  }));
+
+  const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
+  return scope.states.map((stateName) => {
+    const match = storeStates.find((s) => s.name.toLowerCase() === stateName.toLowerCase());
+    return {
+      name: stateName,
+      slug: match?.slug || stateName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    };
+  });
+}
+
+export async function getVipScopedCities(email: string) {
+  const scope = await getVipScope(email);
+  const store = await readStore();
+
+  const cityMap = new Map<string, { name: string; slug: string; state: string; adCount: number }>();
+  const cityLowerSet = new Set(scope.cities.map((c) => c.toLowerCase()));
+
+  // Read cities from store
+  for (const c of store.cities ?? []) {
+    const name = String(c.name ?? "").trim();
+    if (cityLowerSet.has(name.toLowerCase())) {
+      cityMap.set(name.toLowerCase(), {
+        name,
+        slug: String(c.slug ?? ""),
+        state: String(c.state ?? ""),
+        adCount: 0,
+      });
+    }
+  }
+
+  // Also include static cityPlaces
+  try {
+    const { cityPlaces } = await import("@/lib/places");
+    for (const c of cityPlaces) {
+      if (cityLowerSet.has(c.name.toLowerCase()) && !cityMap.has(c.name.toLowerCase())) {
+        cityMap.set(c.name.toLowerCase(), {
+          name: c.name,
+          slug: c.slug,
+          state: c.state ?? "",
+          adCount: 0,
+        });
+      }
+    }
+  } catch {}
+
+  // Count ads per city
+  for (const ad of store.ads ?? []) {
+    const adCity = String(ad.city ?? "").trim().toLowerCase();
+    const entry = cityMap.get(adCity);
+    if (entry) {
+      entry.adCount += 1;
+    }
+  }
+
+  return Array.from(cityMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function getVipScopedAds(email: string) {
+  const scope = await getVipScope(email);
+  const store = await readStore();
+
+  const cityLowerSet = new Set(scope.cities.map((c) => c.toLowerCase()));
+  const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
+
+  const ads = (store.ads ?? [])
+    .filter((ad) => {
+      const adCity = String(ad.city ?? "").trim().toLowerCase();
+      const adState = String(ad.state ?? "").trim().toLowerCase();
+      return cityLowerSet.has(adCity) || (adState && stateLowerSet.has(adState));
+    })
+    .map((ad) => ({
+      _id: String(ad._id ?? ""),
+      name: String(ad.name ?? ""),
+      title: String(ad.title ?? ad.name ?? ""),
+      category: String(ad.category ?? ""),
+      city: String(ad.city ?? ""),
+      state: String(ad.state ?? ""),
+      phone: String(ad.phone ?? ""),
+      status: String(ad.status ?? "active"),
+      createdAt: ad.createdAt ?? new Date(),
+    }));
+
+  return ads;
+}
+
+export async function getVipScopedUsers(email: string) {
+  const scope = await getVipScope(email);
+  const store = await readStore();
+
+  const cityLowerSet = new Set(scope.cities.map((c) => c.toLowerCase()));
+  const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
+
+  // Map users to their ads in scope
+  const userAdCounts: Record<string, number> = {};
+  for (const ad of store.ads ?? []) {
+    const adCity = String(ad.city ?? "").trim().toLowerCase();
+    const adState = String(ad.state ?? "").trim().toLowerCase();
+    if (cityLowerSet.has(adCity) || (adState && stateLowerSet.has(adState))) {
+      const uid = String(ad.userId ?? "");
+      if (uid) {
+        userAdCounts[uid] = (userAdCounts[uid] || 0) + 1;
+      }
+    }
+  }
+
+  const scopedUserIds = new Set(Object.keys(userAdCounts));
+  const users = (store.users ?? [])
+    .filter((u) => scopedUserIds.has(String(u._id ?? "")))
+    .map((u) => ({
+      _id: String(u._id ?? ""),
+      name: String(u.name ?? ""),
+      email: String(u.email ?? ""),
+      phone: String(u.phone ?? ""),
+      coins: Number((u as { coins?: number }).coins ?? 0),
+      adCount: userAdCounts[String(u._id ?? "")] || 0,
+      createdAt: u.createdAt ?? new Date(),
+    }));
+
+  return users;
 }

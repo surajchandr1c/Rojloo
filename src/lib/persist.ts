@@ -35,6 +35,7 @@ type StoreData = {
   };
   localAreas: StoreRecord[];
   notFoundLogs: StoreRecord[];
+  vipUsers?: StoreRecord[];
 };
 
 function reviveDates(record: StoreRecord) {
@@ -68,6 +69,7 @@ function defaults(): StoreData {
     },
     localAreas: [],
     notFoundLogs: [],
+    vipUsers: [],
   };
 }
 
@@ -92,6 +94,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
     },
     localAreas: raw.localAreas ?? [],
     notFoundLogs: raw.notFoundLogs ?? [],
+    vipUsers: raw.vipUsers ?? [],
   };
   data.users = data.users.map((user) => ({
     ...user,

@@ -7,13 +7,24 @@ import {
   deleteVipAssignment,
   syncVipStatus,
   extendVipAssignment,
+  createVipSetupToken,
 } from "@/lib/models/vip";
-import { sendEmail } from "@/lib/email";
+import { sendVipInviteEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (!ctx || !canAccess(ctx, "vip")) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const setupEmail = searchParams.get("setupEmail");
+
+  if (setupEmail) {
+    const token = await createVipSetupToken(setupEmail);
+    const origin = request.nextUrl.origin;
+    const setupUrl = `${origin}/vip/create-password?token=${token}&email=${encodeURIComponent(setupEmail)}`;
+    return NextResponse.json({ success: true, setupUrl });
   }
 
   await syncVipStatus();
@@ -29,78 +40,129 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json().catch(() => null);
-    const email = body?.email;
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const type = (body?.type === "state" ? "state" : "city") as "state" | "city";
     const expiresInDays = Number(body?.expiresInDays ?? 7);
+    const origin = request.nextUrl.origin;
 
-    const rawCities = Array.isArray(body?.cities)
-      ? body.cities
-      : typeof body?.cities === "string"
-        ? body.cities.split(",")
-        : [body?.cityName];
-
-    const cityEntries = rawCities
-      .map((entry: unknown) => String(entry ?? "").trim())
-      .filter(Boolean);
-
-    if (cityEntries.length === 0 || !email) {
+    if (!email) {
       return NextResponse.json(
-        { error: "At least one city and an email are required." },
+        { error: "VIP owner email is required." },
         { status: 400 }
       );
     }
 
     const created: Array<{
-      cityName: string;
+      _id?: string;
+      type: "city" | "state";
+      stateName?: string;
+      cityName?: string;
       email: string;
       expiresAt: Date;
-      citySlug?: string;
     }> = [];
 
-    for (const cityNameValue of [...new Set(cityEntries)]) {
-      const cityName = String(cityNameValue).trim();
-      const citySlug = typeof body?.citySlug === "string" && body.citySlug.trim()
-        ? String(body.citySlug).trim()
-        : cityName.trim();
+    let areaLabel = "";
+
+    if (type === "state") {
+      const stateName = String(body?.stateName ?? "").trim();
+      if (!stateName) {
+        return NextResponse.json(
+          { error: "State name is required for state VIP assignment." },
+          { status: 400 }
+        );
+      }
+
+      areaLabel = `State: ${stateName}`;
 
       const assignment = await createVipAssignment({
-        cityName: String(cityName),
-        citySlug: citySlug ? String(citySlug) : undefined,
-        email: String(email),
+        type: "state",
+        stateName,
+        email,
         assignedBy: ctx.role === "main" ? "main-admin" : ctx.email,
         expiresInDays: Number.isFinite(expiresInDays) && expiresInDays > 0 ? expiresInDays : 7,
       });
 
       created.push({
-        cityName: assignment.cityName,
+        _id: assignment._id,
+        type: "state",
+        stateName: assignment.stateName,
         email: assignment.email,
         expiresAt: new Date(assignment.expiresAt),
-        citySlug: assignment.citySlug,
       });
+    } else {
+      const rawCities = Array.isArray(body?.cities)
+        ? body.cities
+        : typeof body?.cities === "string"
+          ? body.cities.split(",")
+          : [body?.cityName];
 
-      const message = [
-        `Hello,`,
-        "",
-        `You have been assigned city control for ${assignment.cityName}.`,
-        `This access is valid until ${new Date(assignment.expiresAt).toLocaleString()}.`,
-        "Please contact the admin team to extend this access before expiry.",
-        "",
-        "Regards,",
-        "Rojlo Admin Team",
-      ].join("\n");
+      const cityEntries = rawCities
+        .map((entry: unknown) => String(entry ?? "").trim())
+        .filter(Boolean);
 
-      await sendEmail({
-        to: assignment.email,
-        subject: `City access confirmation for ${assignment.cityName}`,
-        text: message,
-        html: `<p>Hello,</p><p>You have been assigned city control for <strong>${assignment.cityName}</strong>.</p><p>This access is valid until <strong>${new Date(assignment.expiresAt).toLocaleString()}</strong>.</p><p>Please contact the admin team to extend this access before expiry.</p><p>Regards,<br/>Rojlo Admin Team</p>`,
-      });
+      if (cityEntries.length === 0) {
+        return NextResponse.json(
+          { error: "At least one city name is required." },
+          { status: 400 }
+        );
+      }
+
+      areaLabel = `Cities: ${cityEntries.join(", ")}`;
+
+      for (const cityNameValue of [...new Set(cityEntries)]) {
+        const cityName = String(cityNameValue).trim();
+        const citySlug = typeof body?.citySlug === "string" && body.citySlug.trim()
+          ? String(body.citySlug).trim()
+          : cityName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+        const assignment = await createVipAssignment({
+          type: "city",
+          cityName,
+          citySlug,
+          email,
+          assignedBy: ctx.role === "main" ? "main-admin" : ctx.email,
+          expiresInDays: Number.isFinite(expiresInDays) && expiresInDays > 0 ? expiresInDays : 7,
+        });
+
+        created.push({
+          _id: assignment._id,
+          type: "city",
+          cityName: assignment.cityName,
+          email: assignment.email,
+          expiresAt: new Date(assignment.expiresAt),
+        });
+      }
     }
 
-    return NextResponse.json({ success: true, assignments: created }, { status: 201 });
+    // Generate password setup token and links
+    const setupToken = await createVipSetupToken(email);
+    const createPasswordUrl = `${origin}/vip/create-password?token=${setupToken}&email=${encodeURIComponent(email)}`;
+    const loginUrl = `${origin}/vip/login`;
+
+    const latestExpiry = created[0]?.expiresAt || new Date();
+
+    // Send invitation email with create password link
+    await sendVipInviteEmail({
+      to: email,
+      areaLabel,
+      createPasswordUrl,
+      loginUrl,
+      expiresAt: latestExpiry,
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        assignments: created,
+        setupUrl: createPasswordUrl,
+        loginUrl,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("createVipAssignment failed:", error);
     return NextResponse.json(
-      { error: "Failed to assign city VIP control." },
+      { error: "Failed to assign VIP control." },
       { status: 500 }
     );
   }

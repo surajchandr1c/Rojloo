@@ -194,3 +194,76 @@ export function sendOtpEmail({
 
   return sendEmail({ to, subject, text, html });
 }
+
+export function sendVipInviteEmail({
+  to,
+  areaLabel,
+  createPasswordUrl,
+  loginUrl,
+  expiresAt,
+}: {
+  to: string;
+  areaLabel: string;
+  createPasswordUrl: string;
+  loginUrl: string;
+  expiresAt: Date | string;
+}) {
+  const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || SITE_NAME;
+  const expiryFormatted = new Date(expiresAt).toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  const subject = `VIP Access Granted for ${areaLabel} - Create Your Password`;
+
+  const text = [
+    `Hello,`,
+    ``,
+    `You have been granted VIP Control Panel access for: ${areaLabel}.`,
+    `Your access is valid until: ${expiryFormatted}.`,
+    ``,
+    `To activate your account and set up your VIP password, click the link below:`,
+    createPasswordUrl,
+    ``,
+    `After creating your password, you can access your VIP Control Panel at:`,
+    loginUrl,
+    ``,
+    `Please contact the admin team if you need any assistance.`,
+    ``,
+    `— ${siteName} Team`,
+  ].join("\n");
+
+  const html = [
+    `<!DOCTYPE html>`,
+    `<html lang="en">`,
+    `<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>VIP Access Granted</title></head>`,
+    `<body style="margin:0;padding:24px 12px;background-color:#fff1f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
+    `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">`,
+    `<tr><td align="center">`,
+    `<table role="presentation" style="max-width:520px;width:100%;background:#ffffff;border:1px solid #fecdd3;border-radius:24px;padding:36px 24px;box-shadow:0 4px 12px rgba(244,63,94,0.06);" border="0" cellpadding="0" cellspacing="0">`,
+    `<tr><td style="text-align:center;">`,
+    `<h1 style="color:#881337;font-size:24px;font-weight:900;margin:0 0 8px;letter-spacing:-0.5px;">${siteName} VIP Portal</h1>`,
+    `<p style="color:#4c0519;font-size:15px;line-height:22px;margin:0 0 20px;">You have been assigned VIP access control for:</p>`,
+    `<div style="background:#fff1f2;border:2px solid #fb7185;border-radius:16px;padding:16px;margin:0 auto 24px;text-align:center;">`,
+    `<span style="font-size:20px;font-weight:800;color:#9f1239;display:block;">${areaLabel}</span>`,
+    `<span style="font-size:12px;color:#e11d48;font-weight:600;display:block;margin-top:4px;">Valid until ${expiryFormatted}</span>`,
+    `</div>`,
+    `<p style="color:#4c0519;font-size:14px;line-height:22px;margin:0 0 24px;">Click the button below to create your password and set up your VIP account.</p>`,
+    `<div style="margin:24px 0;">`,
+    `<a href="${createPasswordUrl}" style="background-color:#450a0a;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:14px;font-weight:700;font-size:15px;display:inline-block;box-shadow:0 4px 10px rgba(69,10,10,0.25);">Create Your Password &rarr;</a>`,
+    `</div>`,
+    `<p style="color:#881337;font-size:13px;line-height:20px;margin:20px 0 8px;">After setting your password, sign in anytime at:</p>`,
+    `<p style="margin:0 0 20px;"><a href="${loginUrl}" style="color:#be123c;font-weight:600;font-size:13px;word-break:break-all;">${loginUrl}</a></p>`,
+    `<div style="margin-top:28px;padding-top:16px;border-top:1px solid #ffe4e6;font-size:12px;color:#9ca3af;text-align:center;">`,
+    `This is an automated VIP notification from ${siteName}. If you were not expecting this, please contact support.`,
+    `</div>`,
+    `</td></tr>`,
+    `</table>`,
+    `</td></tr>`,
+    `</table>`,
+    `</body>`,
+    `</html>`,
+  ].join("");
+
+  return sendEmail({ to, subject, text, html });
+}
+
