@@ -69,6 +69,9 @@ export type Ad = {
   images?: string[];
   status: string;
   serviceRates?: ServiceRate[];
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  promoted?: boolean;
 };
 
 export type AdForm = {
