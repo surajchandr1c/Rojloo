@@ -237,33 +237,47 @@ export async function listUsers(): Promise<PublicUser[]> {
   return docs.map((doc) => toPublicUser(doc as unknown as User));
 }
 
-export async function updateUserCoins(userId: string, delta: number): Promise<boolean> {
+export async function updateUserCoins(
+  userId: string,
+  delta: number,
+  userEmail?: string
+): Promise<boolean> {
   const numericDelta = Number(delta || 0);
   if (!Number.isFinite(numericDelta)) return false;
 
   const collection = await getUsersCollection();
   if (collection) {
-    let _id: ObjectId;
-    try {
-      _id = new ObjectId(userId);
-    } catch {
-      return false;
+    const filters: Record<string, unknown>[] = [];
+    if (userId) {
+      if (ObjectId.isValid(userId)) {
+        filters.push({ _id: new ObjectId(userId) });
+      }
+      filters.push({ _id: userId });
+    }
+    if (userEmail) {
+      filters.push({ email: normalizeEmail(userEmail) });
     }
 
-    // Use atomic $inc to prevent lost updates from concurrent requests.
-    const result = await collection.findOneAndUpdate(
-      { _id },
-      {
-        $inc: { coins: numericDelta },
-        $set: { updatedAt: new Date() },
-      },
-      { returnDocument: "after" }
-    );
-    return Boolean(result);
+    if (filters.length > 0) {
+      const query = filters.length === 1 ? filters[0] : { $or: filters };
+      const result = await collection.findOneAndUpdate(
+        query,
+        {
+          $inc: { coins: numericDelta },
+          $set: { updatedAt: new Date() },
+        },
+        { returnDocument: "after" }
+      );
+      if (result) return true;
+    }
   }
 
   const store = await readStore();
-  const user = store.users.find((u) => u._id === userId) as User | undefined;
+  const user = store.users.find(
+    (u) =>
+      (userId && u._id === userId) ||
+      (userEmail && normalizeEmail(String(u.email)) === normalizeEmail(userEmail))
+  ) as User | undefined;
   if (!user) return false;
 
   const currentCoins = Number(user.coins ?? 0);

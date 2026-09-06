@@ -6,6 +6,7 @@ import {
   declinePaymentRequest,
 } from "@/lib/models/payment-request";
 import { createPaymentHistory } from "@/lib/models/payment-history";
+import { findUserById, findUserByEmail } from "@/lib/models/user";
 
 export async function GET(req: NextRequest) {
   const ctx = await getAdminContext(req);
@@ -47,9 +48,15 @@ export async function POST(req: NextRequest) {
 
       // Create payment history record
       try {
+        let finalUserName = userName;
+        if (!finalUserName) {
+          const user = (await findUserById(updated.userId)) || (await findUserByEmail(updated.userEmail));
+          finalUserName = user?.name || "";
+        }
+
         await createPaymentHistory({
           userEmail: updated.userEmail,
-          userName: userName,
+          userName: finalUserName,
           userId: updated.userId,
           transactionId: updated.transactionId,
           upiId: upiId || "manual",

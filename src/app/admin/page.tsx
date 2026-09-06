@@ -14,25 +14,6 @@ type PaymentHistory = {
   createdAt?: string;
 };
 
-function isSameCalendarDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function shouldKeepPaymentHistory(item: { createdAt?: string; coins?: number }) {
-  const createdAt = item.createdAt ? new Date(item.createdAt) : null;
-  if (!createdAt || Number.isNaN(createdAt.getTime())) return true;
-
-  const today = new Date();
-  const isToday = isSameCalendarDay(createdAt, today);
-  if (!isToday) return true;
-
-  return Number(item.coins ?? 0) === 50;
-}
-
 type Coupon = {
   active?: boolean;
 };
@@ -85,9 +66,7 @@ export default function AdminDashboard() {
         const upis = Array.isArray(upiRes.upis) ? upiRes.upis : [];
         const coupons = Array.isArray(couponRes.coupons) ? couponRes.coupons : [];
         const requests = Array.isArray(paymentReqRes.requests) ? paymentReqRes.requests : [];
-        const history = (Array.isArray(paymentHistoryRes.history) ? paymentHistoryRes.history : []).filter(
-          shouldKeepPaymentHistory
-        );
+        const history = Array.isArray(paymentHistoryRes.history) ? paymentHistoryRes.history : [];
 
         setStats({
           users: u.users?.length ?? 0,

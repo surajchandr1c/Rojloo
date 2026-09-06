@@ -24,25 +24,6 @@ type PaymentHistoryItem = {
   declinedReason?: string;
 };
 
-function isSameCalendarDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function shouldKeepPaymentEntry(item: { createdAt?: string; coins?: number }) {
-  const createdAt = item.createdAt ? new Date(item.createdAt) : null;
-  if (!createdAt || Number.isNaN(createdAt.getTime())) return true;
-
-  const today = new Date();
-  const isToday = isSameCalendarDay(createdAt, today);
-  if (!isToday) return true;
-
-  return Number(item.coins ?? 0) === 50;
-}
-
 export default function Page() {
   const router = useRouter();
   const ready = useAuthGuard();
@@ -51,6 +32,8 @@ export default function Page() {
 
   useEffect(() => {
     if (!ready) return;
+
+    let cancelled = false;
 
     async function load() {
       try {
@@ -64,21 +47,43 @@ export default function Page() {
             router.replace("/login");
             return;
           }
-          setHistory([]);
+          if (!cancelled) setHistory([]);
           return;
         }
 
         const data = await res.json();
         const requests = Array.isArray(data.requests) ? data.requests : [];
-        setHistory(requests.filter(shouldKeepPaymentEntry));
+        if (!cancelled) {
+          setHistory(requests);
+          if (requests.some((r: PaymentHistoryItem) => r.status === "confirmed")) {
+            window.dispatchEvent(new CustomEvent("coins:updated"));
+          }
+        }
       } catch {
-        setHistory([]);
+        if (!cancelled) setHistory([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    load();
+    void load();
+
+    // Auto-refresh every 5 seconds so status changes (Pending -> Confirmed/Declined) reflect live
+    const interval = setInterval(load, 5000);
+    const onFocus = () => void load();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "rojlo_coin_update") void load();
+    };
+
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("storage", onStorage);
+    };
   }, [ready, router]);
 
   if (!ready) return null;

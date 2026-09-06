@@ -22,25 +22,6 @@ type PaymentHistory = {
   createdAt: string;
 };
 
-function isSameCalendarDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function shouldKeepPaymentHistory(item: { createdAt?: string; coins?: number }) {
-  const createdAt = item.createdAt ? new Date(item.createdAt) : null;
-  if (!createdAt || Number.isNaN(createdAt.getTime())) return true;
-
-  const today = new Date();
-  const isToday = isSameCalendarDay(createdAt, today);
-  if (!isToday) return true;
-
-  return Number(item.coins ?? 0) === 50;
-}
-
 export default function PaymentHistoryPage() {
   const router = useRouter();
   const me = useAdminContext();
@@ -62,7 +43,7 @@ export default function PaymentHistoryPage() {
       }
 
       const data = await response.json();
-      setHistory((data.history || []).filter(shouldKeepPaymentHistory));
+      setHistory(Array.isArray(data.history) ? data.history : []);
       setError("");
     } catch (err) {
       setError("Failed to load payment history");

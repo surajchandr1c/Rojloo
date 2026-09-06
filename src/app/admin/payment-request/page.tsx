@@ -27,25 +27,6 @@ type UPI = {
   qrCode: string;
 };
 
-function isSameCalendarDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function shouldKeepPaymentRequest(item: { createdAt?: string; coins?: number }) {
-  const createdAt = item.createdAt ? new Date(item.createdAt) : null;
-  if (!createdAt || Number.isNaN(createdAt.getTime())) return true;
-
-  const today = new Date();
-  const isToday = isSameCalendarDay(createdAt, today);
-  if (!isToday) return true;
-
-  return Number(item.coins ?? 0) === 50;
-}
-
 export default function PaymentRequestPage() {
   const router = useRouter();
   const me = useAdminContext();
@@ -68,7 +49,7 @@ export default function PaymentRequestPage() {
       }
 
       const data = await response.json();
-      setRequests((data.requests || []).filter(shouldKeepPaymentRequest));
+      setRequests(Array.isArray(data.requests) ? data.requests : []);
       setError("");
     } catch (err) {
       setError("Failed to load payment requests");

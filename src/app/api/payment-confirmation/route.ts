@@ -1,24 +1,86 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findUserBySessionToken } from "@/lib/models/user";
+import {
+  findUserById,
+  findUserByEmail,
+  findUserBySessionToken,
+  type User,
+} from "@/lib/models/user";
+import { extractJWTFromHeader, verifyJWT } from "@/lib/jwt";
 import {
   createPaymentRequest,
   listPaymentRequests,
 } from "@/lib/models/payment-request";
 
+async function getAuthUser(req: NextRequest): Promise<User | null> {
+  // 1. Try Authorization header
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader) {
+    const token = extractJWTFromHeader(authHeader);
+    if (token) {
+      const payload = verifyJWT(token);
+      if (payload?._id) {
+        const user = await findUserById(payload._id);
+        if (user) return user;
+      }
+      if (payload?.email) {
+        const user = await findUserByEmail(payload.email);
+        if (user) return user;
+      }
+    }
+  }
+
+  // 2. Try cookie
+  const raw = req.cookies.get("rojlo_auth")?.value;
+  if (!raw) return null;
+
+  const sessionUser = await findUserBySessionToken(raw);
+  if (sessionUser) return sessionUser;
+
+  // Might be stored JWT in cookie
+  const jwtPayload = verifyJWT(raw);
+  if (jwtPayload?._id) {
+    const user = await findUserById(jwtPayload._id);
+    if (user) return user;
+  }
+  if (jwtPayload?.email) {
+    const user = await findUserByEmail(jwtPayload.email);
+    if (user) return user;
+  }
+
+  // Legacy JSON cookie
+  try {
+    const parsed = JSON.parse(decodeURIComponent(raw));
+    if (parsed?._id) {
+      const user = await findUserById(parsed._id);
+      if (user) return user;
+    }
+    if (parsed?.email) {
+      const user = await findUserByEmail(parsed.email);
+      if (user) return user;
+    }
+  } catch {
+    // Non-JSON
+  }
+
+  return findUserById(raw);
+}
+
 export async function GET(req: NextRequest) {
   try {
-    const raw = req.cookies.get("rojlo_auth")?.value;
-    if (!raw) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = await findUserBySessionToken(raw);
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userIdStr = String(user._id || "");
+    const userEmailStr = (user.email || "").toLowerCase();
+
     const requests = await listPaymentRequests();
-    const myRequests = requests.filter((request) => request.userId === user._id);
+    const myRequests = requests.filter(
+      (request) =>
+        (userIdStr && String(request.userId) === userIdStr) ||
+        (userEmailStr && String(request.userEmail || "").toLowerCase() === userEmailStr)
+    );
 
     return NextResponse.json({ requests: myRequests, success: true });
   } catch (error) {
@@ -29,13 +91,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const raw = req.cookies.get("rojlo_auth")?.value;
-
-    if (!raw) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = await findUserBySessionToken(raw);
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -74,7 +130,7 @@ export async function POST(req: NextRequest) {
     // Deduplicate: reject an already-used transaction id.
     const existing = await listPaymentRequests();
     const duplicate = existing.some(
-      (r) => r.transactionId === String(transactionId)
+      (r) => r.transactionId.trim().toLowerCase() === String(transactionId).trim().toLowerCase()
     );
     if (duplicate) {
       return NextResponse.json(
@@ -84,13 +140,13 @@ export async function POST(req: NextRequest) {
     }
 
     const paymentRequest = await createPaymentRequest({
-      userEmail: user.email,
-      userId: user._id ?? "",
-      transactionId: String(transactionId),
+      userEmail: user.email.toLowerCase(),
+      userId: String(user._id || ""),
+      transactionId: String(transactionId).trim(),
       coins: coinCount,
       amount: amountValue,
       discount: discount ? Number(discount) : undefined,
-      couponCode: couponCode || undefined,
+      couponCode: couponCode ? String(couponCode).trim() : undefined,
     });
 
     return NextResponse.json({
