@@ -70,10 +70,10 @@ async function AdContent({ location, id }: { location: string; id: string }) {
           )}
 
           <Eyebrow>{ad.category}</Eyebrow>
-          <h1 className="mt-3 flex items-baseline gap-3 text-3xl font-black text-red-950 sm:text-4xl">
-            {ad.name}
+          <h1 className="mt-3 flex flex-wrap items-baseline gap-2 sm:gap-3 text-2xl sm:text-3xl md:text-4xl font-black text-red-950 break-words">
+            <span>{ad.name}</span>
             {ad.age && (
-              <span className="text-2xl font-semibold text-red-500">
+              <span className="text-xl sm:text-2xl font-semibold text-red-500">
                 Age: {ad.age}
               </span>
             )}
@@ -145,7 +145,7 @@ async function AdContent({ location, id }: { location: string; id: string }) {
           <div className="mt-8">
             <h3 className="text-lg font-bold text-red-950">Service Rates</h3>
             <div className="mt-3 overflow-x-auto rounded-2xl border border-red-100">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[340px] text-left text-sm">
                 <thead className="bg-pink-50 text-red-950">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Duration</th>

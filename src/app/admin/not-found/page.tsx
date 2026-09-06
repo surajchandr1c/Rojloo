@@ -138,7 +138,7 @@ export default function AdminNotFoundPage() {
   }
 
   return (
-    <main className="p-6 sm:p-8 lg:p-10 max-w-7xl mx-auto space-y-8">
+    <main className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto space-y-6 sm:space-y-8 min-w-0">
       {/* Header with Title and Actions */}
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between border-b border-red-200/60 pb-6">
         <div>
@@ -192,7 +192,7 @@ export default function AdminNotFoundPage() {
       </div>
 
       {/* Metric Stat Cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
         <div className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-red-800/70">Unique URLs</span>
@@ -338,7 +338,7 @@ export default function AdminNotFoundPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[700px] text-left text-xs">
               <thead className="border-b border-red-100 bg-red-50/60 text-[11px] font-bold uppercase tracking-wider text-red-900/80">
                 <tr>
                   <th className="px-5 py-4">Broken URL / Requested Path</th>

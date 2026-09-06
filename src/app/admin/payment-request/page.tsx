@@ -202,7 +202,7 @@ export default function PaymentRequestPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-6 py-8">
+    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
       <div className="mx-auto max-w-5xl">
         <h1 className="text-3xl font-black text-red-950">Payment Requests</h1>
 
@@ -243,12 +243,12 @@ export default function PaymentRequestPage() {
               {filteredRequests.map((request) => (
                 <div
                   key={request._id}
-                  className="rounded-2xl border border-red-200 bg-white p-6"
+                  className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
                 >
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div className="flex-1">
-                      <div className="mb-2 flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-red-950">
+                    <div className="flex-1 min-w-0">
+                      <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
+                        <h3 className="text-lg font-bold text-red-950 break-all">
                           {request.userEmail}
                         </h3>
                         <span

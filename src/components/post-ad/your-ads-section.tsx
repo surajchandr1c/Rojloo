@@ -36,13 +36,13 @@ export default function YourAdsSection({
               key={ad._id}
               className="flex flex-col justify-between gap-4 rounded-[1.5rem] bg-pink-50 p-5 sm:flex-row sm:items-center"
             >
-              <div>
-                <h3 className="text-lg font-black text-red-950">{ad.name}</h3>
-                <p className="mt-1 text-sm text-red-900">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg font-black text-red-950 break-words">{ad.name}</h3>
+                <p className="mt-1 text-sm text-red-900 truncate">
                   {ad.city} · {ad.category}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
                 <Button
                   href={getCityUrl(ad.city)}
                   variant="solid"

@@ -9,13 +9,13 @@ export default function Home() {
       <section className="bg-pink-200">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-700">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-red-700">
               get you fun
             </p>
-            <h1 className="mt-3 text-4xl font-black leading-tight text-red-950 sm:text-5xl">
+            <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-red-950 break-words">
               Rojlo Moj lo na Mile Chog Lo
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-red-900">
+            <p className="mx-auto mt-4 max-w-xl text-base sm:text-lg leading-7 sm:leading-8 text-red-900">
               Rojlo connects you with call girls, male escorts, wellness, and the
               best local spots across Indian cities.
             </p>
@@ -34,15 +34,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[2rem] bg-pink-100/85 p-8 shadow-lg shadow-pink-200/40 sm:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-700">
+      <section className="px-4 py-8 sm:py-12 sm:px-6">
+        <div className="mx-auto max-w-6xl rounded-[2rem] bg-pink-100/85 p-5 sm:p-8 lg:p-10 shadow-lg shadow-pink-200/40">
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-red-700">
             Services
           </p>
-          <h2 className="mt-3 text-3xl font-black text-red-950 sm:text-4xl">
+          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-black text-red-950">
             What you can find
           </h2>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-red-900">
+          <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-red-900">
             Rojlo brings together the everyday services people need, with a
             simple way to post your own ad.
           </p>
@@ -80,7 +80,7 @@ export default function Home() {
       </section>
 
       <section className="px-4 pb-12 sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[2rem] bg-red-950 p-8 text-center text-white sm:p-10">
+        <div className="mx-auto max-w-6xl rounded-[2rem] bg-red-950 p-6 sm:p-8 lg:p-10 text-center text-white">
           <h2 className="text-2xl font-black !text-white sm:text-3xl">
             Ready to get started?
           </h2>

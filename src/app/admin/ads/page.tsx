@@ -104,18 +104,18 @@ export default function AdminAds() {
   }
 
   return (
-    <main className="p-6 sm:p-10">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-black text-red-950">Ads</h1>
           <p className="mt-2 text-red-900">Manage all posted ads.</p>
         </div>
 
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="flex w-60 items-center justify-between gap-2 rounded-full border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-950 outline-none hover:border-red-400"
+            className="flex w-full sm:w-60 items-center justify-between gap-2 rounded-full border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-950 outline-none hover:border-red-400"
           >
             <span>{selectedCity ? selectedCity.name : "All Cities"}</span>
             <svg
@@ -192,7 +192,7 @@ export default function AdminAds() {
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-pink-50 text-red-950">
               <tr>
                 <th className="px-4 py-3 font-semibold">Ad</th>

@@ -103,7 +103,7 @@ async function CityContent({ slug }: { slug: string }) {
               {ads.map((ad) => (
                 <Card
                   key={ad._id}
-                  className="group relative min-h-[30rem] p-6 transition-shadow hover:shadow-lg sm:p-8"
+                  className="group relative min-h-[28rem] sm:min-h-[30rem] p-5 sm:p-7 transition-shadow hover:shadow-lg"
                 >
                   {ad._id && (
                     <Link
@@ -114,18 +114,18 @@ async function CityContent({ slug }: { slug: string }) {
                   )}
 
                   {ad.city && (
-                    <span className="pointer-events-none absolute right-6 top-6 z-10 inline-flex max-w-28 items-center truncate rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-red-800 sm:right-8 sm:top-8">
+                    <span className="pointer-events-none absolute right-4 top-4 z-10 inline-flex max-w-28 items-center truncate rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-red-800 sm:right-6 sm:top-6">
                       {ad.city}
                     </span>
                   )}
 
                   <div className="pointer-events-none relative z-10">
-                    <h3 className="pr-24 text-xl font-black text-red-950">
+                    <h3 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-red-950 break-words">
                       {ad.name}
                     </h3>
 
                     {ad.about && (
-                      <p className="mt-2 text-sm leading-7 text-red-900">
+                      <p className="mt-2 text-sm leading-6 sm:leading-7 text-red-900 line-clamp-3">
                         {ad.about}
                       </p>
                     )}

@@ -176,7 +176,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1 px-3">
+        <nav className="flex flex-1 flex-col gap-1 px-3 overflow-y-auto">
           {visibleItems.map((item) => {
             const active =
               item.href === "/admin"

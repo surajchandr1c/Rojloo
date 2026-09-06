@@ -3,8 +3,8 @@ import { navLinks, policyLinks } from "@/lib/nav";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-red-950/30 bg-red-950 px-4 py-8 text-white">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
+    <footer className="border-t border-red-950/30 bg-red-950 px-4 py-8 text-white w-full">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6 lg:gap-12">
         <div>
           <p className="text-lg font-black !text-white">rojlo</p>
           <p className="mt-2 max-w-md text-sm leading-6 !text-white">

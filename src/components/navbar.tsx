@@ -72,16 +72,16 @@ export default function NavBar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#7f1d1d] bg-[#450a0a] text-white">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-4 py-3">
-        <Link href="/" className="text-xl font-black text-white">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-4 py-2.5 sm:py-3">
+        <Link href="/" className="text-xl font-black text-white shrink-0">
           rojlo
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-3 sm:flex">
+        <nav className="ml-auto hidden items-center gap-1.5 md:gap-3 sm:flex">
           {isLoggedIn && (
             <Link
               href="/post-ad/buy-coin"
-              className="flex items-center gap-1 rounded-full border border-white/20 bg-[#7f1d1d]/70 px-3 py-1.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#7f1d1d]"
+              className="flex items-center gap-1 rounded-full border border-white/20 bg-[#7f1d1d]/70 px-2.5 py-1 md:px-3 md:py-1.5 text-xs md:text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#7f1d1d] shrink-0"
             >
               <span aria-hidden="true">🪙</span>
               <span>{Number(user?.coins ?? 0)}</span>
@@ -95,7 +95,7 @@ export default function NavBar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-full px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-colors shrink-0 ${
                   active
                     ? "bg-[#7f1d1d] text-white"
                     : "text-white hover:bg-[#7f1d1d] hover:text-white"
@@ -110,7 +110,7 @@ export default function NavBar() {
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex items-center gap-2 rounded-full bg-[#7f1d1d] px-2 py-1.5 text-sm font-bold text-white transition-colors hover:bg-[#5c1212]"
+              className="flex items-center gap-2 rounded-full bg-[#7f1d1d] px-2 py-1 md:px-2.5 md:py-1.5 text-xs md:text-sm font-bold text-white transition-colors hover:bg-[#5c1212] shrink-0"
             >
               <ProfileIcon name={user?.name} />
               <span className="hidden lg:inline">{user?.name}</span>
@@ -118,7 +118,7 @@ export default function NavBar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-[#7f1d1d] px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#5c1212]"
+              className="rounded-full bg-[#7f1d1d] px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#5c1212] shrink-0"
             >
               Login
             </Link>
@@ -157,7 +157,7 @@ export default function NavBar() {
           <button
             type="button"
             aria-label="Toggle menu"
-            className="rounded-full p-2 text-white"
+            className="rounded-full p-2 text-white hover:bg-[#7f1d1d] transition-colors"
             onClick={() => setMenuOpen((v) => !v)}
           >
             <svg
@@ -189,7 +189,7 @@ export default function NavBar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-[#7f1d1d] text-white"
                     : "text-white hover:bg-[#7f1d1d] hover:text-white"

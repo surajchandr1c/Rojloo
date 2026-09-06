@@ -163,7 +163,7 @@ export default function VipPage() {
   if (!me || !me.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 p-6 sm:p-10">
+    <main className="min-h-screen bg-red-50 p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="mx-auto max-w-5xl">
         <h1 className="text-3xl font-black text-red-950">VIP City Access</h1>
         <p className="mt-2 text-red-900">
@@ -173,7 +173,7 @@ export default function VipPage() {
         {error && <div className="mt-4 rounded-xl bg-red-100 p-3 text-sm text-red-800">{error}</div>}
         {success && <div className="mt-4 rounded-xl bg-green-100 p-3 text-sm text-green-800">{success}</div>}
 
-        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-6">
+        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
           <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-semibold text-red-950">City Names</label>
@@ -240,14 +240,14 @@ export default function VipPage() {
             <div className="rounded-2xl border border-red-200 bg-white p-6 text-red-900">No VIP city assignments yet.</div>
           ) : (
             assignments.map((item) => (
-              <div key={item._id} className="relative rounded-2xl border border-red-200 bg-white p-5">
+              <div key={item._id} className="relative rounded-2xl border border-red-200 bg-white p-4 sm:p-5">
                 <div className="absolute right-4 top-4 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-900">
                   {getAssignedDays(item)} days
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 pr-20 sm:pr-24">
                       <h3 className="text-lg font-bold text-red-950">{item.cityName}</h3>
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         item.status === "active"
@@ -261,7 +261,7 @@ export default function VipPage() {
                     </div>
                     <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-600">Member since</p>
                     <p className="text-sm text-red-900">{formatDisplayDate(item.assignedAt)}</p>
-                    <p className="mt-2 text-sm text-red-900">Email: {item.email}</p>
+                    <p className="mt-2 text-sm text-red-900 break-all">Email: {item.email}</p>
                     <p className="text-sm text-red-900">Expires: {formatDisplayDateTime(item.expiresAt)}</p>
                   </div>
 

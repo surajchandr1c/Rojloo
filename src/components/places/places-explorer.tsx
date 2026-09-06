@@ -429,13 +429,13 @@ export default function PlacesExplorer({
               href={`/places/${city.slug}`}
               className="group flex flex-col rounded-2xl border border-red-100 bg-white p-5 transition-all hover:border-red-300 hover:shadow-md"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-black text-red-950 transition-colors group-hover:text-red-700">
+              <div className="flex items-start justify-between gap-3 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-black text-red-950 transition-colors group-hover:text-red-700 break-words">
                     {city.name}
                   </h2>
                   {city.state && (
-                    <p className="mt-0.5 text-xs font-medium text-red-700">
+                    <p className="mt-0.5 text-xs font-medium text-red-700 truncate">
                       {city.state}
                     </p>
                   )}

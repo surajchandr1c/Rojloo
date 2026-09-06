@@ -625,7 +625,7 @@ export default function AdminStates() {
   const isSearching = debouncedSearch.length > 0;
 
   return (
-    <main className="p-6 sm:p-10">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       {/* Page Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -699,7 +699,7 @@ export default function AdminStates() {
       {/* Add State Form + Upload JSON Button */}
       <form
         onSubmit={addState}
-        className="mt-6 grid gap-3 rounded-2xl border border-red-100 bg-white p-5 sm:grid-cols-[1fr_auto_auto] sm:items-end"
+        className="mt-6 flex flex-col gap-3 rounded-2xl border border-red-100 bg-white p-4 sm:p-5 lg:flex-row lg:items-end"
       >
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-red-900">
@@ -1203,8 +1203,8 @@ function StateHierarchyCard({
   return (
     <section className="rounded-2xl border border-red-100 bg-white p-5 shadow-xs transition-shadow hover:shadow-sm">
       {/* State Header with Accessible Collapse/Expand Button */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onToggleState}
@@ -1390,8 +1390,8 @@ function CityHierarchyItem({
   return (
     <div className="rounded-xl border border-pink-100 bg-pink-50/40 p-3.5 transition-colors">
       {/* City Header with Expand/Collapse Icon */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <button
             type="button"
             onClick={onToggleCity}

@@ -73,13 +73,13 @@ export default function AdminControl() {
   }
 
   return (
-    <main className="p-6 sm:p-10">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <h1 className="text-3xl font-black text-red-950">Admin Control</h1>
       <p className="mt-2 text-red-900">
         Create a sub-admin and assign access to specific sections.
       </p>
 
-      <div className="mt-6 max-w-xl rounded-2xl border border-red-100 bg-white p-6">
+      <div className="mt-6 max-w-xl rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div>
             <label className="mb-1 block text-sm font-semibold text-red-950">

@@ -120,8 +120,8 @@ export default function Page() {
                 className="rounded-[1.5rem] border border-red-200 bg-pink-50 p-5"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2 text-sm text-red-900">
-                    <p>
+                  <div className="space-y-2 text-sm text-red-900 min-w-0 flex-1">
+                    <p className="break-all">
                       <span className="font-semibold">Transaction ID:</span> {item.transactionId}
                     </p>
                     <p>

@@ -108,7 +108,7 @@ export default function PostAdSection({
 
   return (
     <form onSubmit={onSubmit} className="space-y-8">
-      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-5">
+      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
         <h3 className="text-lg font-bold text-red-950">Personal Information</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
@@ -162,7 +162,7 @@ export default function PostAdSection({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-5">
+      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
         <h3 className="text-lg font-bold text-red-950">Location</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div>
@@ -249,7 +249,7 @@ export default function PostAdSection({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-5">
+      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
         <h3 className="text-lg font-bold text-red-950">Services</h3>
         <div>
           <label className="mb-1 block text-sm font-medium text-red-900">
@@ -335,14 +335,14 @@ export default function PostAdSection({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-5">
+      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
         <h3 className="text-lg font-bold text-red-950">Service Rates</h3>
         <p className="text-sm text-red-900">
           Enter rates in INR. These values are saved with the profile and shown
           on the public profile page.
         </p>
         <div className="mt-3 overflow-x-auto rounded-2xl border border-red-100">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[320px] text-left text-sm">
             <thead className="bg-pink-50 text-red-950">
               <tr>
                 <th className="px-4 py-3 font-semibold">Duration</th>
@@ -379,7 +379,7 @@ export default function PostAdSection({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-5">
+      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
         <h3 className="text-lg font-bold text-red-950">Contact</h3>
         <div>
           <label className="mb-1 block text-sm font-medium text-red-900">
@@ -417,7 +417,7 @@ export default function PostAdSection({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-5">
+      <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
         <h3 className="text-lg font-bold text-red-950">Images</h3>
         <FileInput
           type="file"

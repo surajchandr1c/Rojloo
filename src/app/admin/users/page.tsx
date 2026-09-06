@@ -44,7 +44,7 @@ export default function AdminUsers() {
   }
 
   return (
-    <main className="p-6 sm:p-10">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <h1 className="text-3xl font-black text-red-950">Users</h1>
       <p className="mt-2 text-red-900">Manage registered users.</p>
 
@@ -54,7 +54,7 @@ export default function AdminUsers() {
         <p className="mt-6 text-red-900">No users found.</p>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[600px] text-left text-sm">
             <thead className="bg-pink-50 text-red-950">
               <tr>
                 <th className="px-4 py-4 font-semibold">Name</th>

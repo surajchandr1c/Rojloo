@@ -285,17 +285,17 @@ function PaymentView() {
             <>
               {/* Coupon Section */}
               <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                     placeholder="Enter coupon code (optional)"
-                    className="flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
+                    className="min-w-0 flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
                   />
                   <button
                     onClick={applyCoupon}
-                    className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+                    className="w-full sm:w-auto rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
                   >
                     Apply
                   </button>
@@ -329,10 +329,10 @@ function PaymentView() {
                             alt={`UPI payment QR code for ${upi.upiId}`}
                             width={240}
                             height={240}
-                            className="h-60 w-60 rounded-2xl border-2 border-red-200 bg-white p-2"
+                            className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-red-200 bg-white p-2 object-contain"
                           />
                         ) : (
-                          <div className="h-60 w-60 rounded-2xl border-2 border-red-200 bg-white p-2 flex items-center justify-center text-red-900">
+                          <div className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-red-200 bg-white p-2 flex items-center justify-center text-red-900">
                             No QR Code
                           </div>
                         )}
@@ -342,7 +342,7 @@ function PaymentView() {
                         <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
                           UPI ID
                         </p>
-                        <p className="mt-1 text-lg font-black text-red-950">
+                        <p className="mt-1 text-base sm:text-lg font-black text-red-950 break-all">
                           {upi.upiId}
                         </p>
                       </div>
@@ -371,18 +371,18 @@ function PaymentView() {
                         <label className="block text-sm font-semibold text-red-950">
                           Transaction ID
                         </label>
-                        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-2">
+                        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                           <input
                             type="text"
                             value={transactionId}
                             onChange={(e) => setTransactionId(e.target.value)}
                             placeholder="Enter UPI transaction ID"
-                            className="flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
+                            className="min-w-0 flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
                           />
                           <button
                             onClick={handleSubmitTransaction}
                             disabled={submitting}
-                            className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 sm:whitespace-nowrap"
+                            className="w-full sm:w-auto rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 sm:whitespace-nowrap"
                           >
                             {submitting ? "Submitting..." : "Submit"}
                           </button>
@@ -400,7 +400,7 @@ function PaymentView() {
                       alt="UPI payment QR code"
                       width={240}
                       height={240}
-                      className="h-60 w-60 rounded-2xl border-2 border-red-200 bg-white p-2"
+                      className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-red-200 bg-white p-2 object-contain"
                     />
                   </div>
 
@@ -408,7 +408,7 @@ function PaymentView() {
                     <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
                       UPI ID
                     </p>
-                    <p className="mt-1 text-lg font-black text-red-950">
+                    <p className="mt-1 text-base sm:text-lg font-black text-red-950 break-all">
                       {paymentInfo.upiId}
                     </p>
                   </div>
@@ -430,18 +430,18 @@ function PaymentView() {
                     <label className="block text-sm font-semibold text-red-950">
                       Transaction ID
                     </label>
-                    <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-2">
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                       <input
                         type="text"
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         placeholder="Enter UPI transaction ID"
-                        className="flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
+                        className="min-w-0 flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
                       />
                       <button
                         onClick={handleSubmitTransaction}
                         disabled={submitting}
-                        className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 sm:whitespace-nowrap"
+                        className="w-full sm:w-auto rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 sm:whitespace-nowrap"
                       >
                         {submitting ? "Submitting..." : "Submit"}
                       </button>

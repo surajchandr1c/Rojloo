@@ -203,8 +203,8 @@ export default function AdminUPI() {
   if (!me || !me.authenticated) return null;
 
   return (
-    <main className="flex-1 overflow-auto">
-      <div className="p-8">
+    <main className="flex-1 overflow-auto min-w-0">
+      <div className="p-4 sm:p-6 lg:p-8">
         <Eyebrow>Management</Eyebrow>
         <h1 className="mt-3 text-3xl font-black text-red-950">UPI Management</h1>
 
@@ -216,7 +216,7 @@ export default function AdminUPI() {
 
         <div className="mt-8 space-y-8">
           {/* Add New UPI Form */}
-          <div className="rounded-2xl border border-red-200 bg-white p-6">
+          <div className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
             <h2 className="text-xl font-bold text-red-950">
               {editingId ? "Edit UPI" : "Add New UPI"}
             </h2>
@@ -308,11 +308,11 @@ export default function AdminUPI() {
                 {upis.map((upi) => (
                   <div
                     key={upi._id}
-                    className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-white p-6 sm:flex-row sm:items-start sm:justify-between"
+                    className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-white p-4 sm:p-6 sm:flex-row sm:items-start sm:justify-between"
                   >
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-red-950">{upi.name}</h3>
-                      <p className="mt-1 text-sm text-red-900">{upi.upiId}</p>
+                      <p className="mt-1 text-sm text-red-900 break-all">{upi.upiId}</p>
                       {upi.qrCode && (
                         <Image
                           src={upi.qrCode}

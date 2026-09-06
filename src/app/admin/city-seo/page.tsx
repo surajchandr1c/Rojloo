@@ -354,14 +354,14 @@ function CitySeoContent() {
 
   if (loading) {
     return (
-      <main className="p-6 sm:p-10">
+      <main className="p-4 sm:p-6 lg:p-10 min-w-0">
         <p className="text-red-900">Loading...</p>
       </main>
     );
   }
 
   return (
-    <main className="p-4 sm:p-8">
+    <main className="p-4 sm:p-6 lg:p-8 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-black text-red-950">
@@ -432,7 +432,7 @@ function CitySeoContent() {
         {/* LEFT COLUMN */}
         <div className="space-y-6">
           {!isEdit && (
-            <section className="rounded-2xl border border-red-100 bg-white p-6">
+            <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
               <h2 className="mb-3 text-lg font-bold text-red-950">City</h2>
               <Field label="City Name">
                 <input
@@ -445,7 +445,7 @@ function CitySeoContent() {
             </section>
           )}
 
-          <section className="rounded-2xl border border-red-100 bg-white p-6">
+          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
             <h2 className="mb-4 text-lg font-bold text-red-950">SEO Settings</h2>
             <div className="space-y-4">
               <div>
@@ -555,7 +555,7 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-6">
+          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-bold text-red-950">Content Editor</h2>
               <div className="flex gap-2">
@@ -649,7 +649,7 @@ function CitySeoContent() {
 
         {/* RIGHT COLUMN */}
         <div className="space-y-6">
-          <section className="rounded-2xl border border-red-100 bg-white p-6">
+          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20">
                 <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
@@ -678,7 +678,7 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-6">
+          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
             <h2 className="mb-3 text-lg font-bold text-red-950">Google Preview</h2>
             <div className="rounded-xl border border-red-100 bg-white p-4">
               <p className="text-xs text-green-700">{`example.com/${urlSlug || "url-slug"}`}</p>
@@ -698,7 +698,7 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-6">
+          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
             <h2 className="mb-3 text-lg font-bold text-red-950">SEO Checklist</h2>
             <ul className="space-y-2">
               {checks.map((c) => (
@@ -725,7 +725,7 @@ export default function AdminCitySeo() {
   return (
     <Suspense
       fallback={
-        <main className="p-6 sm:p-10">
+        <main className="p-4 sm:p-6 lg:p-10 min-w-0">
           <p className="text-red-900">Loading...</p>
         </main>
       }

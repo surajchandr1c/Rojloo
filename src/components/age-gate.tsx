@@ -74,7 +74,7 @@ export default function AgeGate() {
       aria-labelledby="agegate-title"
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4"
     >
-      <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-center shadow-2xl">
+      <div className="w-full max-w-md rounded-[2rem] bg-white p-5 sm:p-8 text-center shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-3xl">
           <span aria-hidden="true">🔞</span>
         </div>

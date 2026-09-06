@@ -35,7 +35,7 @@ export default function AdminLayoutContent({ children }: AdminLayoutContentProps
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header with Hamburger - only show when authenticated and not on login page */}
         {!isLoginPage && isAuthenticated && (
           <header className="md:hidden flex items-center justify-between h-16 bg-[#450a0a] text-white px-4 border-b border-red-200 z-20">
@@ -63,7 +63,7 @@ export default function AdminLayoutContent({ children }: AdminLayoutContentProps
         )}
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">{children}</div>
+        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">{children}</div>
       </div>
     </div>
   );

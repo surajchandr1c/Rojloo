@@ -268,7 +268,7 @@ export default function AdminCities() {
   }
 
   return (
-    <main className="p-6 sm:p-10">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-black text-red-950">Cities</h1>
@@ -316,7 +316,7 @@ export default function AdminCities() {
         <p className="mt-6 text-red-900">No cities found.</p>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-pink-50 text-red-950">
               <tr>
                 <th className="w-12 px-4 py-3 font-semibold">

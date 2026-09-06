@@ -23,15 +23,15 @@ export default function AdGallery({
 
   if (count === 0) {
     return (
-      <div className="relative h-80 overflow-hidden rounded-[1.5rem] bg-pink-50 sm:h-96" />
+      <div className="relative h-72 w-full overflow-hidden rounded-[1.5rem] bg-pink-50 sm:h-80 md:h-96" />
     );
   }
 
   const go = (dir: number) => setIndex((i) => (i + dir + count) % count);
 
   return (
-    <div className="relative">
-      <div className="relative h-80 overflow-hidden rounded-[1.5rem] bg-pink-50 sm:h-96">
+    <div className="relative w-full">
+      <div className="relative h-72 w-full overflow-hidden rounded-[1.5rem] bg-pink-50 sm:h-80 md:h-96">
         <Image
           src={images[index]}
           alt={`${name} image ${index + 1}`}

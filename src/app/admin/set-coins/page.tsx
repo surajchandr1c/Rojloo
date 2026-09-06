@@ -129,15 +129,15 @@ export default function SetCoinsPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-6 py-8">
+    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
       <div className="mx-auto max-w-5xl">
         <h1 className="text-3xl font-black text-red-950">Set Coin Packages</h1>
         <p className="mt-2 text-red-900">
           Update the packages shown on the public Buy Coins page.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <form onSubmit={handleSubmit} className="mt-6 rounded-2xl border border-red-200 bg-white p-4 sm:p-6 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {packages.map((pkg, index) => (
               <div key={index} className="rounded-2xl border border-red-100 bg-red-50 p-4">
                 <div className="mb-3 flex items-center justify-between gap-2">

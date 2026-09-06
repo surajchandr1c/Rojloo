@@ -28,7 +28,7 @@ export default function About() {
             <Eyebrow className="tracking-[0.25em]">Email</Eyebrow>
             <a
               href={`mailto:${siteInfo.email}`}
-              className="mt-3 block text-xl font-black !text-red-950"
+              className="mt-3 block text-lg sm:text-xl font-black !text-red-950 break-all"
             >
               {siteInfo.email}
             </a>

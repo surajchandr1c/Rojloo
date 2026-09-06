@@ -79,7 +79,7 @@ export default function PaymentHistoryPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-6 py-8">
+    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <h1 className="text-3xl font-black text-red-950">Payment History</h1>
@@ -143,9 +143,9 @@ export default function PaymentHistoryPage() {
               {filteredHistory.map((payment) => (
                 <div
                   key={payment._id}
-                  className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm"
+                  className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6 shadow-sm"
                 >
-                  <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-xl bg-red-50 p-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
                         Email
@@ -183,7 +183,7 @@ export default function PaymentHistoryPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-3 border-t border-red-200 pt-4 text-sm text-red-800 md:grid-cols-3">
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 border-t border-red-200 pt-4 text-sm text-red-800">
                     <div>
                       <span className="font-semibold text-red-900">Coins:</span>{" "}
                       {payment.coins}

@@ -189,7 +189,7 @@ export default function CouponPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-6 py-8">
+    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
       <div className="mx-auto max-w-4xl">
         <h1 className="text-3xl font-black text-red-950">Coupon Management</h1>
 
@@ -200,13 +200,13 @@ export default function CouponPage() {
         )}
 
         {/* Add/Edit Coupon Form */}
-        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-6">
+        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
           <h2 className="text-xl font-bold text-red-950">
             {editingId ? "Edit Coupon" : "Add New Coupon"}
           </h2>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-semibold text-red-950">
                   Coupon Code
@@ -236,7 +236,7 @@ export default function CouponPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-semibold text-red-950">
                   Discount Value
@@ -330,12 +330,12 @@ export default function CouponPage() {
               {coupons.map((coupon) => (
                 <div
                   key={coupon._id}
-                  className="rounded-2xl border border-red-200 bg-white p-6"
+                  className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-red-950">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <h3 className="text-lg font-bold text-red-950 break-all">
                           {coupon.code}
                         </h3>
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -346,7 +346,7 @@ export default function CouponPage() {
                           {coupon.active ? "Active" : "Inactive"}
                         </span>
                       </div>
-                      <div className="mt-2 grid grid-cols-2 gap-3 text-sm text-red-900">
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm text-red-900">
                         <div>
                           <span className="font-semibold">Discount:</span>{" "}
                           {coupon.discountType === "percentage"
@@ -373,7 +373,7 @@ export default function CouponPage() {
                         )}
                       </div>
                     </div>
-                    <div className="ml-4 flex gap-2">
+                    <div className="ml-0 sm:ml-4 flex flex-wrap gap-2 shrink-0">
                       <EditDeleteButtons
                         onEdit={() => handleEdit(coupon)}
                         onDelete={() => handleDelete(coupon._id)}

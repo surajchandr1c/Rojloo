@@ -293,8 +293,8 @@ function AuthPage() {
   const expiresSecs = String(expiresIn % 60).padStart(2, "0");
 
   return (
-    <main className="flex min-h-[80vh] items-center justify-center px-4 py-10">
-      <section className="w-full max-w-md rounded-[2rem] bg-pink-100/85 p-8 shadow-lg shadow-pink-200/40">
+    <main className="flex min-h-[80vh] items-center justify-center px-4 py-8 sm:py-10">
+      <section className="w-full max-w-md rounded-[2rem] bg-pink-100/85 p-5 sm:p-8 shadow-lg shadow-pink-200/40">
         <div className="mb-6 flex gap-2">
           <Button
             variant="soft"
@@ -345,7 +345,7 @@ function AuthPage() {
             <label className="mb-1 block text-sm font-medium text-red-900">
               Email
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <TextInput
                 type="email"
                 value={email}
@@ -354,7 +354,7 @@ function AuthPage() {
                   if (otpSent && otpEmail !== e.target.value) resetOtp();
                 }}
                 placeholder="you@example.com"
-                className="flex-1"
+                className="flex-1 min-w-0"
                 required
               />
               {mode === "signup" && (
@@ -364,7 +364,7 @@ function AuthPage() {
                   size="sm"
                   disabled={sending || resendIn > 0}
                   onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                  className="!text-white whitespace-nowrap"
+                  className="!text-white whitespace-nowrap w-full sm:w-auto shrink-0"
                 >
                   {sending
                     ? "Sending..."
@@ -401,7 +401,7 @@ function AuthPage() {
               <label className="mb-2 block text-sm font-medium text-red-900">
                 Enter verification code
               </label>
-              <div className="flex justify-between gap-2">
+              <div className="flex justify-between gap-1 sm:gap-2">
                 {digits.map((digit, index) => (
                   <input
                     key={index}
@@ -417,7 +417,7 @@ function AuthPage() {
                     onKeyDown={(e) => handleDigitKeyDown(index, e)}
                     onPaste={(e) => handleDigitPaste(index, e)}
                     aria-label={`Digit ${index + 1}`}
-                    className="h-14 w-12 rounded-[20px] border border-pink-200 bg-pink-50 text-center text-2xl font-bold text-red-950 outline-none placeholder:text-red-300 focus:border-red-500 sm:w-14"
+                    className="h-12 w-9 sm:h-14 sm:w-12 rounded-xl sm:rounded-[20px] border border-pink-200 bg-pink-50 text-center text-xl sm:text-2xl font-bold text-red-950 outline-none placeholder:text-red-300 focus:border-red-500"
                   />
                 ))}
               </div>

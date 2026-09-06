@@ -9,17 +9,17 @@ export default function ProfileSection({
   profile: ProfileUser | null;
 }) {
   return (
-    <section className="rounded-[1.75rem] bg-white p-6 sm:p-8">
+    <section className="rounded-[1.75rem] bg-white p-5 sm:p-8">
       <div className="mt-6 space-y-4">
         <div className="rounded-2xl bg-pink-50 p-4">
           <p className="text-sm font-semibold text-red-700">Name</p>
-          <p className="mt-1 font-semibold text-red-950">
+          <p className="mt-1 font-semibold text-red-950 break-words">
             {profile?.name ?? "—"}
           </p>
         </div>
         <div className="rounded-2xl bg-pink-50 p-4">
           <p className="text-sm font-semibold text-red-700">Email</p>
-          <p className="mt-1 font-semibold text-red-950">
+          <p className="mt-1 font-semibold text-red-950 break-all">
             {profile?.email ?? "—"}
           </p>
         </div>

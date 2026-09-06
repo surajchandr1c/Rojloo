@@ -48,14 +48,14 @@ export default function BuyCoinSection() {
   }, []);
 
   return (
-    <section className="rounded-[1.75rem] bg-white p-6 sm:p-8">
+    <section className="rounded-[1.75rem] bg-white p-5 sm:p-8">
       <h2 className="text-2xl font-black text-red-950">Buy Coins</h2>
       <p className="mt-3 text-base leading-7 text-red-900">
         Coins let you promote your ads and unlock premium features. Choose a
         pack to get started.
       </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {packages.map((pkg) => (
           <div
             key={`${pkg.coins}-${pkg.price}`}
