@@ -19,6 +19,7 @@ export const ADMIN_SECTIONS = [
   { key: "vip", name: "VIP" },
   { key: "admin-control", name: "Admin Control" },
   { key: "sub-admins", name: "Sub Admin List" },
+  { key: "not-found", name: "404 Pages" },
 ] as const;
 
 export function sectionFromHref(href: string): string | null {

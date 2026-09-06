@@ -34,6 +34,7 @@ type StoreData = {
     requestCount: number;
   };
   localAreas: StoreRecord[];
+  notFoundLogs: StoreRecord[];
 };
 
 function reviveDates(record: StoreRecord) {
@@ -66,6 +67,7 @@ function defaults(): StoreData {
       requestCount: 0,
     },
     localAreas: [],
+    notFoundLogs: [],
   };
 }
 
@@ -89,6 +91,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
       requestCount: 0,
     },
     localAreas: raw.localAreas ?? [],
+    notFoundLogs: raw.notFoundLogs ?? [],
   };
   data.users = data.users.map((user) => ({
     ...user,
