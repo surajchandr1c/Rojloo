@@ -13,14 +13,14 @@ const cards = [
     desc: "View your account details.",
   },
   {
-    href: "/post-ad/your-ads",
-    title: "Your Ads",
-    desc: "Manage the ads you have posted.",
-  },
-  {
     href: "/post-ad/new",
     title: "Post Ad",
     desc: "Create a new advertisement.",
+  },
+  {
+    href: "/post-ad/your-ads",
+    title: "Your Ads",
+    desc: "Manage the ads you have posted.",
   },
   {
     href: "/post-ad/buy-coin",
