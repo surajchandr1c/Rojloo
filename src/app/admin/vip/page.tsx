@@ -18,27 +18,19 @@ type Assignment = {
   createdAt: string;
 };
 
-type CityOption = {
-  name: string;
-  slug: string;
-  state?: string;
-};
-
 export default function VipPage() {
   const router = useRouter();
   const me = useAdminContext();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [availableStates, setAvailableStates] = useState<Array<{ name: string }>>([]);
-  const [availableCities, setAvailableCities] = useState<CityOption[]>([]);
   const [accessType, setAccessType] = useState<"city" | "state">("city");
   
   // State assignment input
   const [stateName, setStateName] = useState("");
   
-  // City assignment inputs
-  const [cityFilterState, setCityFilterState] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  // City assignment inputs (multiple city access via comma separation)
+  const [cities, setCities] = useState("");
+  const [citySlug, setCitySlug] = useState("");
   
   const [email, setEmail] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(7);
@@ -59,28 +51,17 @@ export default function VipPage() {
       return;
     }
     loadAssignments();
-    loadLocations();
+    loadStates();
   }, [me, router]);
 
-  async function loadLocations() {
+  async function loadStates() {
     try {
-      const [resStates, resCities] = await Promise.all([
-        fetch("/api/admin/states", { credentials: "include" }),
-        fetch("/api/admin/cities", { credentials: "include" }),
-      ]);
-      
-      if (resStates.ok) {
-        const data = await resStates.json();
+      const res = await fetch("/api/admin/states", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
         const list = Array.isArray(data.states) ? data.states : [];
         list.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name));
         setAvailableStates(list);
-      }
-
-      if (resCities.ok) {
-        const data = await resCities.json();
-        const list = Array.isArray(data.cities) ? data.cities : [];
-        list.sort((a: CityOption, b: CityOption) => a.name.localeCompare(b.name));
-        setAvailableCities(list);
       }
     } catch {}
   }
@@ -97,18 +78,6 @@ export default function VipPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load VIP assignments");
     }
-  }
-
-  function handleAddCity() {
-    if (!selectedCity) return;
-    if (!selectedCities.includes(selectedCity)) {
-      setSelectedCities((prev) => [...prev, selectedCity]);
-    }
-    setSelectedCity("");
-  }
-
-  function handleRemoveCity(name: string) {
-    setSelectedCities((prev) => prev.filter((c) => c !== name));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -131,17 +100,15 @@ export default function VipPage() {
         }
         payload.stateName = stateName.trim();
       } else {
-        // Collect cities to assign
-        const finalCities = [...selectedCities];
-        if (selectedCity && !finalCities.includes(selectedCity)) {
-          finalCities.push(selectedCity);
+        const cityList = cities
+          .split(",")
+          .map((name) => name.trim())
+          .filter(Boolean);
+        if (cityList.length === 0) {
+          throw new Error("Please enter at least one city name.");
         }
-
-        if (finalCities.length === 0) {
-          throw new Error("Please select at least one city from the dropdown.");
-        }
-
-        payload.cities = finalCities;
+        payload.cities = cityList;
+        payload.citySlug = citySlug.trim();
       }
 
       const res = await fetch("/api/admin/vip", {
@@ -156,16 +123,15 @@ export default function VipPage() {
         throw new Error(data.error || "Failed to assign VIP control");
       }
 
-      const label = accessType === "state" ? `State: ${stateName}` : `Cities: ${(payload.cities as string[]).join(", ")}`;
+      const label = accessType === "state" ? `State: ${stateName}` : `Cities: ${cities}`;
       setSuccess(`VIP access assigned for ${label}. An invitation email with the Create Password link was sent to ${email.trim()}.`);
       if (data.setupUrl) {
         setLastSetupUrl(data.setupUrl);
       }
 
       setStateName("");
-      setSelectedCity("");
-      setSelectedCities([]);
-      setCityFilterState("");
+      setCities("");
+      setCitySlug("");
       setEmail("");
       setExpiresInDays(7);
       await loadAssignments();
@@ -260,13 +226,6 @@ export default function VipPage() {
 
   if (!me || !me.authenticated) return null;
 
-  // Filter available cities based on selected state filter
-  const filteredCities = cityFilterState
-    ? availableCities.filter(
-        (c) => c.state && c.state.toLowerCase() === cityFilterState.toLowerCase()
-      )
-    : availableCities;
-
   return (
     <main className="min-h-screen bg-red-50 p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="mx-auto max-w-5xl">
@@ -352,85 +311,31 @@ export default function VipPage() {
                 </p>
               </div>
             ) : (
-              /* City Selection Dropdowns */
-              <div className="md:col-span-2 space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-sm font-semibold text-red-950">
-                      Filter by State (Optional)
-                    </label>
-                    <select
-                      value={cityFilterState}
-                      onChange={(e) => {
-                        setCityFilterState(e.target.value);
-                        setSelectedCity("");
-                      }}
-                      className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-red-950 outline-none focus:border-red-400 text-sm"
-                    >
-                      <option value="">-- All States --</option>
-                      {availableStates.map((s) => (
-                        <option key={s.name} value={s.name}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-sm font-semibold text-red-950">
-                      Select City
-                    </label>
-                    <div className="flex gap-2">
-                      <select
-                        value={selectedCity}
-                        onChange={(e) => setSelectedCity(e.target.value)}
-                        className="flex-1 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-red-950 outline-none focus:border-red-400 text-sm"
-                      >
-                        <option value="">-- Select a City --</option>
-                        {filteredCities.map((c) => (
-                          <option key={c.slug || c.name} value={c.name}>
-                            {c.name} {c.state ? `(${c.state})` : ""}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={handleAddCity}
-                        disabled={!selectedCity}
-                        className="rounded-xl bg-pink-100 px-3.5 py-2.5 text-xs font-bold text-red-900 hover:bg-pink-200 disabled:opacity-50 transition"
-                      >
-                        + Add
-                      </button>
-                    </div>
-                  </div>
+              /* City input for multiple city access */
+              <>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-semibold text-red-950">City Names</label>
+                  <textarea
+                    value={cities}
+                    onChange={(e) => setCities(e.target.value)}
+                    className="min-h-24 w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                    placeholder="Jaipur, Delhi, Mumbai"
+                    required
+                  />
+                  <p className="mt-1 text-xs text-red-600">Enter city names separated by commas.</p>
                 </div>
 
-                {/* Selected Cities Badges */}
-                {selectedCities.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-xs font-semibold text-red-900">Selected:</span>
-                    {selectedCities.map((city) => (
-                      <span
-                        key={city}
-                        className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-950 border border-red-200"
-                      >
-                        {city}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCity(city)}
-                          className="text-red-600 hover:text-red-900 ml-1"
-                          aria-label={`Remove ${city}`}
-                        >
-                          &times;
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className="text-xs text-red-600">
-                  Select a city from the dropdown. You can also add multiple cities using the &ldquo;+ Add&rdquo; button.
-                </p>
-              </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-red-950">City Slug (Optional)</label>
+                  <input
+                    type="text"
+                    value={citySlug}
+                    onChange={(e) => setCitySlug(e.target.value)}
+                    className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                    placeholder="jaipur"
+                  />
+                </div>
+              </>
             )}
 
             <div>
