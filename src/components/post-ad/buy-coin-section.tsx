@@ -16,7 +16,6 @@ export default function BuyCoinSection() {
   const router = useRouter();
   const { user } = useAuth();
   const [packages, setPackages] = useState<CoinPackage[]>(FALLBACK_PACKAGES);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadPackages() {
@@ -30,8 +29,6 @@ export default function BuyCoinSection() {
         }
       } catch (err) {
         console.error("Failed to load coin packages:", err);
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -39,38 +36,32 @@ export default function BuyCoinSection() {
   }, []);
 
   return (
-    <section className="rounded-[1.75rem] bg-white p-5 sm:p-8">
+    <section className="rounded-2xl bg-white p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-red-100 pb-3">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-red-950">Buy Coins</h2>
-          <p className="mt-1 text-sm sm:text-base leading-6 text-red-900">
+          <h2 className="text-xl sm:text-2xl font-black text-red-950">Buy Coins</h2>
+          <p className="mt-0.5 text-xs sm:text-sm text-red-900">
             Coins let you promote your ads and unlock premium features. Choose a pack to get started.
           </p>
         </div>
 
-        {/* Available Coins & Transactions History */}
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4 shrink-0">
-          <div className="rounded-2xl border border-red-200 bg-pink-50/70 px-4 py-2 text-center sm:text-right">
-            <span className="block text-[11px] font-bold uppercase tracking-wider text-red-800">
-              Available Coins
-            </span>
-            <span className="text-xl font-black text-red-950">
-              {user?.coins ?? 0}
-            </span>
-          </div>
-
+        <div className="flex items-center gap-3 text-xs shrink-0 pt-1 sm:pt-0">
+          <span className="font-medium text-red-800">
+            Available: <strong className="font-black text-red-950">{user?.coins ?? 0} coins</strong>
+          </span>
+          <span className="text-red-200">•</span>
           <Link
             href="/post-ad/payment-history"
-            className="inline-flex items-center gap-1.5 rounded-2xl border border-red-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-red-900 shadow-xs hover:bg-pink-50 transition"
+            className="font-bold text-red-700 hover:text-red-900 hover:underline transition"
           >
-            Transactions History &rarr;
+            Transactions &rarr;
           </Link>
         </div>
       </div>
 
-      {/* Package List / Grid */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Grid of Coin Packages */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
         {packages.map((pkg) => {
           const hasDiscount =
             pkg.originalPrice && Number(pkg.originalPrice) > Number(pkg.price);
@@ -78,144 +69,81 @@ export default function BuyCoinSection() {
           return (
             <div
               key={pkg._id || `${pkg.coins}-${pkg.price}`}
-              onClick={() =>
-                router.push(
-                  `/post-ad/payment?coins=${pkg.coins}&price=${encodeURIComponent(
-                    `₹${Number(pkg.price).toFixed(2)}`
-                  )}`
-                )
-              }
-              className={`group relative flex flex-col justify-between gap-4 rounded-2xl border p-5 sm:p-6 cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.01] ${
+              className={`flex flex-col justify-between gap-2.5 rounded-xl border p-3 sm:p-3.5 transition-all ${
                 pkg.popular
-                  ? "border-red-400 bg-gradient-to-br from-pink-50 via-rose-50/40 to-white shadow-xs"
-                  : "border-red-200/90 bg-white hover:border-red-300 hover:bg-pink-50/30"
+                  ? "border-red-300 bg-pink-50 shadow-xs"
+                  : "border-red-100 bg-pink-50/40 hover:bg-pink-50/70"
               }`}
             >
-              {/* Popular Badge */}
-              {pkg.popular && (
-                <div className="absolute -top-3 right-6 rounded-full bg-gradient-to-r from-red-600 to-rose-600 px-3 py-0.5 text-[11px] font-black uppercase tracking-wider text-white shadow-sm">
-                  Popular
-                </div>
-              )}
-
-              {/* Main Info */}
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl sm:text-4xl font-black tracking-tight text-red-950">
-                      {pkg.coins}
+              <div>
+                {/* Badges row: Popular / Label / Discount */}
+                <div className="flex items-center justify-between gap-1 mb-1 min-h-[18px]">
+                  {pkg.popular ? (
+                    <span className="inline-block rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                      Popular
                     </span>
-                    <span className="text-base sm:text-lg font-bold text-red-900">
-                      Coins
+                  ) : pkg.label ? (
+                    <span className="inline-block rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-semibold text-red-800">
+                      {pkg.label}
                     </span>
-                  </div>
-
-                  {/* Breakdown pill (e.g. 28 + 2 Free) */}
-                  {pkg.breakdown && (
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <span className="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
-                        {pkg.breakdown}
-                      </span>
-                    </div>
+                  ) : (
+                    <span />
                   )}
-                </div>
 
-                {/* Discount Badge (e.g. 7% DISCOUNT ▶) */}
-                {pkg.discount ? (
-                  <div className="shrink-0">
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100/90 border border-amber-300 px-2.5 py-1 text-xs font-black text-amber-900">
+                  {pkg.discount && (
+                    <span className="inline-block rounded bg-amber-100 border border-amber-300 px-1 py-0.2 text-[9px] font-bold text-amber-900 shrink-0">
                       {pkg.discount}
-                      <svg
-                        className="h-3 w-3 text-amber-700"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
                     </span>
-                  </div>
-                ) : pkg.label ? (
-                  <span className="shrink-0 rounded-lg bg-pink-100 border border-red-200 px-2.5 py-1 text-xs font-bold text-red-900">
-                    {pkg.label}
-                  </span>
-                ) : null}
-              </div>
-
-              {/* Price & Buy Action Button */}
-              <div className="mt-2 flex items-end justify-between gap-3 border-t border-red-100/80 pt-3">
-                <div>
-                  {hasDiscount && (
-                    <div className="text-xs sm:text-sm font-semibold text-gray-400 line-through">
-                      ₹{Number(pkg.originalPrice).toFixed(2)}
-                    </div>
                   )}
-                  <div className="text-2xl sm:text-3xl font-black text-red-950">
-                    ₹{Number(pkg.price).toFixed(2)}
-                  </div>
                 </div>
 
-                <Button
-                  type="button"
-                  variant="solid"
-                  size="sm"
-                  className="!text-white shadow-sm group-hover:scale-105 transition"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(
-                      `/post-ad/payment?coins=${pkg.coins}&price=${encodeURIComponent(
-                        `₹${Number(pkg.price).toFixed(2)}`
-                      )}`
-                    );
-                  }}
-                >
-                  Buy Now
-                </Button>
+                {/* Coins Number */}
+                <p className="text-lg sm:text-xl font-black text-red-950 leading-tight">
+                  {pkg.coins}
+                  <span className="ml-1 text-[11px] font-semibold text-red-700">
+                    coins
+                  </span>
+                </p>
+
+                {/* Breakdown / Bonus text (e.g. 28 + 2 Free) */}
+                {pkg.breakdown && (
+                  <p className="mt-0.5 text-[10px] font-bold text-emerald-800">
+                    {pkg.breakdown}
+                  </p>
+                )}
+
+                {/* Price Display */}
+                <div className="mt-1.5 leading-snug">
+                  {hasDiscount && (
+                    <span className="block text-[10px] text-gray-400 line-through">
+                      ₹{Number(pkg.originalPrice).toFixed(2)}
+                    </span>
+                  )}
+                  <span className="text-xs sm:text-[13px] font-bold text-red-900">
+                    for ₹{Number(pkg.price).toFixed(2)}
+                  </span>
+                </div>
               </div>
+
+              {/* Buy Button */}
+              <Button
+                type="button"
+                variant="solid"
+                size="sm"
+                className="!text-white w-full py-1 text-xs font-bold"
+                onClick={() =>
+                  router.push(
+                    `/post-ad/payment?coins=${pkg.coins}&price=${encodeURIComponent(
+                      `₹${Number(pkg.price).toFixed(2)}`
+                    )}`
+                  )
+                }
+              >
+                Buy
+              </Button>
             </div>
           );
         })}
-      </div>
-
-      {/* Need Help Support Channel Section (from PDF Page 2 & 3) */}
-      <div className="mt-12 rounded-3xl border border-red-200 bg-gradient-to-r from-red-50/60 via-pink-50/40 to-red-50/60 p-6 sm:p-8 text-center shadow-xs">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-red-800 shadow-xs border border-red-100 mb-3">
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
-        </div>
-        <h3 className="text-xl font-black text-red-950">Need help?</h3>
-        <p className="mt-1.5 text-xs sm:text-sm text-red-900 max-w-lg mx-auto leading-relaxed">
-          Contact us through our service channels, from Monday to Friday, from 9:00 am to 4:00 pm.
-        </p>
-
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#450a0a] px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#7f1d1d] transition"
-          >
-            Contact Support &rarr;
-          </Link>
-          <Link
-            href="/post-ad/payment-history"
-            className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-5 py-2.5 text-xs sm:text-sm font-bold text-red-950 shadow-xs hover:bg-red-50 transition"
-          >
-            View Payment History
-          </Link>
-        </div>
       </div>
     </section>
   );
