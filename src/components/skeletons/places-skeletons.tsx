@@ -165,18 +165,18 @@ export function PlacesExplorerSkeleton() {
       </div>
 
       {/* Grid of city cards */}
-      <div className="grid w-full min-w-0 gap-3.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid w-full min-w-0 gap-3 sm:gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
-            className="flex w-full min-w-0 flex-col rounded-2xl border border-red-100 bg-white p-4 sm:p-5"
+            className="flex w-full min-w-0 flex-col rounded-xl border border-red-100 bg-white p-3 sm:p-3.5"
           >
-            <div className="flex w-full min-w-0 items-start justify-between gap-2.5 sm:gap-3">
+            <div className="flex w-full min-w-0 items-start justify-between gap-2">
               <div className="min-w-0 flex-1 space-y-1.5">
-                <Skeleton className="h-6 w-32 rounded-md" />
-                <Skeleton className="h-4 w-20 rounded-md" />
+                <Skeleton className="h-5 w-28 rounded-md" />
+                <Skeleton className="h-3.5 w-16 rounded-md" />
               </div>
-              <Skeleton className="h-6 w-20 rounded-full shrink-0" />
+              <Skeleton className="h-5 w-12 rounded-full shrink-0" />
             </div>
           </div>
         ))}
