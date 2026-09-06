@@ -61,8 +61,8 @@ export default function YourAdsView() {
   const validAds = ads.filter((ad) => (ad.status ?? "active") !== "deleted");
 
   return (
-    <main className="px-4 py-10 sm:px-6 lg:px-8">
-      <SectionPanel>
+    <main className="px-2.5 py-6 sm:px-6 sm:py-10 lg:px-8 max-w-full overflow-hidden">
+      <SectionPanel className="p-3 sm:p-6 md:p-8 w-full max-w-6xl mx-auto overflow-hidden">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-red-950 sm:text-4xl">

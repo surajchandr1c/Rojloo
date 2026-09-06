@@ -102,9 +102,9 @@ export default function YourAdsSection({
   }
 
   return (
-    <section className="rounded-2xl bg-white p-4 sm:p-7 shadow-xs">
+    <section className="rounded-2xl bg-white p-3 sm:p-6 md:p-7 shadow-xs w-full max-w-full overflow-hidden box-border">
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-5 sm:gap-8 border-b border-red-100 pb-2 text-sm sm:text-base overflow-x-auto">
+      <div className="flex items-center gap-4 sm:gap-8 border-b border-red-100 pb-2 text-sm sm:text-base overflow-x-auto no-scrollbar scroll-smooth w-full">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -136,7 +136,7 @@ export default function YourAdsSection({
           <YourAdsListSkeleton />
         </div>
       ) : currentList.length === 0 ? (
-        <div className="mt-6 rounded-2xl bg-pink-50/60 border border-red-100 p-8 text-center">
+        <div className="mt-6 rounded-2xl bg-pink-50/60 border border-red-100 p-6 sm:p-8 text-center">
           <p className="text-sm font-semibold text-red-900">
             No ads found in the <strong className="text-red-950">{activeTab.replace("_", " ")}</strong> tab.
           </p>
@@ -148,7 +148,7 @@ export default function YourAdsSection({
           </Link>
         </div>
       ) : (
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-5 sm:space-y-6">
           {currentList.map((ad) => {
             const hasImage = Array.isArray(ad.images) && ad.images.length > 0 && Boolean(ad.images[0]);
             const isPromoted = isAdPromoted(ad);
@@ -164,17 +164,17 @@ export default function YourAdsSection({
             return (
               <article
                 key={ad._id}
-                className="rounded-2xl border border-red-200/90 bg-white p-4 sm:p-6 shadow-xs flex flex-col gap-4 transition-all"
+                className="w-full max-w-full min-w-0 rounded-2xl border border-red-200/90 bg-white p-3.5 sm:p-6 shadow-xs flex flex-col gap-3.5 sm:gap-4 transition-all overflow-hidden box-border"
               >
                 {/* Top Status & Expiration Header */}
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-red-100 pb-3.5 text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-red-100 pb-3.5 text-xs w-full min-w-0">
                   {/* Left Metadata */}
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <p className="text-gray-600 font-medium">
                       Ad Expire Date:{" "}
                       <strong className="text-red-950 font-bold">{expireShort}</strong>
                     </p>
-                    <p className="text-gray-600 font-medium truncate max-w-xs sm:max-w-sm">
+                    <p className="text-gray-600 font-medium truncate max-w-[220px] sm:max-w-sm">
                       Published:{" "}
                       <strong className="text-red-950 font-bold">{userEmail || "You"}</strong>
                     </p>
@@ -197,11 +197,11 @@ export default function YourAdsSection({
                   </div>
 
                   {/* Right VIP / Promo Schedule */}
-                  <div className="sm:text-right space-y-1 text-xs">
+                  <div className="sm:text-right space-y-1 text-xs min-w-0">
                     <p className="font-bold text-red-950">{isPromoted ? "VIP 1x3" : "Vip 1x3"}</p>
                     <p className="text-gray-500 text-[11px]">12 pm - 03 pm</p>
                     <p className="text-gray-600 font-semibold text-[11px]">3 TOP-US 1 Day</p>
-                    <p className="text-red-600 font-semibold text-[11px] flex items-center sm:justify-end gap-1 pt-0.5">
+                    <p className="text-red-600 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
                       <span>⚠</span>
                       <span>
                         {isPromoted
@@ -213,9 +213,9 @@ export default function YourAdsSection({
                 </div>
 
                 {/* Ad Preview Card */}
-                <div className="rounded-xl border border-red-100/90 bg-pink-50/20 p-3 sm:p-4 flex flex-col sm:flex-row gap-4">
+                <div className="w-full min-w-0 rounded-xl border border-red-100/90 bg-pink-50/20 p-3 sm:p-4 flex flex-col sm:flex-row gap-3.5 sm:gap-4 overflow-hidden box-border">
                   {/* Thumbnail Photo with Image Count */}
-                  <div className="relative shrink-0 w-full sm:w-40 h-48 sm:h-36 rounded-xl overflow-hidden bg-pink-100 flex items-center justify-center border border-red-200/60">
+                  <div className="relative shrink-0 w-full sm:w-40 sm:min-w-[160px] h-48 sm:h-36 rounded-xl overflow-hidden bg-pink-100 flex items-center justify-center border border-red-200/60">
                     {hasImage ? (
                       <img
                         src={ad.images?.[0]}
@@ -233,20 +233,20 @@ export default function YourAdsSection({
                   </div>
 
                   {/* Ad Information */}
-                  <div className="min-w-0 flex-1 flex flex-col justify-between">
+                  <div className="min-w-0 flex-1 flex flex-col justify-between gap-2 overflow-hidden">
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide truncate">
                         {ad.category || "Call Girls"}
                       </p>
                       <h3 className="mt-1 text-sm sm:text-base font-black text-red-600 leading-snug break-words">
                         {displayTitle}
                       </h3>
-                      <p className="mt-1.5 text-xs text-gray-700 leading-relaxed line-clamp-3">
+                      <p className="mt-1.5 text-xs text-gray-700 leading-relaxed line-clamp-3 break-words">
                         {ad.about}
                       </p>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-600 font-semibold">
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-600 font-semibold">
                       {ad.age && (
                         <span className="flex items-center gap-1">
                           📅 {ad.age} Years
@@ -266,11 +266,11 @@ export default function YourAdsSection({
 
                 {/* Free Ad Banner (shown for non-promoted ads) */}
                 {!isPromoted && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-pink-50/50 p-3 text-xs text-red-950">
+                  <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-pink-50/50 p-2.5 sm:p-3 text-xs text-red-950 w-full min-w-0 box-border">
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-900 text-[11px] font-bold text-white">
                       i
                     </div>
-                    <div>
+                    <div className="min-w-0 break-words">
                       <p className="font-bold text-red-950">Free ad</p>
                       <p className="text-red-900/80 text-[11px] mt-0.5">
                         Only 1 image will be visible unless you activate a promo &amp; unlock other images
@@ -280,10 +280,10 @@ export default function YourAdsSection({
                 )}
 
                 {/* Bottom Actions Bar */}
-                <div className="flex items-center justify-around border-t border-red-100 pt-3 text-xs font-bold">
+                <div className="grid grid-cols-4 sm:flex sm:items-center sm:justify-around border-t border-red-100 pt-3 text-xs font-bold gap-1 w-full min-w-0">
                   <Link
                     href={getCityUrl(ad.city)}
-                    className="flex items-center gap-1 text-red-700 hover:text-red-950 transition py-1 px-2.5 rounded-lg hover:bg-pink-100/60"
+                    className="flex items-center justify-center gap-1 text-red-700 hover:text-red-950 transition py-1.5 px-1 sm:px-2.5 rounded-lg hover:bg-pink-100/60 text-[11px] sm:text-xs font-bold"
                   >
                     <span>👁</span>
                     <span>VIEW</span>
@@ -292,7 +292,7 @@ export default function YourAdsSection({
                   <button
                     type="button"
                     onClick={() => onToggleStatus?.(ad)}
-                    className="flex items-center gap-1 text-red-700 hover:text-red-950 transition py-1 px-2.5 rounded-lg hover:bg-pink-100/60"
+                    className="flex items-center justify-center gap-1 text-red-700 hover:text-red-950 transition py-1.5 px-1 sm:px-2.5 rounded-lg hover:bg-pink-100/60 text-[11px] sm:text-xs font-bold"
                   >
                     <span>{ad.status === "suspended" ? "▶" : "⏸"}</span>
                     <span>{ad.status === "suspended" ? "ACTIVATE" : "SUSPEND"}</span>
@@ -301,7 +301,7 @@ export default function YourAdsSection({
                   <button
                     type="button"
                     onClick={() => onEdit(ad)}
-                    className="flex items-center gap-1 text-red-700 hover:text-red-950 transition py-1 px-2.5 rounded-lg hover:bg-pink-100/60"
+                    className="flex items-center justify-center gap-1 text-red-700 hover:text-red-950 transition py-1.5 px-1 sm:px-2.5 rounded-lg hover:bg-pink-100/60 text-[11px] sm:text-xs font-bold"
                   >
                     <span>✏</span>
                     <span>EDIT</span>
@@ -310,20 +310,20 @@ export default function YourAdsSection({
                   <button
                     type="button"
                     onClick={() => onDelete(ad)}
-                    className="flex items-center gap-1 text-red-700 hover:text-red-950 transition py-1 px-2.5 rounded-lg hover:bg-pink-100/60"
+                    className="flex items-center justify-center gap-1 text-red-700 hover:text-red-950 transition py-1.5 px-1 sm:px-2.5 rounded-lg hover:bg-pink-100/60 text-[11px] sm:text-xs font-bold"
                   >
                     <span>🗑</span>
                     <span>DELETE</span>
                   </button>
                 </div>
 
-                {/* Renew Promo Button */}
+                {/* Promoted The Ad Action Button */}
                 <Link
-                  href="/post-ad/buy-coin"
-                  className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-pink-50/70 hover:bg-pink-100 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-red-900 transition shadow-xs"
+                  href={ad._id ? `/post-ad/your-ads/promoted?adId=${ad._id}` : "/post-ad/your-ads/promoted"}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-pink-50/70 hover:bg-pink-100 px-4 py-2.5 text-xs sm:text-sm font-bold text-red-900 transition shadow-xs w-full text-center"
                 >
                   <span>🔓</span>
-                  <span>RENEW PROMO AND UNLOCK IMAGES</span>
+                  <span>Promoted the ad</span>
                 </Link>
               </article>
             );

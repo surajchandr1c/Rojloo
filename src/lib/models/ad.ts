@@ -24,6 +24,10 @@ export interface Ad {
   images: string[];
   status: string;
   serviceRates?: ServiceRate[];
+  promoted?: boolean;
+  isPromoted?: boolean;
+  promotedUntil?: Date | string;
+  promoPackage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -601,6 +605,10 @@ export function toPublicAd(ad: Ad, override?: VipPhoneOverride | null): PublicAd
     images: ad.images,
     serviceRates: ad.serviceRates,
     status: ad.status,
+    promoted: ad.promoted,
+    isPromoted: ad.isPromoted,
+    promotedUntil: ad.promotedUntil,
+    promoPackage: ad.promoPackage,
     createdAt: ad.createdAt,
     updatedAt: ad.updatedAt,
   };
