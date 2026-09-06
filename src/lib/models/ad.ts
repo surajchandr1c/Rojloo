@@ -256,6 +256,79 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
   return counts;
 }
 
+export type CityPhoneStats = {
+  totalAds: number;
+  totalPhones: number;
+  uniquePhones: number;
+};
+
+export async function getCityPhoneStats(): Promise<Record<string, CityPhoneStats>> {
+  const collection = await getAdsCollection();
+  const stats: Record<string, CityPhoneStats> = {};
+
+  if (collection) {
+    try {
+      const results = await collection
+        .aggregate([
+          { $match: { status: { $ne: "deleted" } } },
+          {
+            $group: {
+              _id: { $toLower: "$city" },
+              totalAds: { $sum: 1 },
+              phoneList: { $push: "$phone" },
+            },
+          },
+        ])
+        .toArray();
+
+      for (const item of results) {
+        if (item._id) {
+          const key = String(item._id).trim().toLowerCase();
+          const phones = (Array.isArray(item.phoneList) ? item.phoneList : [])
+            .map((p) => String(p ?? "").trim())
+            .filter(Boolean);
+          const uniqueSet = new Set(phones);
+          stats[key] = {
+            totalAds: Number(item.totalAds ?? 0),
+            totalPhones: phones.length,
+            uniquePhones: uniqueSet.size,
+          };
+        }
+      }
+      return stats;
+    } catch (err) {
+      console.error("[ad] getCityPhoneStats aggregation failed:", err);
+    }
+  }
+
+  const store = await readStore();
+  const memoryPhonesByCity: Record<string, string[]> = {};
+  const memoryAdsCount: Record<string, number> = {};
+
+  for (const ad of store.ads) {
+    if (isVisibleAd(ad as unknown as Ad) && ad.city) {
+      const key = String(ad.city).trim().toLowerCase();
+      memoryAdsCount[key] = (memoryAdsCount[key] ?? 0) + 1;
+      if (!memoryPhonesByCity[key]) memoryPhonesByCity[key] = [];
+      if (ad.phone && String(ad.phone).trim()) {
+        memoryPhonesByCity[key].push(String(ad.phone).trim());
+      }
+    }
+  }
+
+  for (const [key, totalAds] of Object.entries(memoryAdsCount)) {
+    const phones = memoryPhonesByCity[key] || [];
+    const uniqueSet = new Set(phones);
+    stats[key] = {
+      totalAds,
+      totalPhones: phones.length,
+      uniquePhones: uniqueSet.size,
+    };
+  }
+
+  return stats;
+}
+
 export const getPublicAdById = cache(async function (
   id: string
 ): Promise<PublicAd | null> {

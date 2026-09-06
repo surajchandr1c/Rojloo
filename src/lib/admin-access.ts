@@ -17,6 +17,7 @@ export const ADMIN_SECTIONS = [
   { key: "users", name: "Users" },
   { key: "set-coins", name: "Set Coins" },
   { key: "vip", name: "VIP" },
+  { key: "phone-control", name: "Phone No. Control" },
   { key: "admin-control", name: "Admin Control" },
   { key: "sub-admins", name: "Sub Admin List" },
   { key: "not-found", name: "404 Pages" },

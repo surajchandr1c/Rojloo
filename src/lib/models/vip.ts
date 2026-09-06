@@ -636,11 +636,13 @@ export type VipPhoneOverride = {
   _id: string;
   vipEmail: string;
   city: string;
+  state?: string;
   phone: string;
   whatsapp: string;
   telegram: string;
   deleteUserPhone: boolean;
   active: boolean;
+  createdBy?: "admin" | "vip";
   expiresAt: Date | string;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -652,7 +654,7 @@ export async function getVipPhoneOverridesForEmail(
   const store = await readStore();
   const cleanEmail = email.trim().toLowerCase();
   const list = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(
-    (o) => o && o.vipEmail?.toLowerCase() === cleanEmail
+    (o) => o && o.vipEmail?.toLowerCase() === cleanEmail && o.createdBy !== "admin"
   );
   return list;
 }
@@ -660,6 +662,7 @@ export async function getVipPhoneOverridesForEmail(
 export async function saveVipPhoneOverride(input: {
   vipEmail: string;
   city: string;
+  state?: string;
   phone?: string;
   whatsapp?: string;
   telegram?: string;
@@ -698,11 +701,13 @@ export async function saveVipPhoneOverride(input: {
     _id: existingIdx >= 0 ? overrides[existingIdx]._id : `vpo_${Date.now()}_${randomUUID().substring(0, 6)}`,
     vipEmail: cleanEmail,
     city: cleanCity,
+    state: input.state?.trim(),
     phone: String(input.phone ?? "").trim(),
     whatsapp: String(input.whatsapp ?? "").trim(),
     telegram: String(input.telegram ?? "").trim(),
     deleteUserPhone: Boolean(input.deleteUserPhone),
     active: true,
+    createdBy: "vip",
     expiresAt,
     createdAt: existingIdx >= 0 ? overrides[existingIdx].createdAt : now,
     updatedAt: now,
@@ -734,6 +739,81 @@ export async function deleteVipPhoneOverride(
   return true;
 }
 
+export async function getAdminPhoneOverrides(): Promise<VipPhoneOverride[]> {
+  const store = await readStore();
+  const list = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(
+    (o) => o && (o.createdBy === "admin" || o.vipEmail === "admin")
+  );
+  return list;
+}
+
+export async function saveAdminPhoneOverride(input: {
+  city: string;
+  state?: string;
+  phone?: string;
+  whatsapp?: string;
+  telegram?: string;
+  deleteUserPhone?: boolean;
+  adminEmail?: string;
+}): Promise<VipPhoneOverride> {
+  const store = await readStore();
+  const cleanCity = input.city.trim();
+  const cleanState = (input.state ?? "").trim();
+  const normalizedCity = cleanCity.toLowerCase();
+  const cleanAdminEmail = (input.adminEmail ?? "admin").trim().toLowerCase();
+
+  const overrides = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(Boolean);
+  const existingIdx = overrides.findIndex(
+    (o) =>
+      o.city.toLowerCase() === normalizedCity &&
+      (o.createdBy === "admin" || o.vipEmail === "admin")
+  );
+
+  // Admin overrides remain active until removed by admin (10-year expiration)
+  const expiresAt = new Date();
+  expiresAt.setFullYear(expiresAt.getFullYear() + 10);
+
+  const now = new Date();
+  const overrideData: VipPhoneOverride = {
+    _id: existingIdx >= 0 ? overrides[existingIdx]._id : `apo_${Date.now()}_${randomUUID().substring(0, 6)}`,
+    vipEmail: cleanAdminEmail,
+    city: cleanCity,
+    state: cleanState,
+    phone: String(input.phone ?? "").trim(),
+    whatsapp: String(input.whatsapp ?? "").trim(),
+    telegram: String(input.telegram ?? "").trim(),
+    deleteUserPhone: Boolean(input.deleteUserPhone),
+    active: true,
+    createdBy: "admin",
+    expiresAt,
+    createdAt: existingIdx >= 0 ? overrides[existingIdx].createdAt : now,
+    updatedAt: now,
+  };
+
+  if (existingIdx >= 0) {
+    overrides[existingIdx] = overrideData;
+  } else {
+    overrides.push(overrideData);
+  }
+
+  store.vipPhoneOverrides = overrides as unknown as typeof store.vipPhoneOverrides;
+  await writeStore(store);
+  return overrideData;
+}
+
+export async function deleteAdminPhoneOverride(id: string): Promise<boolean> {
+  const store = await readStore();
+  const overrides = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(Boolean);
+  const idx = overrides.findIndex(
+    (o) => o._id === id && (o.createdBy === "admin" || o.vipEmail === "admin")
+  );
+  if (idx < 0) return false;
+  overrides.splice(idx, 1);
+  store.vipPhoneOverrides = overrides as unknown as typeof store.vipPhoneOverrides;
+  await writeStore(store);
+  return true;
+}
+
 export async function getActiveVipPhoneOverride(
   city: string
 ): Promise<VipPhoneOverride | null> {
@@ -744,11 +824,27 @@ export async function getActiveVipPhoneOverride(
   const overrides = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(Boolean);
   const now = Date.now();
 
+  // 1. First priority: Active ADMIN override for this city
+  const adminOverride = overrides.find(
+    (o) =>
+      o.active &&
+      o.city &&
+      o.city.trim().toLowerCase() === normalizedCity &&
+      (o.createdBy === "admin" || o.vipEmail === "admin") &&
+      new Date(o.expiresAt).getTime() > now
+  );
+  if (adminOverride) {
+    return adminOverride;
+  }
+
+  // 2. Second priority: Active VIP override with active assignment
   for (const o of overrides) {
     if (
       o.active &&
       o.city &&
       o.city.trim().toLowerCase() === normalizedCity &&
+      o.createdBy !== "admin" &&
+      o.vipEmail !== "admin" &&
       new Date(o.expiresAt).getTime() > now
     ) {
       // Verify VIP assignment is currently active
