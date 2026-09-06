@@ -19,16 +19,21 @@ export type PaymentHistory = {
   createdAt: Date | string;
 };
 
+let paymentHistoryIndexesCreated = false;
+
 async function getPaymentHistoryCollection(): Promise<Collection<Document> | null> {
   const db = await getDb();
   if (!db) return null;
   const col = db.collection("payment_history");
-  try {
-    await col.createIndex({ createdAt: -1 });
-    await col.createIndex({ userId: 1 });
-    await col.createIndex({ userEmail: 1 });
-  } catch {
-    // Non-fatal
+  if (!paymentHistoryIndexesCreated) {
+    try {
+      await col.createIndex({ createdAt: -1 });
+      await col.createIndex({ userId: 1 });
+      await col.createIndex({ userEmail: 1 });
+      paymentHistoryIndexesCreated = true;
+    } catch {
+      // Non-fatal
+    }
   }
   return col;
 }

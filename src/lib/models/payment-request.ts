@@ -21,17 +21,22 @@ export type PaymentRequest = {
   upiName?: string;
 };
 
+let paymentIndexesCreated = false;
+
 async function getPaymentRequestsCollection(): Promise<Collection<Document> | null> {
   const db = await getDb();
   if (!db) return null;
   const col = db.collection("payment_requests");
-  try {
-    await col.createIndex({ createdAt: -1 });
-    await col.createIndex({ userId: 1 });
-    await col.createIndex({ userEmail: 1 });
-    await col.createIndex({ transactionId: 1 });
-  } catch {
-    // Non-fatal
+  if (!paymentIndexesCreated) {
+    try {
+      await col.createIndex({ createdAt: -1 });
+      await col.createIndex({ userId: 1 });
+      await col.createIndex({ userEmail: 1 });
+      await col.createIndex({ transactionId: 1 });
+      paymentIndexesCreated = true;
+    } catch {
+      // Non-fatal
+    }
   }
   return col;
 }

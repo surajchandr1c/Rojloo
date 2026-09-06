@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Collection, Document, ObjectId } from "mongodb";
 import { getDb } from "../db";
 import { readStore, writeStore } from "../persist";
@@ -134,18 +135,25 @@ async function memoryDelete(id: string, userId: string): Promise<boolean> {
   return true;
 }
 
+let adIndexesCreated = false;
+
 async function getAdsCollection(): Promise<Collection<Document> | null> {
   const db = await getDb();
   if (!db) return null;
 
   const collection = db.collection("ads");
-  try {
-    await collection.createIndexes([
-      { key: { userId: 1 }, name: "user_idx" },
-      { key: { userId: 1, _id: 1 }, name: "user_ad_idx" },
-    ]);
-  } catch {
-    // Non-fatal.
+  if (!adIndexesCreated) {
+    try {
+      await collection.createIndexes([
+        { key: { userId: 1 }, name: "user_idx" },
+        { key: { userId: 1, _id: 1 }, name: "user_ad_idx" },
+        { key: { city: 1, status: 1, createdAt: -1 }, name: "city_status_created_idx" },
+        { key: { status: 1, createdAt: -1 }, name: "status_created_idx" },
+      ]);
+      adIndexesCreated = true;
+    } catch {
+      // Non-fatal.
+    }
   }
   return collection;
 }
@@ -204,7 +212,43 @@ export async function getAdById(
   return ad && ad.userId === userId ? ad : null;
 }
 
-export async function getPublicAdById(id: string): Promise<PublicAd | null> {
+export async function getAdCountsByCity(): Promise<Record<string, number>> {
+  const collection = await getAdsCollection();
+  const counts: Record<string, number> = {};
+
+  if (collection) {
+    try {
+      const results = await collection
+        .aggregate([
+          { $match: { status: { $ne: "deleted" } } },
+          { $group: { _id: { $toLower: "$city" }, count: { $sum: 1 } } },
+        ])
+        .toArray();
+
+      for (const item of results) {
+        if (item._id && typeof item.count === "number") {
+          counts[String(item._id).trim().toLowerCase()] = item.count;
+        }
+      }
+      return counts;
+    } catch (err) {
+      console.error("[ad] getAdCountsByCity aggregation failed:", err);
+    }
+  }
+
+  const store = await readStore();
+  for (const ad of store.ads) {
+    if (isVisibleAd(ad as unknown as Ad) && ad.city) {
+      const key = String(ad.city).trim().toLowerCase();
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
+export const getPublicAdById = cache(async function (
+  id: string
+): Promise<PublicAd | null> {
   const collection = await getAdsCollection();
   if (!collection) {
     const ad = await memoryFindById(id);
@@ -216,7 +260,7 @@ export async function getPublicAdById(id: string): Promise<PublicAd | null> {
 
   const ad = await memoryFindById(id);
   return ad ? toPublicAd(ad) : null;
-}
+});
 
 export async function createAd(
   data: Omit<Ad, "_id" | "createdAt" | "updatedAt">

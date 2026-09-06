@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { readStore, writeStore } from "../persist";
 
 export type LocalAreaRecord = {
@@ -42,7 +43,7 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-export async function listLocalAreas(filters?: {
+export const listLocalAreas = cache(async function (filters?: {
   cityName?: string;
   citySlug?: string;
   stateName?: string;
@@ -70,7 +71,7 @@ export async function listLocalAreas(filters?: {
   return [...areas].sort((a, b) =>
     String(a.name).localeCompare(String(b.name))
   );
-}
+});
 
 export async function createLocalArea(data: {
   name: string;

@@ -76,17 +76,23 @@ async function memoryCreateUser(
   return toPublicUser(user);
 }
 
+let userIndexesCreated = false;
+
 async function getUsersCollection(): Promise<Collection<Document> | null> {
   const db = await getDb();
   if (!db) return null;
 
   const collection = db.collection("users");
-  try {
-    await collection.createIndexes([
-      { key: { email: 1 }, name: "email_unique", unique: true },
-    ]);
-  } catch {
-    // Non-fatal: indexes may already exist or be unavailable.
+  if (!userIndexesCreated) {
+    try {
+      await collection.createIndexes([
+        { key: { email: 1 }, name: "email_unique", unique: true },
+        { key: { sessionToken: 1 }, name: "session_token_idx" },
+      ]);
+      userIndexesCreated = true;
+    } catch {
+      // Non-fatal: indexes may already exist or be unavailable.
+    }
   }
   return collection;
 }

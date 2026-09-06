@@ -188,15 +188,28 @@ async function writeStoreToFile(data: StoreData): Promise<void> {
   }
 }
 
+// In-memory cache for fast repeated reads across requests and server components
+let storeCache: { data: StoreData; expiresAt: number } | null = null;
+const CACHE_TTL_MS = 10_000; // 10 seconds
+
 // ---------- Public API ----------
 
 export async function readStore(): Promise<StoreData> {
+  const now = Date.now();
+  if (storeCache && now < storeCache.expiresAt) {
+    return storeCache.data;
+  }
+
   const db = await getDb();
-  if (db) return readStoreFromMongo();
-  return readStoreFromFile();
+  const data = db ? await readStoreFromMongo() : await readStoreFromFile();
+  storeCache = { data, expiresAt: now + CACHE_TTL_MS };
+  return data;
 }
 
 export async function writeStore(data: StoreData): Promise<void> {
+  // Update cache immediately to guarantee instant consistency on subsequent reads
+  storeCache = { data, expiresAt: Date.now() + CACHE_TTL_MS };
+
   const db = await getDb();
   if (db) {
     await writeStoreToMongo(data);
@@ -206,4 +219,8 @@ export async function writeStore(data: StoreData): Promise<void> {
   } catch (err) {
     if (!db) throw err;
   }
+}
+
+export function invalidateStoreCache(): void {
+  storeCache = null;
 }

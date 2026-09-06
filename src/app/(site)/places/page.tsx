@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { listAllCities } from "@/lib/models/city";
-import { listAdsByCity } from "@/lib/models/ad";
+import { getAdCountsByCity } from "@/lib/models/ad";
 import PlacesExplorer from "@/components/places/places-explorer";
 
 export const dynamic = "force-dynamic";
@@ -23,19 +23,20 @@ export default async function Places({
   const query = Array.isArray(q) ? q[0] : q;
   const initialQuery = query?.trim() ?? "";
 
-  const allCities = await listAllCities();
+  const [allCities, adCounts] = await Promise.all([
+    listAllCities(),
+    getAdCountsByCity(),
+  ]);
 
-  const citiesWithAds = await Promise.all(
-    allCities.map(async (city) => {
-      const ads = await listAdsByCity(city.name);
-      return {
-        name: city.name,
-        slug: city.slug,
-        state: city.state ?? "",
-        adCount: ads.length,
-      };
-    })
-  );
+  const citiesWithAds = allCities.map((city) => ({
+    name: city.name,
+    slug: city.slug,
+    state: city.state ?? "",
+    adCount:
+      adCounts[city.name.toLowerCase()] ??
+      adCounts[city.slug.toLowerCase()] ??
+      0,
+  }));
 
   return (
     <main className="px-4 py-10 sm:px-6 lg:px-8">

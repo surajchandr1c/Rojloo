@@ -81,9 +81,12 @@ export async function getDb(): Promise<Db | null> {
 
   if (!globalCache.promise) {
     const client = new MongoClient(uri, {
+      maxPoolSize: 50,
+      minPoolSize: 5,
+      maxIdleTimeMS: 30000,
       socketTimeoutMS: 15000,
-      serverSelectionTimeoutMS: 15000,
-      connectTimeoutMS: 15000,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
     });
     globalCache.promise = client
       .connect()

@@ -11,7 +11,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const localAreas = await listLocalAreas({ cityName, citySlug, stateName });
-    return NextResponse.json({ localAreas });
+    return NextResponse.json(
+      { localAreas },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error) {
     console.error("[local-areas] GET error:", error);
     return NextResponse.json(

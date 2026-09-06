@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { readStore, writeStore } from "../persist";
 
 export type BlockType = "h1" | "h2" | "h3" | "p";
@@ -33,7 +34,7 @@ export async function getAllCitySeo(): Promise<CitySeo[]> {
   return ((store.citySeo ?? []) as unknown as CitySeo[]).slice();
 }
 
-export async function getCitySeo(
+export const getCitySeo = cache(async function (
   slug: string
 ): Promise<CitySeo | null> {
   const store = await readStore();
@@ -41,7 +42,7 @@ export async function getCitySeo(
     (c) => c.slug === slug
   );
   return found ?? null;
-}
+});
 
 export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
   const store = await readStore();

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { readStore, writeStore } from "../persist";
 import { cityPlaces } from "../places";
 
@@ -50,7 +51,9 @@ export async function isCityDeleted(slug: string): Promise<boolean> {
   return (store.deletedCities ?? []).includes(slug);
 }
 
-export async function getCityBySlug(slug: string): Promise<CityRecord | null> {
+export const getCityBySlug = cache(async function (
+  slug: string
+): Promise<CityRecord | null> {
   const staticCity = cityPlaces.find((c) => c.slug === slug);
   if (staticCity) {
     if (await isCityDeleted(slug)) return null;
@@ -68,7 +71,7 @@ export async function getCityBySlug(slug: string): Promise<CityRecord | null> {
 
   const custom = (await listCities()).find((c) => c.slug === slug);
   return custom ?? null;
-}
+});
 
 export async function getCustomCityBySlug(
   slug: string
