@@ -6,19 +6,19 @@ export default function Footer() {
   return (
     <footer className="border-t border-red-950/30 bg-red-950 px-4 py-8 text-white w-full">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
-        <div className="flex items-center gap-4 sm:col-span-2">
+        <div className="flex items-center gap-4 sm:gap-6 sm:col-span-2">
           <Link href="/" className="shrink-0 hover:opacity-90 transition">
             <Image
               src="/favicon.png"
               alt="Rojlo Logo"
-              width={120}
-              height={120}
-              className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 object-contain drop-shadow-md"
+              width={220}
+              height={220}
+              className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-52 lg:w-52 object-contain drop-shadow-xl"
             />
           </Link>
-          <div>
-            <p className="text-xl sm:text-2xl font-black !text-white">rojlo</p>
-            <p className="mt-1.5 max-w-sm text-xs sm:text-sm leading-relaxed text-red-100">
+          <div className="min-w-0">
+            <p className="text-2xl sm:text-3xl font-black tracking-tight !text-white">rojlo</p>
+            <p className="mt-2 max-w-sm text-xs sm:text-sm leading-relaxed text-red-100">
               Find services, explore places, and post ads in one simple local
               marketplace.
             </p>
