@@ -9,6 +9,7 @@ export type CityVipAssignment = {
   citySlug?: string;
   stateName?: string;
   email: string;
+  phone?: string;
   status: "pending" | "active" | "inactive" | "expired";
   assignedBy?: string;
   assignedAt: Date | string;
@@ -21,6 +22,7 @@ export type CityVipAssignment = {
 export type VipUser = {
   _id: string;
   email: string;
+  phone?: string;
   passwordHash?: string;
   setupToken?: string;
   setupTokenExpires?: Date | string;
@@ -38,10 +40,20 @@ function normalizeVipStatus(status?: string): CityVipAssignment["status"] {
 
 export async function listVipAssignments(): Promise<CityVipAssignment[]> {
   const store = await readStore();
+  const vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
+  const userPhoneMap = new Map<string, string>();
+  for (const u of vipUsers) {
+    if (u.email && u.phone) {
+      userPhoneMap.set(u.email.toLowerCase(), u.phone);
+    }
+  }
+
   const items: CityVipAssignment[] = ((store.cityVipAssignments ?? []) as CityVipAssignment[]).map((item) => {
     const normalizedStatus = normalizeVipStatus(item.status);
+    const phone = item.phone || userPhoneMap.get(item.email.toLowerCase()) || "";
     return {
       ...item,
+      phone,
       status: normalizedStatus,
     };
   });
@@ -55,6 +67,7 @@ export async function createVipAssignment(input: {
   citySlug?: string;
   stateName?: string;
   email: string;
+  phone?: string;
   assignedBy?: string;
   expiresInDays?: number;
 }): Promise<CityVipAssignment> {
@@ -62,6 +75,7 @@ export async function createVipAssignment(input: {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + (input.expiresInDays ?? 7));
 
+  const cleanPhone = String(input.phone ?? "").trim();
   const assignment: CityVipAssignment = {
     _id: `vip_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     type: input.type || (input.stateName ? "state" : "city"),
@@ -69,7 +83,8 @@ export async function createVipAssignment(input: {
     citySlug: input.citySlug,
     stateName: input.stateName,
     email: input.email.trim().toLowerCase(),
-    status: "pending",
+    phone: cleanPhone,
+    status: "active",
     assignedBy: input.assignedBy,
     assignedAt: new Date(),
     expiresAt,
@@ -269,6 +284,44 @@ export async function setVipPassword(
   return { success: true };
 }
 
+export async function upsertVipUserWithPhone(
+  email: string,
+  phone: string
+): Promise<VipUser> {
+  const store = await readStore();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanPhone = phone.trim();
+  const passwordHash = await bcrypt.hash(cleanPhone, 12);
+
+  const vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
+  const existingIdx = vipUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
+
+  if (existingIdx >= 0) {
+    vipUsers[existingIdx] = {
+      ...vipUsers[existingIdx],
+      phone: cleanPhone,
+      passwordHash,
+      updatedAt: new Date(),
+    };
+    store.vipUsers = vipUsers as unknown as typeof store.vipUsers;
+    await writeStore(store);
+    return vipUsers[existingIdx];
+  } else {
+    const newUser: VipUser = {
+      _id: `vipu_${Date.now()}_${randomUUID().substring(0, 8)}`,
+      email: cleanEmail,
+      phone: cleanPhone,
+      passwordHash,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    vipUsers.push(newUser);
+    store.vipUsers = vipUsers as unknown as typeof store.vipUsers;
+    await writeStore(store);
+    return newUser;
+  }
+}
+
 export async function verifyVipCredentials(
   email: string,
   password: string
@@ -279,6 +332,7 @@ export async function verifyVipCredentials(
   sessionToken?: string;
 }> {
   const cleanEmail = email.trim().toLowerCase();
+  const cleanPassword = password.trim();
   await syncVipStatus();
 
   // Check that the VIP has at least one active assignment
@@ -291,35 +345,56 @@ export async function verifyVipCredentials(
     };
   }
 
-  const store = await readStore();
-  const vipUsers = (store.vipUsers ?? []) as unknown as VipUser[];
-  const user = vipUsers.find((u) => u.email.toLowerCase() === cleanEmail);
+  let store = await readStore();
+  let vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
+  let user = vipUsers.find((u) => u.email.toLowerCase() === cleanEmail);
 
-  if (!user || !user.passwordHash) {
+  // If user doesn't exist yet, check assignment phone to auto-create user
+  const assignmentWithPhone = assignments.find((a) => a.phone);
+  const phonePassword = user?.phone || assignmentWithPhone?.phone;
+
+  if (!user && phonePassword) {
+    user = await upsertVipUserWithPhone(cleanEmail, phonePassword);
+    store = await readStore();
+    vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
+  }
+
+  if (!user) {
     return {
       success: false,
-      error: "Password not set. Please use the password creation link sent to your email.",
+      error: "VIP user record not found. Please contact support.",
     };
   }
 
-  const matches = await bcrypt.compare(password, user.passwordHash);
+  let matches = false;
+  if (user.passwordHash) {
+    matches = await bcrypt.compare(cleanPassword, user.passwordHash).catch(() => false);
+  }
+  if (!matches && phonePassword) {
+    matches =
+      cleanPassword === phonePassword.trim() ||
+      cleanPassword.replace(/\D/g, "") === phonePassword.replace(/\D/g, "");
+  }
+
   if (!matches) {
     return { success: false, error: "Invalid email or password." };
   }
 
   const sessionToken = randomUUID();
-  const userIdx = vipUsers.findIndex((u) => u._id === user._id);
-  vipUsers[userIdx] = {
-    ...vipUsers[userIdx],
-    sessionToken,
-    lastLogin: new Date(),
-    updatedAt: new Date(),
-  };
+  const userIdx = vipUsers.findIndex((u) => u._id === user?._id);
+  if (userIdx >= 0) {
+    vipUsers[userIdx] = {
+      ...vipUsers[userIdx],
+      sessionToken,
+      lastLogin: new Date(),
+      updatedAt: new Date(),
+    };
+  }
 
   store.vipUsers = vipUsers as unknown as typeof store.vipUsers;
   await writeStore(store);
 
-  return { success: true, user: vipUsers[userIdx], sessionToken };
+  return { success: true, user, sessionToken };
 }
 
 export async function getVipBySession(sessionToken: string): Promise<VipUser | null> {

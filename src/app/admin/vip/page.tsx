@@ -12,6 +12,7 @@ type Assignment = {
   cityName?: string;
   citySlug?: string;
   email: string;
+  phone?: string;
   status: "pending" | "active" | "inactive" | "expired";
   assignedAt: string;
   expiresAt: string;
@@ -33,12 +34,11 @@ export default function VipPage() {
   const [citySlug, setCitySlug] = useState("");
   
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [lastSetupUrl, setLastSetupUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (me === null) return;
@@ -84,13 +84,17 @@ export default function VipPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    setLastSetupUrl("");
     setLoading(true);
 
     try {
+      if (!phone.trim()) {
+        throw new Error("Please enter the VIP owner's phone number.");
+      }
+
       const payload: Record<string, unknown> = {
         type: accessType,
         email: email.trim(),
+        phone: phone.trim(),
         expiresInDays,
       };
 
@@ -124,15 +128,13 @@ export default function VipPage() {
       }
 
       const label = accessType === "state" ? `State: ${stateName}` : `Cities: ${cities}`;
-      setSuccess(`VIP access assigned for ${label}. An invitation email with the Create Password link was sent to ${email.trim()}.`);
-      if (data.setupUrl) {
-        setLastSetupUrl(data.setupUrl);
-      }
+      setSuccess(`VIP access assigned for ${label}. Login credentials (email and password) sent to ${email.trim()}.`);
 
       setStateName("");
       setCities("");
       setCitySlug("");
       setEmail("");
+      setPhone("");
       setExpiresInDays(7);
       await loadAssignments();
     } catch (err) {
@@ -201,22 +203,6 @@ export default function VipPage() {
     }
   }
 
-  async function handleCopyPasswordLink(itemEmail: string, itemId?: string) {
-    try {
-      const res = await fetch(`/api/admin/vip?setupEmail=${encodeURIComponent(itemEmail)}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.setupUrl) {
-        await navigator.clipboard.writeText(data.setupUrl);
-        setCopiedId(itemId || itemEmail);
-        setTimeout(() => setCopiedId(null), 3000);
-      }
-    } catch {
-      alert("Failed to generate password link.");
-    }
-  }
-
   function getAssignedDays(item: Assignment) {
     const start = new Date(item.assignedAt).getTime();
     const end = new Date(item.expiresAt).getTime();
@@ -229,30 +215,26 @@ export default function VipPage() {
   return (
     <main className="min-h-screen bg-red-50 p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="mx-auto max-w-5xl">
-        <h1 className="text-3xl font-black text-red-950">VIP Access Control</h1>
-        <p className="mt-2 text-red-900">
-          Assign City or State level VIP access. The VIP receives an email with a secure link to create their password and access their dedicated VIP Panel.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black text-red-950">VIP Access Control</h1>
+            <p className="mt-2 text-red-900">
+              Assign City or State level VIP access. The VIP's phone number serves as their password to access their dedicated VIP Panel.
+            </p>
+          </div>
+          <a
+            href="/api/admin/go-to-vip"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#450a0a] px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#7f1d1d] transition shrink-0"
+          >
+            <span>Go to VIP Dashboard</span>
+            <span>&rarr;</span>
+          </a>
+        </div>
 
         {error && <div className="mt-4 rounded-xl bg-red-100 p-3 text-sm text-red-800">{error}</div>}
         {success && (
-          <div className="mt-4 rounded-xl bg-green-100 p-4 text-sm text-green-900">
-            <p className="font-semibold">{success}</p>
-            {lastSetupUrl && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-green-800 font-mono break-all">{lastSetupUrl}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(lastSetupUrl);
-                    alert("Create password link copied to clipboard!");
-                  }}
-                  className="rounded-lg bg-green-800 px-2.5 py-1 text-xs font-bold text-white hover:bg-green-900"
-                >
-                  Copy Link
-                </button>
-              </div>
-            )}
+          <div className="mt-4 rounded-xl bg-green-100 p-4 text-sm text-green-900 font-semibold">
+            {success}
           </div>
         )}
 
@@ -351,6 +333,18 @@ export default function VipPage() {
             </div>
 
             <div>
+              <label className="mb-1 block text-sm font-semibold text-red-950">Phone No. (Used as Password)</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                placeholder="e.g. 9876543210"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-semibold text-red-950">Expires In (Days)</label>
               <input
                 type="number"
@@ -401,60 +395,60 @@ export default function VipPage() {
                         className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           item.status === "active"
                             ? "bg-green-100 text-green-900"
-                            : item.status === "inactive"
-                              ? "bg-red-100 text-red-900"
-                              : "bg-yellow-100 text-yellow-900"
+                            : "bg-red-100 text-red-900"
                         }`}
                       >
-                        {item.status === "inactive" ? "Inactive" : item.status === "active" ? "Active" : "Pending Setup"}
+                        {item.status === "inactive" ? "Inactive" : "Active"}
                       </span>
                     </div>
 
                     <p className="mt-2 text-sm text-red-900 break-all font-medium">Email: {item.email}</p>
-                    <p className="text-xs text-red-700">Assigned: {formatDisplayDate(item.assignedAt)}</p>
+                    <p className="text-sm font-bold text-red-950 break-all">Password: {item.phone || "—"}</p>
+                    <p className="text-xs text-red-700 mt-1">Assigned: {formatDisplayDate(item.assignedAt)}</p>
                     <p className="text-xs text-red-700">Expires: {formatDisplayDateTime(item.expiresAt)}</p>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleCopyPasswordLink(item.email, item._id)}
-                      className="rounded-lg bg-pink-100 px-3 py-2 text-xs font-bold text-red-900 hover:bg-pink-200 transition"
+                  <div className="flex flex-col items-start sm:items-end gap-2.5">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleExtend(item._id, -7)}
+                        className="rounded-lg bg-orange-100 px-3 py-2 text-xs font-semibold text-orange-900 hover:bg-orange-200"
+                      >
+                        -7 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExtend(item._id, 7)}
+                        className="rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-900 hover:bg-blue-200"
+                      >
+                        +7 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(item._id, item.status !== "active")}
+                        className={`rounded-lg px-3 py-2 text-xs font-semibold ${
+                          item.status === "active"
+                            ? "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
+                            : "bg-green-100 text-green-900 hover:bg-green-200"
+                        }`}
+                      >
+                        {item.status === "active" ? "Mark Inactive" : "Mark Active"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item._id)}
+                        className="rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-900 hover:bg-red-200"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    <a
+                      href="/api/admin/go-to-vip"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#450a0a] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#7f1d1d] transition shadow-sm"
                     >
-                      {copiedId === (item._id || item.email) ? "✓ Copied Link!" : "Copy Password Link"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleExtend(item._id, -7)}
-                      className="rounded-lg bg-orange-100 px-3 py-2 text-xs font-semibold text-orange-900 hover:bg-orange-200"
-                    >
-                      -7 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleExtend(item._id, 7)}
-                      className="rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-900 hover:bg-blue-200"
-                    >
-                      +7 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(item._id, item.status !== "active")}
-                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${
-                        item.status === "active"
-                          ? "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
-                          : "bg-green-100 text-green-900 hover:bg-green-200"
-                      }`}
-                    >
-                      {item.status === "active" ? "Mark Inactive" : "Mark Active"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item._id)}
-                      className="rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-900 hover:bg-red-200"
-                    >
-                      Delete
-                    </button>
+                      Go to VIP Dashboard &rarr;
+                    </a>
                   </div>
                 </div>
               </div>

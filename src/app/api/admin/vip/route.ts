@@ -7,7 +7,7 @@ import {
   deleteVipAssignment,
   syncVipStatus,
   extendVipAssignment,
-  createVipSetupToken,
+  upsertVipUserWithPhone,
 } from "@/lib/models/vip";
 import { sendVipInviteEmail } from "@/lib/email";
 
@@ -15,16 +15,6 @@ export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (!ctx || !canAccess(ctx, "vip")) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
-
-  const { searchParams } = new URL(request.url);
-  const setupEmail = searchParams.get("setupEmail");
-
-  if (setupEmail) {
-    const token = await createVipSetupToken(setupEmail);
-    const origin = request.nextUrl.origin;
-    const setupUrl = `${origin}/vip/create-password?token=${token}&email=${encodeURIComponent(setupEmail)}`;
-    return NextResponse.json({ success: true, setupUrl });
   }
 
   await syncVipStatus();
@@ -41,6 +31,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => null);
     const email = String(body?.email ?? "").trim().toLowerCase();
+    const phone = String(body?.phone ?? "").trim();
     const type = (body?.type === "state" ? "state" : "city") as "state" | "city";
     const expiresInDays = Number(body?.expiresInDays ?? 7);
     const origin = request.nextUrl.origin;
@@ -52,12 +43,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!phone) {
+      return NextResponse.json(
+        { error: "VIP owner phone number (used as password) is required." },
+        { status: 400 }
+      );
+    }
+
     const created: Array<{
       _id?: string;
       type: "city" | "state";
       stateName?: string;
       cityName?: string;
       email: string;
+      phone?: string;
       expiresAt: Date;
     }> = [];
 
@@ -78,6 +77,7 @@ export async function POST(request: NextRequest) {
         type: "state",
         stateName,
         email,
+        phone,
         assignedBy: ctx.role === "main" ? "main-admin" : ctx.email,
         expiresInDays: Number.isFinite(expiresInDays) && expiresInDays > 0 ? expiresInDays : 7,
       });
@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
         type: "state",
         stateName: assignment.stateName,
         email: assignment.email,
+        phone: assignment.phone,
         expiresAt: new Date(assignment.expiresAt),
       });
     } else {
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
           cityName,
           citySlug,
           email,
+          phone,
           assignedBy: ctx.role === "main" ? "main-admin" : ctx.email,
           expiresInDays: Number.isFinite(expiresInDays) && expiresInDays > 0 ? expiresInDays : 7,
         });
@@ -129,23 +131,23 @@ export async function POST(request: NextRequest) {
           type: "city",
           cityName: assignment.cityName,
           email: assignment.email,
+          phone: assignment.phone,
           expiresAt: new Date(assignment.expiresAt),
         });
       }
     }
 
-    // Generate password setup token and links
-    const setupToken = await createVipSetupToken(email);
-    const createPasswordUrl = `${origin}/vip/create-password?token=${setupToken}&email=${encodeURIComponent(email)}`;
-    const loginUrl = `${origin}/vip/login`;
+    // Upsert VIP user record with phone number as their password
+    await upsertVipUserWithPhone(email, phone);
 
+    const loginUrl = `${origin}/vip/login`;
     const latestExpiry = created[0]?.expiresAt || new Date();
 
-    // Send invitation email with create password link
+    // Send notification email containing VIP login credentials
     await sendVipInviteEmail({
       to: email,
       areaLabel,
-      createPasswordUrl,
+      phone,
       loginUrl,
       expiresAt: latestExpiry,
     });
@@ -154,7 +156,6 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         assignments: created,
-        setupUrl: createPasswordUrl,
         loginUrl,
       },
       { status: 201 }

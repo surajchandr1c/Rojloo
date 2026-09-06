@@ -198,13 +198,13 @@ export function sendOtpEmail({
 export function sendVipInviteEmail({
   to,
   areaLabel,
-  createPasswordUrl,
+  phone,
   loginUrl,
   expiresAt,
 }: {
   to: string;
   areaLabel: string;
-  createPasswordUrl: string;
+  phone: string;
   loginUrl: string;
   expiresAt: Date | string;
 }) {
@@ -213,7 +213,7 @@ export function sendVipInviteEmail({
     dateStyle: "medium",
     timeStyle: "short",
   });
-  const subject = `VIP Access Granted for ${areaLabel} - Create Your Password`;
+  const subject = `VIP Access Granted for ${areaLabel} - Your Login Details`;
 
   const text = [
     `Hello,`,
@@ -221,10 +221,11 @@ export function sendVipInviteEmail({
     `You have been granted VIP Control Panel access for: ${areaLabel}.`,
     `Your access is valid until: ${expiryFormatted}.`,
     ``,
-    `To activate your account and set up your VIP password, click the link below:`,
-    createPasswordUrl,
+    `Your Login Credentials:`,
+    `Email: ${to}`,
+    `Password: ${phone}`,
     ``,
-    `After creating your password, you can access your VIP Control Panel at:`,
+    `Log in to your VIP Control Panel at:`,
     loginUrl,
     ``,
     `Please contact the admin team if you need any assistance.`,
@@ -243,15 +244,19 @@ export function sendVipInviteEmail({
     `<tr><td style="text-align:center;">`,
     `<h1 style="color:#881337;font-size:24px;font-weight:900;margin:0 0 8px;letter-spacing:-0.5px;">${siteName} VIP Portal</h1>`,
     `<p style="color:#4c0519;font-size:15px;line-height:22px;margin:0 0 20px;">You have been assigned VIP access control for:</p>`,
-    `<div style="background:#fff1f2;border:2px solid #fb7185;border-radius:16px;padding:16px;margin:0 auto 24px;text-align:center;">`,
+    `<div style="background:#fff1f2;border:2px solid #fb7185;border-radius:16px;padding:16px;margin:0 auto 20px;text-align:center;">`,
     `<span style="font-size:20px;font-weight:800;color:#9f1239;display:block;">${areaLabel}</span>`,
     `<span style="font-size:12px;color:#e11d48;font-weight:600;display:block;margin-top:4px;">Valid until ${expiryFormatted}</span>`,
     `</div>`,
-    `<p style="color:#4c0519;font-size:14px;line-height:22px;margin:0 0 24px;">Click the button below to create your password and set up your VIP account.</p>`,
-    `<div style="margin:24px 0;">`,
-    `<a href="${createPasswordUrl}" style="background-color:#450a0a;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:14px;font-weight:700;font-size:15px;display:inline-block;box-shadow:0 4px 10px rgba(69,10,10,0.25);">Create Your Password &rarr;</a>`,
+    `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:14px;padding:16px;margin:0 auto 24px;text-align:left;">`,
+    `<h3 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#991b1b;text-transform:uppercase;letter-spacing:0.5px;">Your Login Credentials</h3>`,
+    `<p style="margin:4px 0;font-size:13px;color:#450a0a;"><strong>Email:</strong> <span style="font-family:monospace;">${to}</span></p>`,
+    `<p style="margin:4px 0;font-size:13px;color:#450a0a;"><strong>Password:</strong> <span style="font-family:monospace;font-weight:bold;">${phone}</span></p>`,
     `</div>`,
-    `<p style="color:#881337;font-size:13px;line-height:20px;margin:20px 0 8px;">After setting your password, sign in anytime at:</p>`,
+    `<div style="margin:24px 0;">`,
+    `<a href="${loginUrl}" style="background-color:#450a0a;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:14px;font-weight:700;font-size:15px;display:inline-block;box-shadow:0 4px 10px rgba(69,10,10,0.25);">Login to VIP Panel &rarr;</a>`,
+    `</div>`,
+    `<p style="color:#881337;font-size:13px;line-height:20px;margin:20px 0 8px;">Or copy and paste this link in your browser:</p>`,
     `<p style="margin:0 0 20px;"><a href="${loginUrl}" style="color:#be123c;font-weight:600;font-size:13px;word-break:break-all;">${loginUrl}</a></p>`,
     `<div style="margin-top:28px;padding-top:16px;border-top:1px solid #ffe4e6;font-size:12px;color:#9ca3af;text-align:center;">`,
     `This is an automated VIP notification from ${siteName}. If you were not expecting this, please contact support.`,
