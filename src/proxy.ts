@@ -6,6 +6,47 @@ const adminToken = (process.env.ADMIN_TOKEN ?? "").trim().replace(/^['"]|['"]$/g
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // --- VIP Route Protection ---
+  if (pathname.startsWith("/vip") || pathname.startsWith("/api/vip")) {
+    const isVipLoginPage =
+      pathname === "/vip/login" || pathname.startsWith("/vip/login/");
+    const isVipCreatePasswordPage =
+      pathname === "/vip/create-password" ||
+      pathname.startsWith("/vip/create-password/");
+    const isVipLoginApi =
+      pathname === "/api/vip/login" || pathname.startsWith("/api/vip/login/");
+    const isVipCreatePasswordApi =
+      pathname === "/api/vip/create-password" ||
+      pathname.startsWith("/api/vip/create-password/");
+
+    if (
+      isVipLoginPage ||
+      isVipCreatePasswordPage ||
+      isVipLoginApi ||
+      isVipCreatePasswordApi
+    ) {
+      return NextResponse.next();
+    }
+
+    const vipCookie = request.cookies.get("rojlo_vip")?.value;
+    const adminCookie = request.cookies.get("rojlo_admin")?.value;
+
+    // If VIP session cookie or admin cookie is present, allow through
+    if (vipCookie || (adminToken && adminCookie === adminToken) || adminCookie) {
+      return NextResponse.next();
+    }
+
+    if (pathname.startsWith("/api/vip")) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const url = request.nextUrl.clone();
+    url.pathname = "/vip/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // --- Admin Route Protection ---
   const isLoginPage =
     pathname === "/admin/login" || pathname.startsWith("/admin/login/");
   const isLoginApi =
@@ -67,5 +108,10 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/vip/:path*",
+    "/api/vip/:path*",
+  ],
 };

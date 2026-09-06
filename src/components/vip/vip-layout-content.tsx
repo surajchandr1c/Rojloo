@@ -22,6 +22,10 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
     return <div className="min-h-screen bg-pink-50 text-red-950">{children}</div>;
   }
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-pink-50 text-red-950">
       {/* Desktop Sidebar - visible on md+ screens when authenticated */}
