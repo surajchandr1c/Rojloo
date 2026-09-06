@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 export default function ProfileView() {
   const router = useRouter();
   const ready = useAuthGuard();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
   if (!ready) return null;
 
@@ -31,7 +31,7 @@ export default function ProfileView() {
         </div>
 
         <div className="mt-6">
-          <ProfileSection profile={user} />
+          <ProfileSection profile={user} loading={isLoading} />
         </div>
       </SectionPanel>
     </main>

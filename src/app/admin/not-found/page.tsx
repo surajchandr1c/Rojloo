@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
+import { AdminStatSkeleton, AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type NotFoundItem = {
   _id: string;
@@ -202,7 +203,9 @@ export default function AdminNotFoundPage() {
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-red-950">{totalCount}</div>
+          <div className="mt-3 text-3xl font-black text-red-950">
+            {loading ? <AdminStatSkeleton /> : totalCount}
+          </div>
           <p className="mt-1 text-xs text-red-700/60 font-medium">Distinct broken paths</p>
         </div>
 
@@ -215,7 +218,9 @@ export default function AdminNotFoundPage() {
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-rose-600">{totalHits}</div>
+          <div className="mt-3 text-3xl font-black text-rose-600">
+            {loading ? <AdminStatSkeleton /> : totalHits}
+          </div>
           <p className="mt-1 text-xs text-red-700/60 font-medium">Total user occurrences</p>
         </div>
 
@@ -228,7 +233,9 @@ export default function AdminNotFoundPage() {
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-amber-950">{unresolvedCount}</div>
+          <div className="mt-3 text-3xl font-black text-amber-950">
+            {loading ? <AdminStatSkeleton /> : unresolvedCount}
+          </div>
           <p className="mt-1 text-xs text-amber-800/70 font-medium">Require redirect or page</p>
         </div>
 
@@ -241,7 +248,9 @@ export default function AdminNotFoundPage() {
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-emerald-950">{resolvedCount}</div>
+          <div className="mt-3 text-3xl font-black text-emerald-950">
+            {loading ? <AdminStatSkeleton /> : resolvedCount}
+          </div>
           <p className="mt-1 text-xs text-emerald-800/70 font-medium">Marked as handled</p>
         </div>
       </div>
@@ -318,9 +327,43 @@ export default function AdminNotFoundPage() {
       {/* Logs Table Card */}
       <div className="rounded-2xl border border-red-100 bg-white shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-24 text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-red-600 border-r-transparent mb-3" />
-            <div className="text-sm font-bold text-red-950">Loading 404 logs...</div>
+          <div className="overflow-x-auto" aria-busy="true" aria-label="Loading 404 logs">
+            <table className="w-full min-w-[700px] text-left text-xs">
+              <thead className="border-b border-red-100 bg-red-50/60 text-[11px] font-bold uppercase tracking-wider text-red-900/80">
+                <tr>
+                  <th className="px-5 py-4">Broken URL / Requested Path</th>
+                  <th className="px-4 py-4 text-center">Hits</th>
+                  <th className="px-4 py-4">Last Seen</th>
+                  <th className="px-5 py-4">Traffic Source / Referrer</th>
+                  <th className="px-4 py-4 text-center">Status</th>
+                  <th className="px-5 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-red-50">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-5 py-4">
+                      <div className="h-4 w-48 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="mx-auto h-4 w-12 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="h-4 w-28 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="h-4 w-36 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="mx-auto h-6 w-20 animate-pulse rounded-full bg-pink-200/60 motion-reduce:animate-none" />
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="ml-auto h-7 w-20 animate-pulse rounded-full bg-pink-200/60 motion-reduce:animate-none" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : logs.length === 0 ? (
           <div className="py-24 text-center px-4">

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
+import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type SubAdminRow = {
   _id: string;
@@ -70,7 +71,10 @@ export default function SubAdminList() {
       </p>
 
       {loading ? (
-        <p className="mt-6 text-red-900">Loading...</p>
+        <AdminTableSkeleton
+          headers={["Email", "Access", "Last Login", "Actions"]}
+          minWidth="min-w-[550px]"
+        />
       ) : admins.length === 0 ? (
         <p className="mt-6 text-red-900">No sub-admins found.</p>
       ) : (

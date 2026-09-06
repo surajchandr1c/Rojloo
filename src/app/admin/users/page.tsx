@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type User = {
   _id?: string;
@@ -49,7 +50,10 @@ export default function AdminUsers() {
       <p className="mt-2 text-red-900">Manage registered users.</p>
 
       {loading ? (
-        <p className="mt-6 text-red-900">Loading...</p>
+        <AdminTableSkeleton
+          headers={["Name", "Email", "Phone", "Coins", "Actions", "Ads"]}
+          minWidth="min-w-[600px]"
+        />
       ) : users.length === 0 ? (
         <p className="mt-6 text-red-900">No users found.</p>
       ) : (

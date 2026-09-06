@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDisplayDate } from "@/lib/date";
+import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type DynamicCity = {
   _id?: string;
@@ -311,7 +312,17 @@ export default function AdminCities() {
       </div>
 
       {loading ? (
-        <p className="mt-6 text-red-900">Loading...</p>
+        <AdminTableSkeleton
+          headers={[
+            "Select",
+            "Name",
+            "State",
+            "Country",
+            "Last updated",
+            "Actions",
+          ]}
+          minWidth="min-w-[640px]"
+        />
       ) : filteredCities.length === 0 ? (
         <p className="mt-6 text-red-900">No cities found.</p>
       ) : (

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
+import { AdminPaymentRequestCardsSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type PaymentRequest = {
   _id?: string;
@@ -233,7 +234,7 @@ export default function PaymentRequestPage() {
 
         <div className="mt-8 space-y-4">
           {loading ? (
-            <p className="text-red-900">Loading payment requests...</p>
+            <AdminPaymentRequestCardsSkeleton />
           ) : filteredRequests.length === 0 ? (
             <p className="text-red-900">
               No payment requests found for {filter} status.

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button";
 import { SectionPanel } from "@/components/ui/card";
 import { useAuthGuard } from "@/components/post-ad/use-auth-guard";
+import { PaymentHistorySkeleton } from "@/components/skeletons/post-ad-skeletons";
 
 type PaymentHistoryItem = {
   _id?: string;
@@ -105,9 +106,7 @@ export default function Page() {
         </div>
 
         {loading ? (
-          <p className="mt-6 rounded-[1.5rem] bg-pink-50 p-5 text-red-900">
-            Loading payment history...
-          </p>
+          <PaymentHistorySkeleton />
         ) : history.length === 0 ? (
           <p className="mt-6 rounded-[1.5rem] bg-pink-50 p-5 text-red-900">
             You have no payments yet.

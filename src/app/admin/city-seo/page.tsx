@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
+import { AdminCitySeoSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type BlockType = "h1" | "h2" | "h3" | "p";
 
@@ -353,11 +354,7 @@ function CitySeoContent() {
   const score = Math.round((passed / checks.length) * 100);
 
   if (loading) {
-    return (
-      <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-        <p className="text-red-900">Loading...</p>
-      </main>
-    );
+    return <AdminCitySeoSkeleton />;
   }
 
   return (
@@ -723,13 +720,7 @@ function CitySeoContent() {
 
 export default function AdminCitySeo() {
   return (
-    <Suspense
-      fallback={
-        <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-          <p className="text-red-900">Loading...</p>
-        </main>
-      }
-    >
+    <Suspense fallback={<AdminCitySeoSkeleton />}>
       <CitySeoContent />
     </Suspense>
   );

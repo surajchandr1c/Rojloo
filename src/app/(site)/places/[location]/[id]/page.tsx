@@ -10,6 +10,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { getPublicAdById, listAdsByCity } from "@/lib/models/ad";
 import { getCityBySlug } from "@/lib/models/city";
 import { DEFAULT_SERVICE_RATES } from "@/components/post-ad/types";
+import { AdDetailSkeleton } from "@/components/skeletons/places-skeletons";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -38,7 +39,7 @@ export default async function AdPage({
 }) {
   const { location, id } = await params;
   return (
-    <Suspense fallback={<main className="p-10 text-red-900">Loading…</main>}>
+    <Suspense fallback={<AdDetailSkeleton />}>
       <AdContent location={location} id={id} />
     </Suspense>
   );

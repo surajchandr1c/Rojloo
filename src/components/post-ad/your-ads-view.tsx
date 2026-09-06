@@ -13,12 +13,15 @@ export default function YourAdsView() {
   const router = useRouter();
   const ready = useAuthGuard();
   const [ads, setAds] = useState<Ad[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const loadAds = () => {
+    setLoading(true);
     authenticatedFetch("/api/ads")
       .then((r) => r.json())
       .then((data) => setAds(data.ads ?? []))
-      .catch(() => setAds([]));
+      .catch(() => setAds([]))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -58,6 +61,7 @@ export default function YourAdsView() {
             ads={activeAds}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            loading={loading}
           />
         </div>
       </SectionPanel>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type Ad = {
   _id?: string;
@@ -183,7 +184,9 @@ export default function AdminAds() {
       </div>
 
       {loading ? (
-        <p className="mt-6 text-red-900">Loading...</p>
+        <AdminTableSkeleton
+          headers={["Ad", "Category", "City", "Status", "Actions"]}
+        />
       ) : filteredAds.length === 0 ? (
         <p className="mt-6 text-red-900">
           {selectedSlug && ads.length > 0

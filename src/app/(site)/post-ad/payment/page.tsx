@@ -6,6 +6,7 @@ import Button from "@/components/ui/button";
 import { SectionPanel } from "@/components/ui/card";
 import { useAuthGuard } from "@/components/post-ad/use-auth-guard";
 import { paymentInfo, siteInfo } from "@/lib/site";
+import { PaymentOptionsSkeleton } from "@/components/skeletons/post-ad-skeletons";
 
 type UPI = {
   _id?: string;
@@ -316,7 +317,7 @@ function PaymentView() {
                 )}
               </div>
               {loading ? (
-                <p className="mt-6 text-red-900">Loading payment options...</p>
+                <PaymentOptionsSkeleton />
               ) : upis.length > 0 ? (
                 <div className="mt-6 space-y-6">
                   {upis.map((upi) => (

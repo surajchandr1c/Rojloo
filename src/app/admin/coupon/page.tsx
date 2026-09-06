@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { EditDeleteButtons } from "@/components/ui/action-buttons";
 import { formatDisplayDate } from "@/lib/date";
+import { AdminCouponCardsSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type Coupon = {
   _id?: string;
@@ -322,7 +323,7 @@ export default function CouponPage() {
           <h2 className="text-xl font-bold text-red-950">Existing Coupons</h2>
 
           {loading ? (
-            <p className="text-red-900">Loading coupons...</p>
+            <AdminCouponCardsSkeleton />
           ) : coupons.length === 0 ? (
             <p className="text-red-900">No coupons added yet.</p>
           ) : (

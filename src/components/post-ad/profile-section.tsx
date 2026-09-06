@@ -2,15 +2,21 @@
 
 import { formatDisplayDate } from "@/lib/date";
 import type { ProfileUser } from "./types";
+import { ProfileSkeleton } from "@/components/skeletons/post-ad-skeletons";
 
 export default function ProfileSection({
   profile,
+  loading = false,
 }: {
   profile: ProfileUser | null;
+  loading?: boolean;
 }) {
   return (
     <section className="rounded-[1.75rem] bg-white p-5 sm:p-8">
-      <div className="mt-6 space-y-4">
+      {loading ? (
+        <ProfileSkeleton />
+      ) : (
+        <div className="mt-6 space-y-4">
         <div className="rounded-2xl bg-pink-50 p-4">
           <p className="text-sm font-semibold text-red-700">Name</p>
           <p className="mt-1 font-semibold text-red-950 break-words">
@@ -36,6 +42,7 @@ export default function ProfileSection({
           </p>
         </div>
       </div>
+      )}
     </section>
   );
 }

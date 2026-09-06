@@ -10,6 +10,7 @@ import { listAdsByCity } from "@/lib/models/ad";
 import { getCitySeo } from "@/lib/models/city-seo";
 import { getCityBySlug } from "@/lib/models/city";
 import { listLocalAreas } from "@/lib/models/localArea";
+import { CityPageSkeleton } from "@/components/skeletons/places-skeletons";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -53,7 +54,7 @@ export default async function CityPage({
 }) {
   const { location: slug } = await params;
   return (
-    <Suspense fallback={<main className="p-10 text-red-900">Loading…</main>}>
+    <Suspense fallback={<CityPageSkeleton />}>
       <CityContent slug={slug} />
     </Suspense>
   );

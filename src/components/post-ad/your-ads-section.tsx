@@ -3,6 +3,7 @@
 import type { Ad } from "./types";
 import Button from "@/components/ui/button";
 import { cityPlaces } from "@/lib/places";
+import { YourAdsListSkeleton } from "@/components/skeletons/post-ad-skeletons";
 
 function getCityUrl(cityName: string) {
   if (!cityName) return "/places";
@@ -22,10 +23,12 @@ export default function YourAdsSection({
   ads,
   onEdit,
   onDelete,
+  loading = false,
 }: {
   ads: Ad[];
   onEdit: (ad: Ad) => void;
   onDelete: (ad: Ad) => void;
+  loading?: boolean;
 }) {
   return (
     <section className="rounded-[1.75rem] bg-white p-6 sm:p-8">
@@ -34,7 +37,9 @@ export default function YourAdsSection({
         Track the ads you have posted or saved as drafts.
       </p>
 
-      {ads.length === 0 ? (
+      {loading ? (
+        <YourAdsListSkeleton />
+      ) : ads.length === 0 ? (
         <p className="mt-6 rounded-[1.5rem] bg-pink-50 p-5 text-red-900">
           You have not posted any ads yet.
         </p>

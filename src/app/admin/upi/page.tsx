@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { EditDeleteButtons } from "@/components/ui/action-buttons";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { AdminUpiCardsSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type UPI = {
   _id?: string;
@@ -300,7 +301,7 @@ export default function AdminUPI() {
             <h2 className="text-xl font-bold text-red-950">Existing UPIs</h2>
 
             {loading ? (
-              <p className="text-red-900">Loading UPIs...</p>
+              <AdminUpiCardsSkeleton />
             ) : upis.length === 0 ? (
               <p className="text-red-900">No UPIs added yet.</p>
             ) : (

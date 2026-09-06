@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminStateHierarchySkeleton } from "@/components/skeletons/admin-skeletons";
 
 type StateRecord = {
   _id?: string;
@@ -1070,7 +1071,7 @@ export default function AdminStates() {
         </h2>
 
         {loading ? (
-          <p className="text-red-900">Loading...</p>
+          <AdminStateHierarchySkeleton />
         ) : states.length === 0 ? (
           <p className="text-red-900">No states added yet.</p>
         ) : filteredHierarchy.length === 0 ? (

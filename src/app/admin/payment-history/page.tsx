@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
+import { AdminPaymentHistoryCardsSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type PaymentHistory = {
   _id?: string;
@@ -133,7 +134,7 @@ export default function PaymentHistoryPage() {
         {/* Payment History List */}
         <div className="mt-8 space-y-4">
           {loading ? (
-            <p className="text-red-900">Loading payment history...</p>
+            <AdminPaymentHistoryCardsSkeleton />
           ) : filteredHistory.length === 0 ? (
             <p className="text-red-900">
               No payment history found{searchEmail ? " for this name/email" : ""}.

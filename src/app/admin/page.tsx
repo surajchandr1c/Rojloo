@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminStatSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type PaymentRequest = {
   status?: "pending" | "confirmed" | "declined";
@@ -142,7 +143,7 @@ export default function AdminDashboard() {
             >
               <p className="text-sm font-medium text-red-900">{card.label}</p>
               <p className="mt-2 text-3xl sm:text-4xl font-black text-red-950 break-words">
-                {loading ? "..." : card.value}
+                {loading ? <AdminStatSkeleton /> : card.value}
               </p>
             </a>
           ))}
@@ -159,7 +160,7 @@ export default function AdminDashboard() {
             >
               <p className="text-sm font-medium text-red-900">{card.label}</p>
               <p className="mt-3 text-2xl sm:text-3xl font-black text-red-950 break-words">
-                {loading ? "..." : card.value}
+                {loading ? <AdminStatSkeleton /> : card.value}
               </p>
             </div>
           ))}
