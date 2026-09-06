@@ -4,9 +4,9 @@ import { navLinks, policyLinks } from "@/lib/nav";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-red-950/30 bg-red-950 px-4 py-8 text-white w-full">
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
-        <div className="flex items-center gap-4 sm:gap-6 sm:col-span-2">
+    <footer className="border-t border-red-950/30 bg-red-950 px-3 sm:px-6 lg:px-8 py-8 text-white w-full">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+        <div className="flex items-center gap-3.5 sm:gap-5 sm:col-span-2 -ml-2 sm:-ml-3">
           <Link href="/" className="shrink-0 hover:opacity-90 transition">
             <Image
               src="/favicon.png"
@@ -18,9 +18,10 @@ export default function Footer() {
           </Link>
           <div className="min-w-0">
             <p className="text-2xl sm:text-3xl font-black tracking-tight !text-white">rojlo</p>
-            <p className="mt-2 max-w-sm text-xs sm:text-sm leading-relaxed text-red-100">
-              Find services, explore places, and post ads in one simple local
-              marketplace.
+            <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-red-100 max-w-[280px]">
+              Find services, explore places,<br />
+              and post ads in one simple<br />
+              local marketplace.
             </p>
           </div>
         </div>
