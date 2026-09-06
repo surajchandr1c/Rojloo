@@ -61,7 +61,7 @@ export default function YourAdsSection({
                   href={getCityUrl(ad.city)}
                   variant="solid"
                   size="sm"
-                  className="!text-black"
+                  className="!text-white"
                 >
                   View
                 </Button>
