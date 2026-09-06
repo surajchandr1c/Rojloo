@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { siteConfig } from "@/lib/config/site";
+import GlobalPageLoader from "@/components/ui/global-page-loader";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full bg-pink-50 text-red-950">
-        {children}
+        <GlobalPageLoader>
+          {children}
+        </GlobalPageLoader>
       </body>
     </html>
   );
