@@ -1,4 +1,4 @@
-import { readStore, writeStore } from "@/lib/persist";
+import { readStore, writeStore, invalidateStoreCache } from "@/lib/persist";
 import {
   type CoinPackage,
   DEFAULT_PACKAGES,
@@ -10,16 +10,13 @@ export { DEFAULT_PACKAGES };
 export async function getCoinPackages(): Promise<CoinPackage[]> {
   const store = await readStore();
   const packages = (store.coinPackages ?? []) as CoinPackage[];
+  const isInitialized = Boolean((store as Record<string, unknown>).coinPackagesInitialized);
 
-  const isLegacySet =
-    packages.length === 4 &&
-    packages[0]?.coins === 50 &&
-    packages[1]?.coins === 200;
-
-  if (packages.length > 0 && !isLegacySet) {
-    return packages.sort((a, b) => a.coins - b.coins);
+  if (isInitialized || packages.length > 0) {
+    return [...packages].sort((a, b) => Number(a.coins) - Number(b.coins));
   }
 
+  // Initial seeding on fresh database
   const seeded = DEFAULT_PACKAGES.map((pkg, index) => ({
     _id: `coin-package-${index + 1}`,
     ...pkg,
@@ -28,6 +25,7 @@ export async function getCoinPackages(): Promise<CoinPackage[]> {
   }));
 
   store.coinPackages = seeded;
+  (store as Record<string, unknown>).coinPackagesInitialized = true;
   await writeStore(store);
 
   return seeded;
@@ -35,6 +33,7 @@ export async function getCoinPackages(): Promise<CoinPackage[]> {
 
 export async function saveCoinPackages(
   packages: Array<{
+    _id?: string;
     coins: number;
     price: number;
     originalPrice?: number;
@@ -44,13 +43,18 @@ export async function saveCoinPackages(
     popular?: boolean;
   }>
 ): Promise<CoinPackage[]> {
-  const cleaned = packages
+  const cleaned: CoinPackage[] = packages
     .filter((pkg) => pkg && Number(pkg.coins) > 0 && Number(pkg.price) >= 0)
-    .map((pkg) => ({
-      _id: `coin-package-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    .map((pkg, idx) => ({
+      _id: pkg._id && !pkg._id.startsWith("pkg-")
+        ? String(pkg._id)
+        : `coin-package-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
       coins: Number(pkg.coins),
       price: Number(pkg.price),
-      originalPrice: pkg.originalPrice ? Number(pkg.originalPrice) : undefined,
+      originalPrice:
+        pkg.originalPrice && Number(pkg.originalPrice) > 0
+          ? Number(pkg.originalPrice)
+          : undefined,
       breakdown: typeof pkg.breakdown === "string" ? pkg.breakdown.trim() : "",
       discount: typeof pkg.discount === "string" ? pkg.discount.trim() : "",
       label: typeof pkg.label === "string" ? pkg.label.trim() : "",
@@ -60,13 +64,11 @@ export async function saveCoinPackages(
     }));
 
   const store = await readStore();
-  store.coinPackages = cleaned.length > 0 ? cleaned : DEFAULT_PACKAGES.map((pkg, index) => ({
-    _id: `coin-package-${index + 1}`,
-    ...pkg,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }));
+  store.coinPackages = cleaned;
+  (store as Record<string, unknown>).coinPackagesInitialized = true;
 
   await writeStore(store);
-  return store.coinPackages as CoinPackage[];
+  invalidateStoreCache();
+
+  return [...cleaned].sort((a, b) => Number(a.coins) - Number(b.coins));
 }

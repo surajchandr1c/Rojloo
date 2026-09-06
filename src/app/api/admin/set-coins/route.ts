@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { getCoinPackages, saveCoinPackages } from "@/lib/models/coin-package";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req: NextRequest) {
   const ctx = await getAdminContext(req);
 
@@ -11,7 +14,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const packages = await getCoinPackages();
-    return NextResponse.json({ packages, success: true });
+    return NextResponse.json(
+      { packages, success: true },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch coin packages:", error);
     return NextResponse.json(
@@ -40,7 +52,16 @@ export async function POST(req: NextRequest) {
     }
 
     const saved = await saveCoinPackages(packages);
-    return NextResponse.json({ packages: saved, success: true });
+    return NextResponse.json(
+      { packages: saved, success: true },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to save coin packages:", error);
     return NextResponse.json(

@@ -27,14 +27,17 @@ export default function SetCoinsPage() {
   const loadPackages = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/set-coins", { credentials: "include" });
+      const res = await fetch(`/api/admin/set-coins?_t=${Date.now()}`, {
+        credentials: "include",
+        cache: "no-store",
+      });
       if (res.status === 401) {
         router.replace("/admin/login");
         return;
       }
 
       const data = await res.json();
-      const items = Array.isArray(data.packages) && data.packages.length > 0 ? data.packages : [];
+      const items = Array.isArray(data.packages) ? data.packages : [];
 
       if (items.length > 0) {
         setPackages(
@@ -50,8 +53,7 @@ export default function SetCoinsPage() {
           }))
         );
       } else {
-        // Fallback to PDF default packages
-        setPackages(DEFAULT_PACKAGES.map((pkg, idx) => ({ _id: `pkg-${idx + 1}`, ...pkg })));
+        setPackages([]);
       }
     } catch (err) {
       console.error(err);
@@ -94,18 +96,86 @@ export default function SetCoinsPage() {
     setPackages((prev) => [...prev, emptyPackage()]);
   }
 
-  function handleDeletePackage(index: number) {
-    setPackages((prev) => prev.filter((_, i) => i !== index));
+  async function handleDeletePackage(index: number) {
+    const target = packages[index];
+    const confirmMsg = target?.coins
+      ? `Are you sure you want to remove the ${target.coins} coins package? This will be removed from the Buy Coins page immediately.`
+      : "Are you sure you want to remove this package? This will be removed from the Buy Coins page immediately.";
+    if (!window.confirm(confirmMsg)) return;
+
+    const remaining = packages.filter((_, i) => i !== index);
+    setPackages(remaining);
+    setError("");
+    setSuccess("");
+    setSaving(true);
+
+    try {
+      const payload = remaining.filter((pkg) => Number(pkg.coins) > 0 && Number(pkg.price) >= 0);
+      const res = await fetch("/api/admin/set-coins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ packages: payload }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Failed to remove package from server.");
+        setPackages(packages); // rollback
+        return;
+      }
+
+      setSuccess("Package removed successfully and changes saved to database.");
+      if (Array.isArray(data.packages)) {
+        setPackages(data.packages);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Network error while removing package.");
+      setPackages(packages); // rollback
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleResetToDefaults() {
+  async function handleResetToDefaults() {
     if (
-      confirm(
-        "Reset coin packages to the default 10 packages from the PDF? Any unsaved changes will be replaced."
+      !window.confirm(
+        "Reset coin packages to the default 10 packages from the PDF and save to the Buy Coins page?"
       )
     ) {
-      setPackages(DEFAULT_PACKAGES.map((pkg, idx) => ({ _id: `pkg-${idx + 1}`, ...pkg })));
-      setSuccess("Reset to PDF 10 coin packages. Click 'Save Coin Packages' to persist.");
+      return;
+    }
+
+    const seeded = DEFAULT_PACKAGES.map((pkg, idx) => ({ _id: `pkg-${idx + 1}`, ...pkg }));
+    setPackages(seeded);
+    setError("");
+    setSuccess("");
+    setSaving(true);
+
+    try {
+      const res = await fetch("/api/admin/set-coins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ packages: seeded }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Failed to reset coin packages.");
+        return;
+      }
+
+      setSuccess("Reset to PDF 10 coin packages and saved successfully.");
+      if (Array.isArray(data.packages)) {
+        setPackages(data.packages);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to save default packages.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -172,9 +242,17 @@ export default function SetCoinsPage() {
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl bg-[#450a0a] px-4 py-2 text-xs font-bold text-white hover:bg-[#7f1d1d] transition shadow-xs"
+              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs"
             >
               + Add Package
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+              disabled={saving || loading || packages.length === 0}
+              className="rounded-xl bg-emerald-700 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs"
+            >
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
@@ -204,9 +282,10 @@ export default function SetCoinsPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleDeletePackage(index)}
-                      className="text-xs font-bold text-red-600 hover:text-red-900"
-                      title="Delete package"
+                      disabled={saving}
+                      onClick={() => void handleDeletePackage(index)}
+                      className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition disabled:opacity-50"
+                      title="Remove package and save changes"
                     >
                       &times; Remove
                     </button>
