@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     // Expired OTP — clear it and ask for a new one.
-    if (!user.otpHash || !user.otpExpires || new Date(user.otpExpires).getTime() < now.getTime()) {
+    if (!user.otpExpires || new Date(user.otpExpires).getTime() < now.getTime()) {
       await clearUserOtp(String(user._id));
       return NextResponse.json(
         { error: "This verification code has expired. Please request a new code." },
@@ -67,7 +67,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!verifyOtp(otp, user.otpHash, normalizedEmail)) {
+    // Collect all candidate valid hashes (supports resend / out-of-order delivery)
+    const validHashes: string[] = [];
+    if (user.otpHash) validHashes.push(user.otpHash);
+    if (Array.isArray(user.otpHashes)) {
+      for (const h of user.otpHashes) {
+        if (h && !validHashes.includes(h)) {
+          validHashes.push(h);
+        }
+      }
+    }
+
+    if (validHashes.length === 0) {
+      await clearUserOtp(String(user._id));
+      return NextResponse.json(
+        { error: "This verification code has expired. Please request a new code." },
+        { status: 400 }
+      );
+    }
+
+    const isMatch = validHashes.some((expectedHash) =>
+      verifyOtp(otp, expectedHash, normalizedEmail)
+    );
+
+    if (!isMatch) {
       const attempts = await incrementUserOtpAttempts(String(user._id));
       if (attempts >= OTP_MAX_ATTEMPTS) {
         await clearUserOtp(String(user._id));

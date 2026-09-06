@@ -16,6 +16,7 @@ export interface User {
   sessionToken?: string;
   emailVerified?: boolean;
   otpHash?: string;
+  otpHashes?: string[];
   otpExpires?: Date;
   otpAttempts?: number;
   otpLastSentAt?: Date;
@@ -332,30 +333,105 @@ export function updateUserFields(
 
 /**
  * Store an OTP hash + expiry for a user, and record the time it was sent so we
- * can enforce the resend cooldown. Generating a new OTP resets the attempt count.
+ * can enforce the resend cooldown. Generating a new OTP resets the attempt count
+ * and retains the last 3 hashes to avoid invalidating in-flight emails.
  */
 export async function setUserOtp(
   userId: string,
   otpHash: string,
   ttlMs: number
 ): Promise<boolean> {
-  return updateUserFields(userId, {
-    otpHash,
-    otpExpires: new Date(Date.now() + ttlMs),
-    otpAttempts: 0,
-    otpLastSentAt: new Date(),
-  });
+  const expiresAt = new Date(Date.now() + ttlMs);
+  const now = new Date();
+  const collection = await getUsersCollection();
+
+  if (collection) {
+    let _id: ObjectId;
+    try {
+      _id = new ObjectId(userId);
+    } catch {
+      return false;
+    }
+
+    const result = await collection.findOneAndUpdate(
+      { _id },
+      {
+        $set: {
+          otpHash,
+          otpExpires: expiresAt,
+          otpAttempts: 0,
+          otpLastSentAt: now,
+          updatedAt: now,
+        },
+        $push: {
+          otpHashes: {
+            $each: [otpHash],
+            $slice: -3,
+          },
+        } as unknown as Document,
+      },
+      { returnDocument: "after" }
+    );
+    return Boolean(result);
+  }
+
+  const store = await readStore();
+  const user = store.users.find((u) => u._id === userId) as User | undefined;
+  if (!user) return false;
+
+  user.otpHash = otpHash;
+  const recentHashes = Array.isArray(user.otpHashes) ? user.otpHashes : [];
+  user.otpHashes = [...recentHashes, otpHash].slice(-3);
+  user.otpExpires = expiresAt;
+  user.otpAttempts = 0;
+  user.otpLastSentAt = now;
+  user.updatedAt = now;
+  await writeStore(store);
+  return true;
 }
 
 /**
- * Remove the stored OTP (after successful verification, expiry, or lockout).
+ * Remove stored OTPs (after successful verification, expiry, or lockout).
  */
 export async function clearUserOtp(userId: string): Promise<boolean> {
-  return updateUserFields(userId, {
-    otpHash: null,
-    otpExpires: null,
-    otpAttempts: 0,
-  });
+  const collection = await getUsersCollection();
+  const now = new Date();
+
+  if (collection) {
+    let _id: ObjectId;
+    try {
+      _id = new ObjectId(userId);
+    } catch {
+      return false;
+    }
+
+    const result = await collection.findOneAndUpdate(
+      { _id },
+      {
+        $set: {
+          otpHash: null,
+          otpHashes: [],
+          otpExpires: null,
+          otpAttempts: 0,
+          updatedAt: now,
+        },
+      },
+      { returnDocument: "after" }
+    );
+    return Boolean(result);
+  }
+
+  const store = await readStore();
+  const user = store.users.find((u) => u._id === userId) as User | undefined;
+  if (!user) return false;
+
+  user.otpHash = undefined;
+  user.otpHashes = [];
+  user.otpExpires = undefined;
+  user.otpAttempts = 0;
+  user.updatedAt = now;
+  await writeStore(store);
+  return true;
 }
 
 /**

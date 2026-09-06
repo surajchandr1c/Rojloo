@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  createUser,
   findUserByEmail,
   normalizeEmail,
 } from "@/lib/models/user";
@@ -34,27 +35,38 @@ export async function POST(request: NextRequest) {
     }
 
     const existing = await findUserByEmail(normalizedEmail);
-    if (!existing || !existing._id || existing.emailVerified === true) {
-      // Do not reveal whether an email exists or is already verified.
-      return NextResponse.json(
-        { message: "If that email was pending verification, a new code has been sent." },
-        { status: 200 }
-      );
-    }
-
     const now = new Date();
-    const cooldown = otpCooldownRemainingMs(existing.otpLastSentAt, now);
-    if (cooldown > 0) {
-      return NextResponse.json(
-        {
-          error: `Please wait ${Math.ceil(cooldown / 1000)} seconds before requesting a new code.`,
-          resendInMs: cooldown,
-        },
-        { status: 429 }
-      );
+    let userId: string;
+
+    if (existing && existing._id) {
+      userId = String(existing._id);
+      const cooldown = otpCooldownRemainingMs(existing.otpLastSentAt, now);
+      if (cooldown > 0) {
+        return NextResponse.json(
+          {
+            error: `Please wait ${Math.ceil(cooldown / 1000)} seconds before requesting a new code.`,
+            resendInMs: cooldown,
+          },
+          { status: 429 }
+        );
+      }
+    } else {
+      const newUser = await createUser({
+        name: "",
+        email: normalizedEmail,
+        passwordHash: "",
+        emailVerified: false,
+      });
+      if (!newUser._id) {
+        return NextResponse.json(
+          { error: "Unable to resend verification code. Please try again." },
+          { status: 500 }
+        );
+      }
+      userId = String(newUser._id);
     }
 
-    const otpResult = await createAndSendOtp(existing._id, normalizedEmail, now);
+    const otpResult = await createAndSendOtp(userId, normalizedEmail, now);
     if (!otpResult.ok) {
       return NextResponse.json({ error: otpResult.error }, { status: otpResult.status });
     }

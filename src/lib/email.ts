@@ -15,10 +15,53 @@ export type EmailResult =
   | { sent: true }
   | { sent: false; reason: string; error?: string };
 
+// Cached transporter singleton to avoid renegotiating TLS on every request
+let cachedTransporter: nodemailer.Transporter | null = null;
+
+function getTransporter(
+  host: string,
+  port: number,
+  user: string,
+  pass: string,
+  isGmail: boolean
+): nodemailer.Transporter {
+  if (cachedTransporter) {
+    return cachedTransporter;
+  }
+
+  const transportOptions = isGmail
+    ? {
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        pool: true,
+        maxConnections: 3,
+        maxMessages: 100,
+        auth: { user, pass },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 12000,
+      }
+    : {
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+      };
+
+  cachedTransporter = nodemailer.createTransport(
+    transportOptions as nodemailer.TransportOptions
+  );
+  return cachedTransporter;
+}
+
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
   const cleanTo = to.trim().toLowerCase();
   const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
-  const port = Number(cleanEnv(process.env.SMTP_PORT) || "587");
+  const port = Number(cleanEnv(process.env.SMTP_PORT) || "465");
   const rawUser = cleanEnv(process.env.SMTP_USER);
   const rawPass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
 
@@ -44,42 +87,21 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       host.toLowerCase().includes("gmail") ||
       user.toLowerCase().endsWith("@gmail.com");
 
-    const transportOptions = isGmail
-      ? {
-          service: "gmail",
-          auth: { user, pass },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
-        }
-      : {
-          host,
-          port,
-          secure: port === 465,
-          auth: { user, pass },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
-        };
-
-    const transporter = nodemailer.createTransport(transportOptions);
+    const transporter = getTransporter(host, port, user, pass, isGmail);
 
     await transporter.sendMail({
       from,
       to: cleanTo,
+      replyTo: user,
       subject,
       text,
       html: html ?? text,
-      headers: {
-        "X-Priority": "1",
-        "X-MSMail-Priority": "High",
-        Importance: "high",
-      },
     });
 
     console.log(`[email] Verification email sent successfully to ${cleanTo}`);
     return { sent: true };
   } catch (error: unknown) {
+    cachedTransporter = null;
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error(`[email] Failed to send email to ${to}:`, errMsg);
 
@@ -114,7 +136,7 @@ const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Rojlo";
 
 /**
  * Send an email verification OTP to the user, using the site's branding.
- * Never logs the OTP itself.
+ * Formatted specifically for primary inbox delivery without spam flags.
  */
 export function sendOtpEmail({
   to,
@@ -125,9 +147,10 @@ export function sendOtpEmail({
   otp: string;
   expiresInMinutes?: number;
 }) {
-  const subject = `Your ${SITE_NAME} verification code`;
+  const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || SITE_NAME;
+  const subject = `${otp} is your ${siteName} verification code`;
   const text = [
-    `Your verification code is:`,
+    `Your ${siteName} verification code is:`,
     ``,
     otp,
     ``,
@@ -135,17 +158,38 @@ export function sendOtpEmail({
     ``,
     `If you did not request this code, you can safely ignore this email.`,
     ``,
-    `— ${SITE_NAME}`,
+    `— ${siteName} Team`,
   ].join("\n");
 
   const html = [
-    `<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;border:1px solid #fecdd3;border-radius:20px;background:#fff1f2;">`,
-    `<h2 style="color:#450a0a;margin:0 0 12px;">${SITE_NAME} — Verify your email</h2>`,
-    `<p style="color:#7f1d1d;line-height:1.6;margin:0 0 16px;">Use the code below to verify your email address.</p>`,
-    `<div style="font-size:32px;font-weight:700;letter-spacing:8px;color:#450a0a;background:#ffe4e6;border-radius:12px;padding:16px;text-align:center;margin:0 0 16px;">${otp}</div>`,
-    `<p style="color:#7f1d1d;font-size:14px;line-height:1.6;margin:0 0 8px;">This code expires in <strong>${expiresInMinutes} minutes</strong>.</p>`,
-    `<p style="color:#7f1d1d;font-size:14px;line-height:1.6;margin:0;">If you did not request this code, you can safely ignore this email.</p>`,
+    `<!DOCTYPE html>`,
+    `<html lang="en">`,
+    `<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${otp} is your verification code</title></head>`,
+    `<body style="margin:0;padding:24px 12px;background-color:#fff1f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
+    `<!-- Preheader text visible in email previews / push notifications -->`,
+    `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">`,
+    `${otp} is your ${siteName} verification code. Valid for ${expiresInMinutes} minutes.`,
     `</div>`,
+    `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">`,
+    `<tr><td align="center">`,
+    `<table role="presentation" style="max-width:480px;width:100%;background:#ffffff;border:1px solid #fecdd3;border-radius:24px;padding:32px 24px;box-shadow:0 4px 12px rgba(244,63,94,0.06);" border="0" cellpadding="0" cellspacing="0">`,
+    `<tr><td style="text-align:center;">`,
+    `<h1 style="color:#881337;font-size:24px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;">${siteName}</h1>`,
+    `<p style="color:#4c0519;font-size:16px;line-height:24px;margin:0 0 20px;">Use the verification code below to verify your email address and continue.</p>`,
+    `<div style="background:#fff1f2;border:2px dashed #fb7185;border-radius:16px;padding:18px;margin:0 auto 20px;text-align:center;">`,
+    `<span style="font-size:36px;font-weight:800;letter-spacing:10px;color:#e11d48;font-family:monospace;display:inline-block;padding-left:10px;">${otp}</span>`,
+    `</div>`,
+    `<p style="color:#881337;font-size:14px;line-height:20px;margin:0 0 8px;">Valid for <strong>${expiresInMinutes} minutes</strong>. Please do not share this code.</p>`,
+    `<p style="color:#9f1239;font-size:13px;line-height:18px;margin:0;">If you didn't request this code, you can safely ignore this email.</p>`,
+    `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #ffe4e6;font-size:12px;color:#9ca3af;text-align:center;">`,
+    `This is an automated security verification message from ${siteName}.`,
+    `</div>`,
+    `</td></tr>`,
+    `</table>`,
+    `</td></tr>`,
+    `</table>`,
+    `</body>`,
+    `</html>`,
   ].join("");
 
   return sendEmail({ to, subject, text, html });

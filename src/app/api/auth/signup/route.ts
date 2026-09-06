@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (existing.emailVerified === true) {
+    if (existing.passwordHash && existing.passwordHash.length > 0) {
       return NextResponse.json(
         { error: "An account with this email already exists. Please log in." },
         { status: 409 }
