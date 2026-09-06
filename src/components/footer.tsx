@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { navLinks, policyLinks } from "@/lib/nav";
 
 export default function Footer() {
@@ -6,7 +7,16 @@ export default function Footer() {
     <footer className="border-t border-red-950/30 bg-red-950 px-4 py-8 text-white w-full">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6 lg:gap-12">
         <div>
-          <p className="text-lg font-black !text-white">rojlo</p>
+          <Link href="/" className="inline-block hover:opacity-90 transition">
+            <Image
+              src="/rojlo.png"
+              alt="Rojlo Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover shadow-md ring-2 ring-red-800"
+            />
+          </Link>
+          <p className="mt-2.5 text-lg font-black !text-white">rojlo</p>
           <p className="mt-2 max-w-md text-sm leading-6 !text-white">
             Find services, explore places, and post ads in one simple local
             marketplace.

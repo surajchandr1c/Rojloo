@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { navLinks } from "@/lib/nav";
@@ -73,8 +74,19 @@ export default function NavBar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#7f1d1d] bg-[#450a0a] text-white shadow-sm">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-4 py-2.5 sm:py-3">
-        <Link href="/" className="text-xl font-black text-white shrink-0">
-          rojlo
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 text-xl font-black text-white shrink-0 hover:opacity-95 transition"
+        >
+          <Image
+            src="/rojlo.png"
+            alt="Rojlo Logo"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-full object-cover shadow-sm ring-1 ring-white/30"
+            priority
+          />
+          <span>rojlo</span>
         </Link>
 
         <nav className="ml-auto hidden items-center gap-1.5 md:gap-3 sm:flex">
