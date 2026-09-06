@@ -5,8 +5,17 @@ import Button from "@/components/ui/button";
 import { cityPlaces } from "@/lib/places";
 
 function getCityUrl(cityName: string) {
-  const city = cityPlaces.find((place) => place.name === cityName);
-  return city ? `/places/${city.slug}` : "/places";
+  if (!cityName) return "/places";
+  const city = cityPlaces.find(
+    (place) => place.name.toLowerCase() === cityName.toLowerCase()
+  );
+  if (city) return `/places/${city.slug}`;
+  const slug = cityName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return `/places/${slug}`;
 }
 
 export default function YourAdsSection({

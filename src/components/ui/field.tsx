@@ -1,8 +1,9 @@
-import type {
-  InputHTMLAttributes,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-  ReactNode,
+import {
+  forwardRef,
+  type InputHTMLAttributes,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+  type ReactNode,
 } from "react";
 import { cn } from "@/lib/cn";
 
@@ -28,17 +29,17 @@ export function TextArea({
   );
 }
 
-export function Select({
-  className,
-  children,
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement> & { children: ReactNode }) {
+export const Select = forwardRef<
+  HTMLSelectElement,
+  SelectHTMLAttributes<HTMLSelectElement> & { children: ReactNode }
+>(function Select({ className, children, ...props }, ref) {
   return (
-    <select className={cn(fieldBase, className)} {...props}>
+    <select ref={ref} className={cn(fieldBase, className)} {...props}>
       {children}
     </select>
   );
-}
+});
+Select.displayName = "Select";
 
 export function FileInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (

@@ -121,6 +121,16 @@ export default function PostAdForm({ adId }: { adId?: string }) {
       }
     }
 
+    if (!form.state || !form.state.trim()) {
+      setFormError("Please select a state.");
+      return;
+    }
+
+    if (!form.city || !form.city.trim()) {
+      setFormError("Please select a city.");
+      return;
+    }
+
     setFormLoading(true);
 
     const payload = { ...form, id: editingId ?? undefined };

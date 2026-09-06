@@ -1,6 +1,7 @@
 import "server-only";
 
 import { readStore, writeStore } from "../persist";
+import { cityPlaces } from "../places";
 
 export type StateRecord = {
   _id?: string;
@@ -17,10 +18,79 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+export const DEFAULT_INDIAN_STATES: string[] = [
+  "Andaman and Nicobar Islands",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chandigarh",
+  "Chhattisgarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jammu and Kashmir",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Ladakh",
+  "Lakshadweep",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Puducherry",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+];
+
 export async function listStates(): Promise<StateRecord[]> {
   const store = await readStore();
-  const states = (store.states ?? []) as unknown as StateRecord[];
-  return states.sort((a, b) =>
+  const customStates = (store.states ?? []) as unknown as StateRecord[];
+  const existingNames = new Set(
+    customStates.map((s) => s.name.trim().toLowerCase())
+  );
+
+  const combined: StateRecord[] = [...customStates];
+
+  for (const name of DEFAULT_INDIAN_STATES) {
+    if (!existingNames.has(name.toLowerCase())) {
+      existingNames.add(name.toLowerCase());
+      combined.push({
+        _id: `static_state_${slugify(name)}`,
+        name,
+        slug: slugify(name),
+        createdAt: new Date(0),
+      });
+    }
+  }
+
+  for (const c of cityPlaces) {
+    if (c.state && !existingNames.has(c.state.trim().toLowerCase())) {
+      existingNames.add(c.state.trim().toLowerCase());
+      combined.push({
+        _id: `static_state_${slugify(c.state.trim())}`,
+        name: c.state.trim(),
+        slug: slugify(c.state.trim()),
+        createdAt: new Date(0),
+      });
+    }
+  }
+
+  return combined.sort((a, b) =>
     String(a.name).localeCompare(String(b.name))
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Button from "@/components/ui/button";
 import { TextInput, TextArea, Select, FileInput } from "@/components/ui/field";
 import { cityPlaces } from "@/lib/places";
 import { SERVICES, TO_SERVE, PLACE_OF_SERVICE, DEFAULT_SERVICE_RATES, type AdForm } from "./types";
 
-type CityOption = { name: string; slug: string };
+type CityOption = { name: string; slug: string; state?: string };
 
 type StateOption = { name: string; slug: string };
 type LocalAreaOption = { name: string; slug: string };
@@ -32,8 +32,13 @@ export default function PostAdSection({
   onSubmit: (e: React.FormEvent) => void;
 }) {
   const [stateOptions, setStateOptions] = useState<StateOption[]>([]);
-  const [cityOptions, setCityOptions] = useState<CityOption[]>(cityPlaces);
+  const [allCities, setAllCities] = useState<CityOption[]>(cityPlaces);
+  const [stateCities, setStateCities] = useState<CityOption[]>([]);
+  const [cityLoading, setCityLoading] = useState<boolean>(false);
   const [localAreaOptions, setLocalAreaOptions] = useState<LocalAreaOption[]>([]);
+  const [showStatePrompt, setShowStatePrompt] = useState<boolean>(false);
+  const [isStateHighlighted, setIsStateHighlighted] = useState<boolean>(false);
+  const stateSelectRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
     fetch("/api/states")
@@ -54,16 +59,68 @@ export default function PostAdSection({
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.cities) && data.cities.length > 0) {
-          setCityOptions(
-            data.cities.map((c: { name: string; slug: string }) => ({
+          setAllCities(
+            data.cities.map((c: { name: string; slug: string; state?: string }) => ({
               name: c.name,
               slug: c.slug,
+              state: c.state,
             }))
           );
         }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!form.state || !form.state.trim()) {
+      setStateCities([]);
+      return;
+    }
+
+    const targetState = form.state.trim().toLowerCase();
+
+    // 1. Immediately filter from already-loaded allCities for instant zero-latency feedback
+    const localMatches = allCities.filter(
+      (c) => c.state && c.state.trim().toLowerCase() === targetState
+    );
+    setStateCities(localMatches);
+
+    // 2. Also fetch from backend /api/cities?state=... to capture any custom additions
+    let ignore = false;
+    setCityLoading(true);
+    fetch(`/api/cities?state=${encodeURIComponent(form.state.trim())}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!ignore && Array.isArray(data.cities)) {
+          const fetchedCities: CityOption[] = data.cities.map(
+            (c: { name: string; slug: string; state?: string }) => ({
+              name: c.name,
+              slug: c.slug,
+              state: c.state,
+            })
+          );
+          const seen = new Set<string>();
+          const combined: CityOption[] = [];
+          for (const c of [...fetchedCities, ...localMatches]) {
+            const key = c.name.trim().toLowerCase();
+            if (!seen.has(key)) {
+              seen.add(key);
+              combined.push(c);
+            }
+          }
+          combined.sort((a, b) => a.name.localeCompare(b.name));
+          setStateCities(combined);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!ignore) setCityLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [form.state, allCities]);
 
   useEffect(() => {
     if (!form.city) {
@@ -104,6 +161,28 @@ export default function PostAdSection({
       i === index ? { ...r, [field]: value } : r
     );
     update("serviceRates", next);
+  }
+
+  function handleStateChange(selectedState: string) {
+    update("state", selectedState);
+    if (selectedState !== form.state) {
+      update("city", "");
+      update("localArea", "");
+      setLocalAreaOptions([]);
+    }
+    setShowStatePrompt(false);
+    setIsStateHighlighted(false);
+  }
+
+  function handleCityClickWhenDisabled() {
+    setShowStatePrompt(true);
+    setIsStateHighlighted(true);
+    if (stateSelectRef.current) {
+      stateSelectRef.current.focus();
+    }
+    setTimeout(() => {
+      setIsStateHighlighted(false);
+    }, 2500);
   }
 
   return (
@@ -168,12 +247,19 @@ export default function PostAdSection({
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-red-900">
-              State
+              State <span className="text-red-600">*</span>
             </label>
             {stateOptions.length > 0 ? (
               <Select
+                ref={stateSelectRef}
                 value={form.state ?? ""}
-                onChange={(e) => update("state", e.target.value)}
+                onChange={(e) => handleStateChange(e.target.value)}
+                className={
+                  isStateHighlighted
+                    ? "ring-2 ring-red-500 border-red-500 bg-pink-100/90 transition-all"
+                    : undefined
+                }
+                required
               >
                 <option value="">Select a state</option>
                 {stateOptions.map((s) => (
@@ -185,8 +271,9 @@ export default function PostAdSection({
             ) : (
               <TextInput
                 value={form.state ?? ""}
-                onChange={(e) => update("state", e.target.value)}
+                onChange={(e) => handleStateChange(e.target.value)}
                 placeholder="State"
+                required
               />
             )}
           </div>
@@ -195,21 +282,64 @@ export default function PostAdSection({
             <label className="mb-1 block text-sm font-medium text-red-900">
               City <span className="text-red-600">*</span>
             </label>
-            <Select
-              value={form.city}
-              onChange={(e) => {
-                update("city", e.target.value);
-                update("localArea", "");
-                setLocalAreaOptions([]);
-              }}
-            >
-              <option value="">Select a city</option>
-              {cityOptions.map((c) => (
-                <option key={c.slug} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
+            <div className="relative">
+              {!form.state?.trim() && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={handleCityClickWhenDisabled}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleCityClickWhenDisabled();
+                    }
+                  }}
+                  className="absolute inset-0 z-10 cursor-not-allowed"
+                  title="Please select a state first"
+                  aria-label="City list is locked. Please select a state first."
+                />
+              )}
+              <Select
+                value={form.city}
+                disabled={!form.state?.trim()}
+                onChange={(e) => {
+                  update("city", e.target.value);
+                  update("localArea", "");
+                  setLocalAreaOptions([]);
+                }}
+                className={
+                  !form.state?.trim()
+                    ? "cursor-not-allowed opacity-60 bg-pink-100/60"
+                    : undefined
+                }
+                required
+              >
+                {!form.state?.trim() ? (
+                  <option value="">Select a state first</option>
+                ) : (
+                  <>
+                    <option value="">Select a city</option>
+                    {stateCities.map((c) => (
+                      <option key={c.slug} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                    {stateCities.length === 0 && (
+                      <option value="" disabled>
+                        {cityLoading
+                          ? "Loading cities..."
+                          : "No cities listed for this state"}
+                      </option>
+                    )}
+                  </>
+                )}
+              </Select>
+            </div>
+            {showStatePrompt && !form.state?.trim() && (
+              <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-red-600 animate-pulse">
+                <span>⚠️</span>
+                <span>Please select a state first to view cities.</span>
+              </p>
+            )}
           </div>
 
           <div>
