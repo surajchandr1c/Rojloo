@@ -148,6 +148,12 @@ export default function Page() {
                             : "Pending"}
                       </span>
                     </p>
+                    {item.status === "declined" && (
+                      <div className="mt-2 rounded-xl border border-red-200 bg-red-100/70 px-3 py-2 text-xs text-red-900">
+                        <span className="font-bold text-red-950">Message: </span>
+                        {item.declinedReason || "Wrong Transaction ID"}
+                      </div>
+                    )}
                   </div>
 
                   <div className="text-sm text-red-700">

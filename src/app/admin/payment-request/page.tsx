@@ -151,7 +151,7 @@ export default function PaymentRequestPage() {
         body: JSON.stringify({
           action: "decline",
           id: reqId,
-          reason: "",
+          reason: "Wrong Transaction ID",
         }),
       });
 
@@ -307,13 +307,13 @@ export default function PaymentRequestPage() {
                         </div>
                       </div>
 
-                      {request.status === "declined" && request.declinedReason && (
+                      {request.status === "declined" && (
                         <div className="mt-3 rounded-lg bg-red-50 p-3">
                           <p className="text-xs font-semibold text-red-700">
                             Decline Reason:
                           </p>
                           <p className="mt-1 text-sm text-red-900">
-                            {request.declinedReason}
+                            {request.declinedReason || "Wrong Transaction ID"}
                           </p>
                         </div>
                       )}

@@ -75,7 +75,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ request: updated, success: true });
     } else if (action === "decline") {
-      const updated = await declinePaymentRequest(id, reason);
+      const declineReason = reason && String(reason).trim() ? String(reason).trim() : "Wrong Transaction ID";
+      const updated = await declinePaymentRequest(id, declineReason);
       if (!updated) {
         return NextResponse.json(
           { error: "Payment request not found" },

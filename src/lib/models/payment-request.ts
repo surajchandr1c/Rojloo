@@ -267,10 +267,12 @@ export async function declinePaymentRequest(
     return existing;
   }
 
+  const finalReason = reason && reason.trim() ? reason.trim() : "Wrong Transaction ID";
+
   const updated: PaymentRequest = {
     ...existing,
     status: "declined",
-    declinedReason: reason,
+    declinedReason: finalReason,
   };
 
   if (col) {
@@ -283,7 +285,7 @@ export async function declinePaymentRequest(
         {
           $set: {
             status: "declined",
-            declinedReason: reason || "",
+            declinedReason: finalReason,
             updatedAt: now,
           },
         }

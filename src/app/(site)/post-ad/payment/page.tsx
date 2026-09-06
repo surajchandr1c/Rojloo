@@ -26,9 +26,50 @@ function PaymentView() {
   const [transactionId, setTransactionId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedTxId, setSubmittedTxId] = useState("");
+  const [submittedStatus, setSubmittedStatus] = useState<"pending" | "confirmed" | "declined">("pending");
+  const [declineReason, setDeclineReason] = useState("");
 
   const coins = Number(searchParams.get("coins") ?? "0");
   const price = searchParams.get("price") ?? "";
+
+  useEffect(() => {
+    if (!submitted || !submittedTxId || submittedStatus !== "pending") return;
+
+    let cancelled = false;
+    async function checkStatus() {
+      try {
+        const res = await fetch("/api/payment-confirmation", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const requests = Array.isArray(data.requests) ? data.requests : [];
+        const current = requests.find(
+          (r: { transactionId?: string; status?: string; declinedReason?: string }) =>
+            r.transactionId?.trim().toLowerCase() === submittedTxId.trim().toLowerCase()
+        );
+        if (current && !cancelled) {
+          if (current.status === "declined") {
+            setSubmittedStatus("declined");
+            setDeclineReason(current.declinedReason || "Wrong Transaction ID");
+          } else if (current.status === "confirmed") {
+            setSubmittedStatus("confirmed");
+            window.dispatchEvent(new CustomEvent("coins:updated"));
+          }
+        }
+      } catch {}
+    }
+
+    const interval = setInterval(checkStatus, 3000);
+    void checkStatus();
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [submitted, submittedTxId, submittedStatus]);
 
   useEffect(() => {
     if (!ready) return;
@@ -95,6 +136,7 @@ function PaymentView() {
       return;
     }
 
+    const txnToSubmit = transactionId.trim();
     setSubmitting(true);
     try {
       const response = await fetch("/api/payment-confirmation", {
@@ -104,7 +146,7 @@ function PaymentView() {
         body: JSON.stringify({
           coins,
           amount: price.replace(/[^\d.]/g, ""),
-          transactionId: transactionId.trim(),
+          transactionId: txnToSubmit,
           couponCode: couponCode.trim() || null,
           discount,
         }),
@@ -116,6 +158,9 @@ function PaymentView() {
       }
 
       setSubmitted(true);
+      setSubmittedTxId(txnToSubmit);
+      setSubmittedStatus("pending");
+      setDeclineReason("");
       window.dispatchEvent(new CustomEvent("coins:updated"));
       setTransactionId("");
       setCouponCode("");
@@ -156,7 +201,7 @@ function PaymentView() {
         </div>
 
         <div className="mt-6 rounded-[1.75rem] bg-white p-6 text-center sm:p-8">
-          {!submitted ? (
+          {!submitted && (
             <>
               <p className="text-lg font-bold text-red-950">
                 Pay {price || "—"} &nbsp;·&nbsp; Get {coins} coins
@@ -165,11 +210,63 @@ function PaymentView() {
                 Scan the QR code with any UPI app or use the UPI ID below.
               </p>
             </>
-          ) : (
+          )}
+          {submitted && submittedStatus === "pending" && (
             <div className="rounded-[1.5rem] border border-green-200 bg-green-50 p-6 text-center">
               <p className="text-xl font-black text-green-900">Payment submitted</p>
               <p className="mt-2 text-base text-green-800">
                 Don&apos;t pay again. Please wait to confirm the payment.
+              </p>
+              <div className="mt-5 flex justify-center">
+                <Button
+                  type="button"
+                  variant="solid"
+                  onClick={() => router.push("/post-ad/payment-history")}
+                  className="!text-white"
+                >
+                  Show payment history
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {submitted && submittedStatus === "declined" && (
+            <div className="rounded-[1.5rem] border border-red-200 bg-red-50 p-6 text-center">
+              <p className="text-xl font-black text-red-900">Payment Declined</p>
+              <p className="mt-2 text-base font-semibold text-red-800">
+                {declineReason || "Wrong Transaction ID"}
+              </p>
+              <div className="mt-5 flex flex-col sm:flex-row justify-center gap-3">
+                <Button
+                  type="button"
+                  variant="solid"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setSubmittedTxId("");
+                    setSubmittedStatus("pending");
+                    setDeclineReason("");
+                  }}
+                  className="!text-white"
+                >
+                  Try Again
+                </Button>
+                <Button
+                  type="button"
+                  variant="soft"
+                  onClick={() => router.push("/post-ad/payment-history")}
+                  className="!text-black"
+                >
+                  Show payment history
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {submitted && submittedStatus === "confirmed" && (
+            <div className="rounded-[1.5rem] border border-green-200 bg-green-50 p-6 text-center">
+              <p className="text-xl font-black text-green-900">Payment Confirmed!</p>
+              <p className="mt-2 text-base text-green-800">
+                Coins have been added to your wallet.
               </p>
               <div className="mt-5 flex justify-center">
                 <Button
