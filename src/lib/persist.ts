@@ -36,6 +36,7 @@ type StoreData = {
   localAreas: StoreRecord[];
   notFoundLogs: StoreRecord[];
   vipUsers?: StoreRecord[];
+  vipPhoneOverrides?: StoreRecord[];
 };
 
 function reviveDates(record: StoreRecord) {
@@ -70,6 +71,7 @@ function defaults(): StoreData {
     localAreas: [],
     notFoundLogs: [],
     vipUsers: [],
+    vipPhoneOverrides: [],
   };
 }
 
@@ -95,6 +97,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
     localAreas: raw.localAreas ?? [],
     notFoundLogs: raw.notFoundLogs ?? [],
     vipUsers: raw.vipUsers ?? [],
+    vipPhoneOverrides: raw.vipPhoneOverrides ?? [],
   };
   data.users = data.users.map((user) => ({
     ...user,
@@ -102,6 +105,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
   }));
   data.users.forEach(reviveDates);
   data.ads.forEach(reviveDates);
+  (data.vipPhoneOverrides ?? []).forEach(reviveDates);
   return data;
 }
 

@@ -444,7 +444,7 @@ export default function VipPage() {
                       </button>
                     </div>
                     <a
-                      href="/api/admin/go-to-vip"
+                      href={`/api/admin/go-to-vip?email=${encodeURIComponent(item.email)}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition"
                     >
                       Go to VIP Dashboard &rarr;

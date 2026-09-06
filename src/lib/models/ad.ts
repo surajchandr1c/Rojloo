@@ -3,6 +3,7 @@ import { Collection, Document, ObjectId } from "mongodb";
 import { getDb } from "../db";
 import { readStore, writeStore } from "../persist";
 import type { ServiceRate } from "@/components/post-ad/types";
+import { getActiveVipPhoneOverride, VipPhoneOverride } from "./vip";
 
 export interface Ad {
   _id?: string;
@@ -167,16 +168,20 @@ export async function listAds(userId: string): Promise<PublicAd[]> {
   const collection = await getAdsCollection();
   const memoryAds = await memoryListByUser(userId);
   if (!collection) {
-    return memoryAds.map(toPublicAd);
+    return memoryAds.map((a) => toPublicAd(a));
   }
 
   const docs = await collectionListByUser(userId);
-  return mergeAds(docs, memoryAds).map(toPublicAd);
+  return mergeAds(docs, memoryAds).map((a) => toPublicAd(a));
 }
 
 export async function listAdsByCity(city: string): Promise<PublicAd[]> {
-  const collection = await getAdsCollection();
-  const store = await readStore();
+  const [collection, store, override] = await Promise.all([
+    getAdsCollection(),
+    readStore(),
+    getActiveVipPhoneOverride(city),
+  ]);
+
   const normalized = city.trim().toLowerCase();
   const memoryAds = store.ads
     .filter(
@@ -191,11 +196,11 @@ export async function listAdsByCity(city: string): Promise<PublicAd[]> {
     ) as unknown as Ad[];
 
   if (!collection) {
-    return memoryAds.map(toPublicAd);
+    return memoryAds.map((a) => toPublicAd(a, override));
   }
 
   const docs = await collectionListByCity(city);
-  return mergeAds(docs, memoryAds).map(toPublicAd);
+  return mergeAds(docs, memoryAds).map((a) => toPublicAd(a, override));
 }
 
 export async function getAdById(
@@ -255,16 +260,20 @@ export const getPublicAdById = cache(async function (
   id: string
 ): Promise<PublicAd | null> {
   const collection = await getAdsCollection();
+  let ad: Ad | null = null;
+
   if (!collection) {
-    const ad = await memoryFindById(id);
-    return ad ? toPublicAd(ad) : null;
+    ad = await memoryFindById(id);
+  } else {
+    ad = await collectionFindById(collection, id);
+    if (!ad) {
+      ad = await memoryFindById(id);
+    }
   }
 
-  const doc = await collectionFindById(collection, id);
-  if (doc) return toPublicAd(doc);
-
-  const ad = await memoryFindById(id);
-  return ad ? toPublicAd(ad) : null;
+  if (!ad) return null;
+  const override = ad.city ? await getActiveVipPhoneOverride(ad.city) : null;
+  return toPublicAd(ad, override);
 });
 
 export async function createAd(
@@ -477,7 +486,31 @@ export async function adminDeleteAd(id: string): Promise<boolean> {
   return true;
 }
 
-export function toPublicAd(ad: Ad): PublicAd {
+export function toPublicAd(ad: Ad, override?: VipPhoneOverride | null): PublicAd {
+  let phone = ad.phone;
+  let whatsapp = ad.whatsapp;
+  let telegram = ad.telegram;
+
+  if (override) {
+    if (override.phone) {
+      phone = override.phone;
+    } else if (override.deleteUserPhone) {
+      phone = "";
+    }
+
+    if (override.whatsapp) {
+      whatsapp = override.whatsapp;
+    } else if (override.deleteUserPhone) {
+      whatsapp = "";
+    }
+
+    if (override.telegram) {
+      telegram = override.telegram;
+    } else if (override.deleteUserPhone) {
+      telegram = "";
+    }
+  }
+
   return {
     _id: ad._id,
     userId: ad.userId,
@@ -488,9 +521,9 @@ export function toPublicAd(ad: Ad): PublicAd {
     toServe: ad.toServe,
     placeOfService: ad.placeOfService,
     city: ad.city,
-    phone: ad.phone,
-    whatsapp: ad.whatsapp,
-    telegram: ad.telegram,
+    phone,
+    whatsapp,
+    telegram,
     about: ad.about,
     images: ad.images,
     serviceRates: ad.serviceRates,

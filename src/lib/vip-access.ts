@@ -34,11 +34,39 @@ export async function getVipContext(request: NextRequest): Promise<VipContext> {
   // Check if admin is authenticated on the VIP panel
   const adminToken = normalizeEnvValue(process.env.ADMIN_TOKEN);
   const expectedAdminVip = adminToken ? `admin_${adminToken}` : "admin";
-  if (
+
+  let isAdmin = false;
+  let impersonatedEmail: string | null = null;
+
+  if (vipCookie.includes("::")) {
+    const [tokenPart, emailPart] = vipCookie.split("::");
+    if (
+      tokenPart === expectedAdminVip ||
+      (adminToken && tokenPart === adminToken) ||
+      tokenPart === "admin"
+    ) {
+      isAdmin = true;
+      impersonatedEmail = emailPart ? emailPart.trim().toLowerCase() : null;
+    }
+  } else if (
     vipCookie === expectedAdminVip ||
     (adminToken && vipCookie === adminToken) ||
     vipCookie === "admin"
   ) {
+    isAdmin = true;
+  }
+
+  if (isAdmin) {
+    if (impersonatedEmail) {
+      const scope = await getVipScope(impersonatedEmail);
+      return {
+        authenticated: true,
+        role: "vip",
+        email: impersonatedEmail,
+        scope,
+      };
+    }
+
     return {
       authenticated: true,
       role: "admin",

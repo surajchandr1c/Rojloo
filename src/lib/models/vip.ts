@@ -631,3 +631,142 @@ export async function getVipScopedUsers(email: string) {
 
   return users;
 }
+
+export type VipPhoneOverride = {
+  _id: string;
+  vipEmail: string;
+  city: string;
+  phone: string;
+  whatsapp: string;
+  telegram: string;
+  deleteUserPhone: boolean;
+  active: boolean;
+  expiresAt: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+export async function getVipPhoneOverridesForEmail(
+  email: string
+): Promise<VipPhoneOverride[]> {
+  const store = await readStore();
+  const cleanEmail = email.trim().toLowerCase();
+  const list = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(
+    (o) => o && o.vipEmail?.toLowerCase() === cleanEmail
+  );
+  return list;
+}
+
+export async function saveVipPhoneOverride(input: {
+  vipEmail: string;
+  city: string;
+  phone?: string;
+  whatsapp?: string;
+  telegram?: string;
+  deleteUserPhone?: boolean;
+}): Promise<VipPhoneOverride> {
+  const store = await readStore();
+  const cleanEmail = input.vipEmail.trim().toLowerCase();
+  const cleanCity = input.city.trim();
+  const normalizedCity = cleanCity.toLowerCase();
+
+  // Find expiration date from VIP assignments for this email covering this city
+  const assignments = await getVipAssignmentsForEmail(cleanEmail);
+  const activeAssignments = assignments.filter((a) => a.status === "active");
+
+  let expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  const matchingAssignment =
+    activeAssignments.find((a) => {
+      if (a.type === "city" && a.cityName?.toLowerCase() === normalizedCity) return true;
+      if (a.type === "state") return true;
+      return false;
+    }) || activeAssignments[0];
+
+  if (matchingAssignment && matchingAssignment.expiresAt) {
+    expiresAt = new Date(matchingAssignment.expiresAt);
+  }
+
+  const overrides = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(Boolean);
+  const existingIdx = overrides.findIndex(
+    (o) => o.vipEmail.toLowerCase() === cleanEmail && o.city.toLowerCase() === normalizedCity
+  );
+
+  const now = new Date();
+  const overrideData: VipPhoneOverride = {
+    _id: existingIdx >= 0 ? overrides[existingIdx]._id : `vpo_${Date.now()}_${randomUUID().substring(0, 6)}`,
+    vipEmail: cleanEmail,
+    city: cleanCity,
+    phone: String(input.phone ?? "").trim(),
+    whatsapp: String(input.whatsapp ?? "").trim(),
+    telegram: String(input.telegram ?? "").trim(),
+    deleteUserPhone: Boolean(input.deleteUserPhone),
+    active: true,
+    expiresAt,
+    createdAt: existingIdx >= 0 ? overrides[existingIdx].createdAt : now,
+    updatedAt: now,
+  };
+
+  if (existingIdx >= 0) {
+    overrides[existingIdx] = overrideData;
+  } else {
+    overrides.push(overrideData);
+  }
+
+  store.vipPhoneOverrides = overrides as unknown as typeof store.vipPhoneOverrides;
+  await writeStore(store);
+  return overrideData;
+}
+
+export async function deleteVipPhoneOverride(
+  id: string,
+  vipEmail: string
+): Promise<boolean> {
+  const store = await readStore();
+  const cleanEmail = vipEmail.trim().toLowerCase();
+  const overrides = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(Boolean);
+  const idx = overrides.findIndex((o) => o._id === id && o.vipEmail.toLowerCase() === cleanEmail);
+  if (idx < 0) return false;
+  overrides.splice(idx, 1);
+  store.vipPhoneOverrides = overrides as unknown as typeof store.vipPhoneOverrides;
+  await writeStore(store);
+  return true;
+}
+
+export async function getActiveVipPhoneOverride(
+  city: string
+): Promise<VipPhoneOverride | null> {
+  if (!city) return null;
+  const normalizedCity = city.trim().toLowerCase();
+  const store = await readStore();
+
+  const overrides = ((store.vipPhoneOverrides ?? []) as unknown as VipPhoneOverride[]).filter(Boolean);
+  const now = Date.now();
+
+  for (const o of overrides) {
+    if (
+      o.active &&
+      o.city &&
+      o.city.trim().toLowerCase() === normalizedCity &&
+      new Date(o.expiresAt).getTime() > now
+    ) {
+      // Verify VIP assignment is currently active
+      const assignments = (store.cityVipAssignments ?? []) as unknown as CityVipAssignment[];
+      const hasActiveVip = assignments.some((a) => {
+        if (a.email.toLowerCase() !== o.vipEmail.toLowerCase()) return false;
+        if (a.status !== "active") return false;
+        if (new Date(a.expiresAt).getTime() <= now) return false;
+        if (a.type === "city" && a.cityName?.trim().toLowerCase() === normalizedCity) return true;
+        if (a.type === "state") return true;
+        return false;
+      });
+
+      if (hasActiveVip) {
+        return o;
+      }
+    }
+  }
+
+  return null;
+}
