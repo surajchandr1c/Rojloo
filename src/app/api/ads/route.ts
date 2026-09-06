@@ -51,6 +51,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (age !== undefined && age !== null && String(age).trim() !== "") {
+    const ageNum = Number(age);
+    if (isNaN(ageNum) || ageNum < 18) {
+      return NextResponse.json(
+        { error: "Age must be at least 18." },
+        { status: 400 }
+      );
+    }
+  }
+
   const imageList = Array.isArray(images)
     ? images.filter((img: unknown) => typeof img === "string").slice(0, 4)
     : [];

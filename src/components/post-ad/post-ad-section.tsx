@@ -129,6 +129,7 @@ export default function PostAdSection({
             </label>
             <TextInput
               type="number"
+              min={18}
               value={form.age ?? ""}
               onChange={(e) => update("age", e.target.value)}
               placeholder="Your age"

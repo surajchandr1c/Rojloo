@@ -113,6 +113,14 @@ export default function PostAdForm({ adId }: { adId?: string }) {
       return;
     }
 
+    if (form.age && String(form.age).trim() !== "") {
+      const ageNum = Number(form.age);
+      if (isNaN(ageNum) || ageNum < 18) {
+        setFormError("Age must be at least 18.");
+        return;
+      }
+    }
+
     setFormLoading(true);
 
     const payload = { ...form, id: editingId ?? undefined };
