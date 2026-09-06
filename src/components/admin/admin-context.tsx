@@ -23,8 +23,23 @@ type AdminCtx = {
 
 const AdminContext = createContext<AdminCtx | null>(null);
 
+const ADMIN_STORAGE_KEY = "rojlo_admin_me";
+
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [me, setMe] = useState<AdminMe | null>(null);
+  const [me, setMe] = useState<AdminMe | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed.authenticated === "boolean") {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return null;
+  });
 
   const refresh = useCallback(async () => {
     try {
@@ -36,12 +51,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       if (!res.ok) {
         if (res.status === 401) {
           setMe({ authenticated: false });
+          try {
+            localStorage.removeItem(ADMIN_STORAGE_KEY);
+          } catch {}
         }
         return;
       }
 
       const data = (await res.json()) as AdminMe;
       setMe(data);
+      if (data && data.authenticated) {
+        try {
+          localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(data));
+        } catch {}
+      } else {
+        try {
+          localStorage.removeItem(ADMIN_STORAGE_KEY);
+        } catch {}
+      }
     } catch {
       setMe((prev) => prev ?? { authenticated: false });
     }

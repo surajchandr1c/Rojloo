@@ -162,6 +162,11 @@ export async function confirmPaymentRequest(
 
   if (!existing) return null;
 
+  // If already confirmed or credited, return existing immediately to prevent duplicate credit
+  if (existing.status === "confirmed" || existing.credited) {
+    return existing;
+  }
+
   const alreadyCredited = Boolean(existing.credited);
   const coinsToCredit = Number(existing.coins || 0);
   const userIdToCredit = String(existing.userId || "");
@@ -256,6 +261,11 @@ export async function declinePaymentRequest(
   }
 
   if (!existing) return null;
+
+  // If already declined or confirmed, return existing
+  if (existing.status === "declined" || existing.status === "confirmed") {
+    return existing;
+  }
 
   const updated: PaymentRequest = {
     ...existing,

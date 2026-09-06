@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        maxAge: 60 * 60,
+        maxAge: 30 * 24 * 60 * 60,
         secure: process.env.NODE_ENV === "production",
       });
       response.cookies.set("rojlo_subadmin", "", {

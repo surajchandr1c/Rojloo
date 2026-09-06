@@ -60,7 +60,8 @@ export default function CouponPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!me?.authenticated) {
+    if (me === null) return;
+    if (!me.authenticated) {
       router.replace("/admin/login");
       return;
     }

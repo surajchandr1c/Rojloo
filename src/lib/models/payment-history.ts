@@ -101,6 +101,32 @@ export async function createPaymentHistory(payment: {
   };
 
   const col = await getPaymentHistoryCollection();
+  if (col && payment.paymentRequestId) {
+    try {
+      const existingDoc = await col.findOne({ paymentRequestId: String(payment.paymentRequestId) });
+      if (existingDoc) {
+        return {
+          _id: existingDoc._id.toString(),
+          userEmail: String(existingDoc.userEmail || ""),
+          userName: existingDoc.userName ? String(existingDoc.userName) : undefined,
+          userId: String(existingDoc.userId || ""),
+          transactionId: String(existingDoc.transactionId || ""),
+          upiId: String(existingDoc.upiId || ""),
+          upiName: existingDoc.upiName ? String(existingDoc.upiName) : undefined,
+          coins: Number(existingDoc.coins || 0),
+          amount: Number(existingDoc.amount || 0),
+          discount: existingDoc.discount ? Number(existingDoc.discount) : undefined,
+          finalAmount: Number(existingDoc.finalAmount ?? existingDoc.amount ?? 0),
+          couponCode: existingDoc.couponCode ? String(existingDoc.couponCode) : undefined,
+          paymentRequestId: String(existingDoc.paymentRequestId || ""),
+          createdAt: existingDoc.createdAt instanceof Date ? existingDoc.createdAt.toISOString() : String(existingDoc.createdAt || new Date().toISOString()),
+        };
+      }
+    } catch (err) {
+      console.error("[payment-history] MongoDB findOne failed:", err);
+    }
+  }
+
   if (col) {
     try {
       const { _id, ...docToInsert } = newPayment;

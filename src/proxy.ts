@@ -25,7 +25,7 @@ export function proxy(request: NextRequest) {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60,
+      maxAge: 30 * 24 * 60 * 60,
       secure: process.env.NODE_ENV === "production",
     });
     return response;
@@ -40,7 +40,7 @@ export function proxy(request: NextRequest) {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        maxAge: 60 * 60,
+        maxAge: 30 * 24 * 60 * 60,
         secure: process.env.NODE_ENV === "production",
       });
     }
@@ -49,7 +49,7 @@ export function proxy(request: NextRequest) {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        maxAge: 60 * 60,
+        maxAge: 30 * 24 * 60 * 60,
         secure: process.env.NODE_ENV === "production",
       });
     }

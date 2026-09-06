@@ -171,44 +171,53 @@ function PaymentView() {
               <p className="mt-2 text-base text-green-800">
                 Don&apos;t pay again. Please wait to confirm the payment.
               </p>
+              <div className="mt-5 flex justify-center">
+                <Button
+                  type="button"
+                  variant="solid"
+                  onClick={() => router.push("/post-ad/payment-history")}
+                  className="!text-white"
+                >
+                  Show payment history
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* Coupon Section */}
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
-              <input
-                type="text"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                placeholder="Enter coupon code (optional)"
-                className="flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
-              />
-              <button
-                onClick={applyCoupon}
-                className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
-              >
-                Apply
-              </button>
-            </div>
-            {discountError && (
-              <p className="mt-2 text-sm text-red-600">{discountError}</p>
-            )}
-            {discount > 0 && (
-              <div className="mt-2 flex items-center justify-between rounded-lg bg-green-100 p-3">
-                <p className="font-semibold text-green-900">Discount Applied</p>
-                <p className="text-lg font-bold text-green-900">-₹{discount.toFixed(2)}</p>
-              </div>
-            )}
-            {discount > 0 && (
-              <p className="mt-2 text-sm font-semibold text-red-950">
-                Final Amount: ₹{finalAmount.toFixed(2)}
-              </p>
-            )}
-          </div>
-
           {!submitted && (
             <>
+              {/* Coupon Section */}
+              <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Enter coupon code (optional)"
+                    className="flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none"
+                  />
+                  <button
+                    onClick={applyCoupon}
+                    className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {discountError && (
+                  <p className="mt-2 text-sm text-red-600">{discountError}</p>
+                )}
+                {discount > 0 && (
+                  <div className="mt-2 flex items-center justify-between rounded-lg bg-green-100 p-3">
+                    <p className="font-semibold text-green-900">Discount Applied</p>
+                    <p className="text-lg font-bold text-green-900">-₹{discount.toFixed(2)}</p>
+                  </div>
+                )}
+                {discount > 0 && (
+                  <p className="mt-2 text-sm font-semibold text-red-950">
+                    Final Amount: ₹{finalAmount.toFixed(2)}
+                  </p>
+                )}
+              </div>
               {loading ? (
                 <p className="mt-6 text-red-900">Loading payment options...</p>
               ) : upis.length > 0 ? (

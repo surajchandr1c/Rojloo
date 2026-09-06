@@ -54,7 +54,8 @@ export default function PaymentHistoryPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!me?.authenticated) {
+    if (me === null) return;
+    if (!me.authenticated) {
       router.replace("/admin/login");
       return;
     }

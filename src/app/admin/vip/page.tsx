@@ -29,7 +29,8 @@ export default function VipPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!me?.authenticated) {
+    if (me === null) return;
+    if (!me.authenticated) {
       router.replace("/admin/login");
       return;
     }

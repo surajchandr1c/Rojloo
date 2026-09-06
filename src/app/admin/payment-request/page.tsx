@@ -35,6 +35,7 @@ export default function PaymentRequestPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "confirmed" | "declined">("pending");
+  const [processingIds, setProcessingIds] = useState<Record<string, "confirm" | "decline">>({});
 
   const loadRequests = useCallback(async () => {
     try {
@@ -74,7 +75,8 @@ export default function PaymentRequestPage() {
   }, []);
 
   useEffect(() => {
-    if (!me?.authenticated) {
+    if (me === null) return; // Auth still resolving, wait
+    if (!me.authenticated) {
       router.replace("/admin/login");
       return;
     }
@@ -86,6 +88,11 @@ export default function PaymentRequestPage() {
   }, [loadRequests, loadUPIs, me, router]);
 
   async function handleConfirm(request: PaymentRequest) {
+    const reqId = request._id;
+    if (!reqId || processingIds[reqId]) return;
+
+    setProcessingIds((prev) => ({ ...prev, [reqId]: "confirm" }));
+
     const upi = upis[0] ?? {
       upiId: "surajkumar40407@ybl",
       name: "suraj",
@@ -98,7 +105,7 @@ export default function PaymentRequestPage() {
         credentials: "include",
         body: JSON.stringify({
           action: "confirm",
-          id: request._id,
+          id: reqId,
           coins: request.coins,
           userId: request.userId,
           upiId: upi.upiId,
@@ -121,10 +128,21 @@ export default function PaymentRequestPage() {
     } catch (err) {
       alert("Failed to confirm payment");
       console.error(err);
+    } finally {
+      setProcessingIds((prev) => {
+        const next = { ...prev };
+        delete next[reqId];
+        return next;
+      });
     }
   }
 
   async function handleDecline(request: PaymentRequest) {
+    const reqId = request._id;
+    if (!reqId || processingIds[reqId]) return;
+
+    setProcessingIds((prev) => ({ ...prev, [reqId]: "decline" }));
+
     try {
       const response = await fetch("/api/admin/payment-request", {
         method: "POST",
@@ -132,7 +150,7 @@ export default function PaymentRequestPage() {
         credentials: "include",
         body: JSON.stringify({
           action: "decline",
-          id: request._id,
+          id: reqId,
           reason: "",
         }),
       });
@@ -148,6 +166,12 @@ export default function PaymentRequestPage() {
     } catch (err) {
       alert("Failed to decline payment");
       console.error(err);
+    } finally {
+      setProcessingIds((prev) => {
+        const next = { ...prev };
+        delete next[reqId];
+        return next;
+      });
     }
   }
 
@@ -305,15 +329,17 @@ export default function PaymentRequestPage() {
                       <div className="flex w-full flex-col gap-2 sm:ml-4 sm:w-auto">
                         <button
                           onClick={() => handleConfirm(request)}
-                          className="whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
+                          disabled={Boolean(request._id && processingIds[request._id])}
+                          className="whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Confirm
+                          {request._id && processingIds[request._id] === "confirm" ? "Confirming..." : "Confirm"}
                         </button>
                         <button
                           onClick={() => handleDecline(request)}
-                          className="whitespace-nowrap rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+                          disabled={Boolean(request._id && processingIds[request._id])}
+                          className="whitespace-nowrap rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Decline
+                          {request._id && processingIds[request._id] === "decline" ? "Declining..." : "Decline"}
                         </button>
                       </div>
                     )}
