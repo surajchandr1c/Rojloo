@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import Button from "@/components/ui/button";
 import { TextInput, TextArea, Select, FileInput } from "@/components/ui/field";
 import { cityPlaces } from "@/lib/places";
-import { SERVICES, TO_SERVE, PLACE_OF_SERVICE, DEFAULT_SERVICE_RATES, type AdForm } from "./types";
+import { SERVICES, TO_SERVE, PLACE_OF_SERVICE, DEFAULT_SERVICE_RATES, MAX_IMAGES, type AdForm } from "./types";
 
 type CityOption = { name: string; slug: string; state?: string };
 
@@ -17,6 +17,9 @@ export default function PostAdSection({
   setForm,
   formError,
   formLoading,
+  imageUploading = false,
+  uploadProgress = 0,
+  uploadingCount = 0,
   editingId,
   onImageChange,
   onRemoveImage,
@@ -26,6 +29,9 @@ export default function PostAdSection({
   setForm: React.Dispatch<React.SetStateAction<AdForm>>;
   formError: string;
   formLoading: boolean;
+  imageUploading?: boolean;
+  uploadProgress?: number;
+  uploadingCount?: number;
   editingId: string | null;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: (index: number) => void;
@@ -549,14 +555,74 @@ export default function PostAdSection({
       </section>
 
       <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
-        <h3 className="text-lg font-bold text-red-950">Images</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-red-950">Images</h3>
+          <span className="text-xs font-semibold text-red-800">
+            {form.images.length}/{MAX_IMAGES} uploaded
+          </span>
+        </div>
+
         <FileInput
           type="file"
           accept="image/*"
           multiple
+          disabled={imageUploading || form.images.length >= MAX_IMAGES}
           onChange={onImageChange}
-          className="file:!text-white"
+          className="file:!text-white disabled:cursor-not-allowed disabled:opacity-60"
         />
+
+        {/* Upload Loading Progress Bar */}
+        {imageUploading && (
+          <div className="mt-3 space-y-2 rounded-2xl border border-red-200 bg-pink-50/90 p-4 shadow-sm">
+            <div className="flex items-center justify-between text-xs font-semibold text-red-950">
+              <span className="flex items-center gap-2">
+                <svg
+                  className="h-4 w-4 animate-spin text-red-700"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+                <span>
+                  Uploading {uploadingCount > 1 ? `${uploadingCount} images` : "image"}...
+                </span>
+              </span>
+              <span className="font-mono font-bold text-red-800">
+                {Math.round(uploadProgress)}%
+              </span>
+            </div>
+
+            {/* Visual Progress Bar Track & Indicator */}
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-pink-200/80">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-red-600 to-red-800 transition-all duration-300 ease-out"
+                style={{ width: `${Math.max(6, Math.min(100, uploadProgress))}%` }}
+              />
+            </div>
+
+            <p className="text-[11px] text-red-700">
+              {uploadProgress < 30
+                ? "Compressing image..."
+                : uploadProgress < 95
+                ? "Uploading to server..."
+                : "Finalizing upload..."}
+            </p>
+          </div>
+        )}
         {form.images.length > 0 && (
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {form.images.map((src, i) => (

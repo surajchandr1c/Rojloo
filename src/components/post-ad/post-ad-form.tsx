@@ -34,6 +34,9 @@ export default function PostAdForm({ adId }: { adId?: string }) {
   const [form, setForm] = useState<AdForm>(emptyForm);
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(adId ?? null);
 
   useEffect(() => {
@@ -77,24 +80,53 @@ export default function PostAdForm({ adId }: { adId?: string }) {
       return;
     }
 
-    setFormLoading(true);
+    setFormError("");
+    setImageUploading(true);
+    setUploadProgress(5);
+    setUploadingCount(files.length);
+
+    const fileProgresses = new Array(files.length).fill(5);
+    const updateOverallProgress = () => {
+      const avg =
+        fileProgresses.reduce((sum, p) => sum + p, 0) / files.length;
+      setUploadProgress(Math.round(avg));
+    };
+
     try {
       const urls = await Promise.all(
-        files.map((file) => uploadImage(file).catch(() => null))
+        files.map((file, idx) =>
+          uploadImage(file, (percent) => {
+            fileProgresses[idx] = percent;
+            updateOverallProgress();
+          }).catch(() => null)
+        )
       );
+
+      const successfulUrls = urls.filter(
+        (u): u is string => typeof u === "string"
+      );
+      if (successfulUrls.length === 0 && files.length > 0) {
+        setFormError("Failed to upload image. Please try again.");
+      } else if (successfulUrls.length < files.length) {
+        setFormError("One or more images failed to upload.");
+      }
+
+      setUploadProgress(100);
       setForm((prev) => ({
         ...prev,
-        images: [
-          ...prev.images,
-          ...urls.filter((u): u is string => typeof u === "string"),
-        ].slice(0, MAX_IMAGES),
+        images: [...prev.images, ...successfulUrls].slice(0, MAX_IMAGES),
       }));
+
+      // Short delay so user sees 100% completion before hiding the progress bar
+      await new Promise((res) => setTimeout(res, 400));
     } catch {
       setFormError("Failed to upload one or more images.");
     } finally {
-      setFormLoading(false);
+      setImageUploading(false);
+      setUploadProgress(0);
+      setUploadingCount(0);
+      e.target.value = "";
     }
-    e.target.value = "";
   };
 
   const removeImage = (index: number) => {
@@ -180,6 +212,9 @@ export default function PostAdForm({ adId }: { adId?: string }) {
             setForm={setForm}
             formError={formError}
             formLoading={formLoading}
+            imageUploading={imageUploading}
+            uploadProgress={uploadProgress}
+            uploadingCount={uploadingCount}
             editingId={editingId}
             onImageChange={handleImageChange}
             onRemoveImage={removeImage}

@@ -58,17 +58,56 @@ export async function compressImage(
   });
 }
 
-export async function uploadImage(file: File): Promise<string> {
+export async function uploadImage(
+  file: File,
+  onProgress?: (percent: number) => void
+): Promise<string> {
+  onProgress?.(10);
   const compressed = await compressImage(file);
+  onProgress?.(25);
+
   const body = new FormData();
   body.append("file", compressed);
 
-  const res = await fetch("/api/upload", { method: "POST", body });
-  const data = await res.json();
+  return new Promise<string>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload");
 
-  if (!res.ok || !data.url) {
-    throw new Error(data.error || "Upload failed");
-  }
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        // Map upload byte progress from 25% to 92%
+        const percent = Math.round(25 + (event.loaded / event.total) * 67);
+        onProgress?.(percent);
+      }
+    };
 
-  return data.url;
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (data?.url) {
+            onProgress?.(100);
+            resolve(data.url);
+          } else {
+            reject(new Error(data?.error || "Upload failed"));
+          }
+        } catch {
+          reject(new Error("Invalid upload response"));
+        }
+      } else {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          reject(new Error(data?.error || "Upload failed"));
+        } catch {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error("Network error during image upload"));
+    };
+
+    xhr.send(body);
+  });
 }
