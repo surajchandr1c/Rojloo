@@ -2,7 +2,6 @@ import "server-only";
 
 import { NextRequest } from "next/server";
 import { getVipBySession, getVipScope, VipScope } from "@/lib/models/vip";
-import { getAdminContext } from "@/lib/admin-access";
 
 export type VipContext =
   | {
@@ -21,15 +20,29 @@ export type VipContext =
       authenticated: false;
     };
 
+function normalizeEnvValue(value?: string): string {
+  return (value ?? "").trim().replace(/^['"]|['"]$/g, "");
+}
+
 export async function getVipContext(request: NextRequest): Promise<VipContext> {
-  // Check if main admin is logged in
-  const adminCtx = await getAdminContext(request);
-  if (adminCtx && adminCtx.role === "main") {
-    // Admin has access to all
+  // VIP route access strictly requires a valid rojlo_vip cookie
+  const vipCookie = request.cookies.get("rojlo_vip")?.value;
+  if (!vipCookie || vipCookie.trim().length === 0) {
+    return { authenticated: false };
+  }
+
+  // Check if admin is authenticated on the VIP panel
+  const adminToken = normalizeEnvValue(process.env.ADMIN_TOKEN);
+  const expectedAdminVip = adminToken ? `admin_${adminToken}` : "admin";
+  if (
+    vipCookie === expectedAdminVip ||
+    (adminToken && vipCookie === adminToken) ||
+    vipCookie === "admin"
+  ) {
     return {
       authenticated: true,
       role: "admin",
-      email: "admin",
+      email: normalizeEnvValue(process.env.ADMIN_EMAIL) || "admin",
       scope: {
         hasStateAccess: true,
         states: [],
@@ -39,12 +52,7 @@ export async function getVipContext(request: NextRequest): Promise<VipContext> {
     };
   }
 
-  // Check VIP session cookie
-  const vipCookie = request.cookies.get("rojlo_vip")?.value;
-  if (!vipCookie) {
-    return { authenticated: false };
-  }
-
+  // Verify regular VIP user session in database
   const vip = await getVipBySession(vipCookie);
   if (!vip) {
     return { authenticated: false };

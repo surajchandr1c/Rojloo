@@ -57,6 +57,13 @@ export async function POST(request: NextRequest) {
         role: "admin",
         redirect: "/vip",
       });
+      response.cookies.set("rojlo_vip", `admin_${configuredToken}`, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 30 * 24 * 60 * 60,
+        secure: process.env.NODE_ENV === "production",
+      });
       response.cookies.set("rojlo_admin", configuredToken, {
         httpOnly: true,
         sameSite: "lax",

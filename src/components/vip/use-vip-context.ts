@@ -20,7 +20,11 @@ export function useVipContext(redirectIfUnauthenticated = true) {
       pathname !== "/vip/login" &&
       !pathname.startsWith("/vip/create-password")
     ) {
-      router.replace("/vip/login");
+      if (typeof window !== "undefined") {
+        window.location.replace("/vip/login");
+      } else {
+        router.replace("/vip/login");
+      }
     }
   }, [me, redirectIfUnauthenticated, router, pathname]);
 

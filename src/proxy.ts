@@ -7,7 +7,12 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // --- VIP Route Protection ---
-  if (pathname.startsWith("/vip") || pathname.startsWith("/api/vip")) {
+  if (
+    pathname === "/vip" ||
+    pathname.startsWith("/vip/") ||
+    pathname === "/api/vip" ||
+    pathname.startsWith("/api/vip/")
+  ) {
     const isVipLoginPage =
       pathname === "/vip/login" || pathname.startsWith("/vip/login/");
     const isVipCreatePasswordPage =
@@ -29,10 +34,10 @@ export function proxy(request: NextRequest) {
     }
 
     const vipCookie = request.cookies.get("rojlo_vip")?.value;
-    const adminCookie = request.cookies.get("rojlo_admin")?.value;
 
-    // If VIP session cookie or admin cookie is present, allow through
-    if (vipCookie || (adminToken && adminCookie === adminToken) || adminCookie) {
+    // Strict VIP authentication check:
+    // Only users who have authenticated via the VIP login portal possess a valid rojlo_vip cookie.
+    if (vipCookie && vipCookie.trim().length > 0) {
       return NextResponse.next();
     }
 
@@ -109,9 +114,15 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/api/admin/:path*",
+    "/vip",
     "/vip/:path*",
     "/api/vip/:path*",
+    "/admin",
+    "/admin/:path*",
+    "/api/admin/:path*",
   ],
 };
+
+export default proxy;
+export { proxy as middleware };
+

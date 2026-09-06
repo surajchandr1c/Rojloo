@@ -64,8 +64,11 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
 
   async function handleLogout() {
     await fetch("/api/vip/logout", { method: "POST" }).catch(() => {});
+    try {
+      localStorage.removeItem("rojlo_vip_me");
+    } catch {}
     await refresh();
-    router.push("/vip/login");
+    window.location.href = "/vip/login";
   }
 
   const visibleItems = vipNavItems.filter((item) => {

@@ -19,7 +19,11 @@ export default function VipStatePage() {
   useEffect(() => {
     if (me === null) return;
     if (!me.authenticated) {
-      router.replace("/vip/login");
+      if (typeof window !== "undefined") {
+        window.location.replace("/vip/login");
+      } else {
+        router.replace("/vip/login");
+      }
       return;
     }
     // If VIP does not have state access, redirect to dashboard

@@ -21,6 +21,14 @@ export default function VipUsersPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    if (me && !me.authenticated) {
+      if (typeof window !== "undefined") {
+        window.location.replace("/vip/login");
+      }
+    }
+  }, [me]);
+
+  useEffect(() => {
     if (!me || !me.authenticated) return;
 
     fetch("/api/vip/users", { credentials: "include" })

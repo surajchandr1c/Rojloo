@@ -18,6 +18,14 @@ export default function VipCityPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
+    if (me && !me.authenticated) {
+      if (typeof window !== "undefined") {
+        window.location.replace("/vip/login");
+      }
+    }
+  }, [me]);
+
+  useEffect(() => {
     if (!me || !me.authenticated) return;
 
     fetch("/api/vip/cities", { credentials: "include" })

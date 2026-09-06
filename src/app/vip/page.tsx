@@ -36,6 +36,14 @@ export default function VipDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (me && !me.authenticated) {
+      if (typeof window !== "undefined") {
+        window.location.replace("/vip/login");
+      }
+    }
+  }, [me]);
+
+  useEffect(() => {
     if (!me || !me.authenticated) return;
 
     fetch("/api/vip/stats", { credentials: "include" })
