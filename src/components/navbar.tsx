@@ -71,7 +71,7 @@ export default function NavBar() {
   }, [isLoading, refreshAuth, pathname]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#7f1d1d] bg-[#450a0a] text-white">
+    <header className="sticky top-0 z-50 w-full border-b border-[#7f1d1d] bg-[#450a0a] text-white shadow-sm">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-4 py-2.5 sm:py-3">
         <Link href="/" className="text-xl font-black text-white shrink-0">
           rojlo

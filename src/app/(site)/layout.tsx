@@ -7,7 +7,7 @@ import { Providers } from "../providers";
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <Providers>
-      <div className="flex min-h-full flex-col w-full overflow-x-hidden">
+      <div className="flex min-h-screen flex-col w-full">
         <NavBar />
         <div className="flex-1 w-full">{children}</div>
         <Footer />

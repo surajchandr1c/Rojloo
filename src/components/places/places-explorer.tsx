@@ -422,16 +422,16 @@ export default function PlacesExplorer({
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid w-full min-w-0 gap-3.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((city) => (
             <Link
               key={city.slug}
               href={`/places/${city.slug}`}
-              className="group flex flex-col rounded-2xl border border-red-100 bg-white p-5 transition-all hover:border-red-300 hover:shadow-md"
+              className="group flex w-full min-w-0 flex-col rounded-2xl border border-red-100 bg-white p-4 sm:p-5 transition-all hover:border-red-300 hover:shadow-md"
             >
-              <div className="flex items-start justify-between gap-3 min-w-0">
+              <div className="flex w-full min-w-0 items-start justify-between gap-2.5 sm:gap-3">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-xl font-black text-red-950 transition-colors group-hover:text-red-700 break-words">
+                  <h2 className="text-lg sm:text-xl font-black text-red-950 transition-colors group-hover:text-red-700 break-words">
                     {city.name}
                   </h2>
                   {city.state && (
@@ -440,7 +440,7 @@ export default function PlacesExplorer({
                     </p>
                   )}
                 </div>
-                <span className="inline-flex shrink-0 items-center rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-red-800">
+                <span className="inline-flex shrink-0 items-center rounded-full bg-pink-100 px-2.5 sm:px-3 py-1 text-xs font-semibold text-red-800 whitespace-nowrap">
                   {city.adCount} {city.adCount === 1 ? "service" : "services"}
                 </span>
               </div>

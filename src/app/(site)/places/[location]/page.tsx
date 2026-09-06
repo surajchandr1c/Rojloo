@@ -114,7 +114,7 @@ async function CityContent({ slug }: { slug: string }) {
                   )}
 
                   {ad.city && (
-                    <span className="pointer-events-none absolute right-4 top-4 z-10 inline-flex max-w-28 items-center truncate rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-red-800 sm:right-6 sm:top-6">
+                    <span className="pointer-events-none absolute right-3.5 top-3.5 z-10 inline-flex max-w-[12rem] sm:max-w-xs items-center truncate rounded-full bg-pink-100 px-2.5 sm:px-3 py-1 text-xs font-semibold text-red-800 sm:right-6 sm:top-6">
                       {ad.city}
                     </span>
                   )}
