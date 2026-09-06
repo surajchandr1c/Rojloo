@@ -143,7 +143,8 @@ export async function POST(request: NextRequest) {
     // Upsert VIP user record with phone number as their password
     await upsertVipUserWithPhone(email, phone);
 
-    const loginUrl = `${origin}/vip/login`;
+    const envVipUrl = (process.env.VIP_LOGIN_URL || process.env.NEXT_PUBLIC_VIP_URL || "").trim().replace(/^['"]|['"]$/g, "");
+    const loginUrl = envVipUrl || `${origin}/vip/login`;
     const latestExpiry = created[0]?.expiresAt || new Date();
 
     // Send notification email containing VIP login credentials

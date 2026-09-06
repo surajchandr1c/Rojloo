@@ -224,7 +224,7 @@ export default function VipPage() {
           </div>
           <a
             href="/api/admin/go-to-vip"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#450a0a] px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#7f1d1d] transition shrink-0"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline transition shrink-0"
           >
             <span>Go to VIP Dashboard</span>
             <span>&rarr;</span>
@@ -445,7 +445,7 @@ export default function VipPage() {
                     </div>
                     <a
                       href="/api/admin/go-to-vip"
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#450a0a] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#7f1d1d] transition shadow-sm"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition"
                     >
                       Go to VIP Dashboard &rarr;
                     </a>

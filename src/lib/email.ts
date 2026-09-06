@@ -205,7 +205,7 @@ export function sendVipInviteEmail({
   to: string;
   areaLabel: string;
   phone: string;
-  loginUrl: string;
+  loginUrl?: string;
   expiresAt: Date | string;
 }) {
   const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || SITE_NAME;
@@ -214,6 +214,10 @@ export function sendVipInviteEmail({
     timeStyle: "short",
   });
   const subject = `VIP Access Granted for ${areaLabel} - Your Login Details`;
+
+  const envVipUrl = cleanEnv(process.env.VIP_LOGIN_URL || process.env.NEXT_PUBLIC_VIP_URL);
+  const effectiveLoginUrl =
+    envVipUrl || (loginUrl ? cleanEnv(loginUrl) : "") || "https://rojloo.vercel.app/vip/login";
 
   const text = [
     `Hello,`,
@@ -226,11 +230,11 @@ export function sendVipInviteEmail({
     `----------------------------------------`,
     `• Email: ${to}`,
     `• Password: ${phone}`,
-    `• VIP Page URL: ${loginUrl}`,
+    `• VIP Page URL: ${effectiveLoginUrl}`,
     `----------------------------------------`,
     ``,
     `Log in to your VIP Control Panel at:`,
-    loginUrl,
+    effectiveLoginUrl,
     ``,
     `Please contact the admin team if you need any assistance.`,
     ``,
@@ -256,13 +260,13 @@ export function sendVipInviteEmail({
     `<h3 style="margin:0 0 12px;font-size:14px;font-weight:800;color:#991b1b;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #fecaca;padding-bottom:8px;">Your VIP Login Details</h3>`,
     `<p style="margin:6px 0;font-size:13px;color:#450a0a;"><strong>Email:</strong> <span style="font-family:monospace;font-size:14px;color:#1e1e1e;font-weight:600;">${to}</span></p>`,
     `<p style="margin:6px 0;font-size:13px;color:#450a0a;"><strong>Password:</strong> <span style="font-family:monospace;font-size:14px;color:#991b1b;font-weight:700;">${phone}</span></p>`,
-    `<p style="margin:6px 0;font-size:13px;color:#450a0a;"><strong>VIP Page URL:</strong> <a href="${loginUrl}" style="font-family:monospace;font-size:13px;color:#be123c;font-weight:600;word-break:break-all;">${loginUrl}</a></p>`,
+    `<p style="margin:6px 0;font-size:13px;color:#450a0a;"><strong>VIP Page URL:</strong> <a href="${effectiveLoginUrl}" style="font-family:monospace;font-size:13px;color:#be123c;font-weight:600;word-break:break-all;">${effectiveLoginUrl}</a></p>`,
     `</div>`,
     `<div style="margin:24px 0;">`,
-    `<a href="${loginUrl}" style="background-color:#450a0a;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:14px;font-weight:700;font-size:15px;display:inline-block;box-shadow:0 4px 10px rgba(69,10,10,0.25);">Login to VIP Panel &rarr;</a>`,
+    `<a href="${effectiveLoginUrl}" style="background-color:#450a0a;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:14px;font-weight:700;font-size:15px;display:inline-block;box-shadow:0 4px 10px rgba(69,10,10,0.25);">Login to VIP Panel &rarr;</a>`,
     `</div>`,
     `<p style="color:#881337;font-size:13px;line-height:20px;margin:20px 0 8px;">Or copy and paste this link in your browser:</p>`,
-    `<p style="margin:0 0 20px;"><a href="${loginUrl}" style="color:#be123c;font-weight:600;font-size:13px;word-break:break-all;">${loginUrl}</a></p>`,
+    `<p style="margin:0 0 20px;"><a href="${effectiveLoginUrl}" style="color:#be123c;font-weight:600;font-size:13px;word-break:break-all;">${effectiveLoginUrl}</a></p>`,
     `<div style="margin-top:28px;padding-top:16px;border-top:1px solid #ffe4e6;font-size:12px;color:#9ca3af;text-align:center;">`,
     `This is an automated VIP notification from ${siteName}. If you were not expecting this, please contact support.`,
     `</div>`,
