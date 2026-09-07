@@ -1,4 +1,4 @@
-export type PromoShift = "day" | "night" | "all";
+export type PromoShift = "12h" | "day" | "night" | "all";
 
 export type PromoTier = "platinum" | "gold" | "silver" | "bronze";
 
@@ -58,20 +58,24 @@ export function getCurrentShiftInfo(date: Date = new Date()): ShiftInfo {
 }
 
 export function getShiftLabel(shift?: string): string {
-  const normalized = (shift || "day").toLowerCase();
+  const normalized = (shift || "12h").toLowerCase();
+  if (normalized === "12h") {
+    return "12 Hours Shift (Runs 12 hours from promotion time)";
+  }
   if (normalized === "night") {
-    return "Night Shift (08:00 PM – 08:00 AM)";
+    return "Night Shift (12 Hours from promotion time)";
   }
-  if (normalized === "all") {
-    return "24 Hours (Day & Night Shifts)";
+  if (normalized === "all" || normalized === "24h") {
+    return "24 Hours Shift (Day & Night)";
   }
-  return "Day Shift (08:00 AM – 08:00 PM)";
+  return "Day Shift (12 Hours from promotion time)";
 }
 
 export function getShiftShortLabel(shift?: string): string {
-  const normalized = (shift || "day").toLowerCase();
+  const normalized = (shift || "12h").toLowerCase();
+  if (normalized === "12h") return "⏱️ 12h Shift";
   if (normalized === "night") return "🌙 Night (12h)";
-  if (normalized === "all") return "🔄 24h Full Day";
+  if (normalized === "all" || normalized === "24h") return "🔄 24h Full Day";
   return "☀️ Day (12h)";
 }
 
@@ -161,17 +165,41 @@ export function isAdActiveInCurrentShift(
   },
   now: Date = new Date()
 ): boolean {
-  if (!isAdPromotionActive(ad, now)) return false;
-  const currentShift = getCurrentShift(now);
-  const promoShift = (ad.promoShift || "day").toLowerCase();
-  return promoShift === "all" || promoShift === currentShift;
+  return isAdPromotionActive(ad, now);
 }
 
 export function calculateExpirationDate(
-  durationDays: number,
+  duration: number,
+  startDate: Date = new Date(),
+  isHours = false
+): Date {
+  if (isHours) {
+    const hours = Math.max(1, Number(duration) || 12);
+    return new Date(startDate.getTime() + hours * 60 * 60 * 1000);
+  }
+  const days = Number(duration) || 1;
+  return new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+export function calculatePromoExpiration(
+  pkg?: { durationDays?: number; durationHours?: number },
+  shift?: string,
   startDate: Date = new Date()
 ): Date {
-  const days = Math.max(1, Math.round(durationDays || 1));
+  if (pkg?.durationHours) {
+    return new Date(startDate.getTime() + pkg.durationHours * 60 * 60 * 1000);
+  }
+
+  const normShift = (shift || "12h").toLowerCase();
+  if (normShift === "12h" || normShift === "day" || normShift === "night") {
+    if (pkg?.durationDays && pkg.durationDays > 1) {
+      return new Date(startDate.getTime() + pkg.durationDays * 24 * 60 * 60 * 1000);
+    }
+    // Default 12-hour shift: runs for exactly 12 hours from activation
+    return new Date(startDate.getTime() + 12 * 60 * 60 * 1000);
+  }
+
+  const days = Number(pkg?.durationDays) || 1;
   return new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
@@ -218,13 +246,33 @@ export function formatTimeRemaining(expiryDate?: Date | string, now: Date = new 
   return `${minutes}m remaining`;
 }
 
+export function formatDetailedTimeRemaining(expiryDate?: Date | string, now: Date = new Date()): string {
+  if (!expiryDate) return "Expired";
+  const exp = new Date(expiryDate).getTime();
+  const diff = exp - now.getTime();
+
+  if (diff <= 0) return "Expired";
+
+  const totalSeconds = Math.floor(diff / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    const remHours = hours % 24;
+    return `${days}d ${remHours}h ${minutes}m ${seconds}s left`;
+  }
+  return `${hours}h ${minutes}m ${seconds}s left`;
+}
+
 /**
- * Sorts ads by promotion tier and current 12-hour shift:
+ * Sorts ads by promotion tier:
  * - Active Platinum ads (Top 1 - 3)
  * - Active Gold ads (Top 4 - 6)
  * - Active Silver ads (Top 7 - 10)
  * - Active Bronze ads (Top 10 - 15)
- * - Remaining ads: off-shift active ads, expired ads, and standard ads (newest first).
+ * - Remaining ads: expired ads and standard free ads (newest first).
  */
 export function sortAdsWithPromotions<T extends {
   _id?: string;
@@ -236,8 +284,6 @@ export function sortAdsWithPromotions<T extends {
   promoTier?: string;
   promoShift?: string;
 }>(ads: T[], now: Date = new Date()): T[] {
-  const currentShift = getCurrentShift(now);
-
   const platinumAds: T[] = [];
   const goldAds: T[] = [];
   const silverAds: T[] = [];
@@ -248,25 +294,20 @@ export function sortAdsWithPromotions<T extends {
     const isActivePromo = isAdPromotionActive(ad, now);
 
     if (isActivePromo) {
-      const shift = (ad.promoShift || "day").toLowerCase();
-      const matchesShift = shift === "all" || shift === currentShift;
-
-      if (matchesShift) {
-        const tier = normalizeTier(ad.promoTier, ad.promoPackage);
-        if (tier === "platinum") {
-          platinumAds.push(ad);
-        } else if (tier === "gold") {
-          goldAds.push(ad);
-        } else if (tier === "silver") {
-          silverAds.push(ad);
-        } else {
-          bronzeAds.push(ad);
-        }
-        continue;
+      const tier = normalizeTier(ad.promoTier, ad.promoPackage);
+      if (tier === "platinum") {
+        platinumAds.push(ad);
+      } else if (tier === "gold") {
+        goldAds.push(ad);
+      } else if (tier === "silver") {
+        silverAds.push(ad);
+      } else {
+        bronzeAds.push(ad);
       }
+      continue;
     }
 
-    // Ads not active in this shift (either expired, off-shift, or standard free ads)
+    // Ads not active (expired or standard free ads)
     otherAds.push(ad);
   }
 

@@ -18,10 +18,17 @@ import {
 import {
   getShiftLabel,
   getTierRankInfo,
-  calculateExpirationDate,
+  calculatePromoExpiration,
   formatDateTime,
+  formatDetailedTimeRemaining,
   type PromoShift,
 } from "@/lib/promo-shifts";
+
+interface PromoModalData {
+  adTitle: string;
+  rankRange: string;
+  promotedUntil: Date;
+}
 
 export default function PromotedAdView() {
   const router = useRouter();
@@ -34,12 +41,24 @@ export default function PromotedAdView() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [promoPackages, setPromoPackages] = useState<PromotionPackage[]>(DEFAULT_PROMO_PACKAGES);
   const [selectedAdId, setSelectedAdId] = useState<string>(adIdParam);
-  const [selectedShift, setSelectedShift] = useState<PromoShift>("day");
+  const [selectedShift, setSelectedShift] = useState<PromoShift>("12h");
   const [selectedPackageId, setSelectedPackageId] = useState<string>("platinum-vip");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [modalData, setModalData] = useState<PromoModalData | null>(null);
+  const [countdown, setCountdown] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!modalData) return;
+    const update = () => {
+      setCountdown(formatDetailedTimeRemaining(modalData.promotedUntil));
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [modalData]);
 
   const loadAds = () => {
     setLoading(true);
@@ -107,7 +126,7 @@ export default function PromotedAdView() {
   const hasEnoughCoins = userCoins >= selectedPkg.coinsCost;
 
   // Real-time projected expiration calculation
-  const projectedExpiration = calculateExpirationDate(selectedPkg.durationDays);
+  const projectedExpiration = calculatePromoExpiration(selectedPkg, selectedShift);
   const formattedProjectedExpiry = formatDateTime(projectedExpiration);
 
   const isAdPromoted = (ad: Ad) => {
@@ -130,7 +149,6 @@ export default function PromotedAdView() {
 
     setSubmitting(true);
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     try {
       const res = await authenticatedFetch(`/api/ads/${selectedAd._id}/promote`, {
@@ -140,6 +158,7 @@ export default function PromotedAdView() {
           packageId: selectedPkg.id,
           title: selectedPkg.title,
           durationDays: selectedPkg.durationDays,
+          durationHours: selectedPkg.durationHours,
           coinsCost: selectedPkg.coinsCost,
           shift: selectedShift,
           tier: selectedTierInfo.tier,
@@ -151,9 +170,16 @@ export default function PromotedAdView() {
         throw new Error(data.error || "Failed to promote ad.");
       }
 
-      setSuccessMessage(
-        `🎉 Successfully promoted "${selectedAd.name || selectedAd.title}" with ${selectedPkg.title}! Guaranteed position: ${selectedTierInfo.rankRange} during ${getShiftLabel(selectedShift)} until ${formattedProjectedExpiry}.`
+      const expiry = new Date(
+        data.promotedUntil || calculatePromoExpiration(selectedPkg, selectedShift)
       );
+
+      setModalData({
+        adTitle: selectedAd.name || selectedAd.title || "Your Ad",
+        rankRange: selectedTierInfo.rankRange,
+        promotedUntil: expiry,
+      });
+
       await refreshAuth();
       loadAds();
     } catch (err: unknown) {
@@ -318,9 +344,10 @@ export default function PromotedAdView() {
               onChange={(e) => setSelectedShift(e.target.value as PromoShift)}
               className="w-full rounded-xl border border-red-200 bg-pink-50/30 p-2.5 text-xs sm:text-sm font-bold text-red-950 focus:border-red-600 focus:outline-none"
             >
-              <option value="day">☀️ Day Shift (12 Hours: 08:00 AM – 08:00 PM)</option>
-              <option value="night">🌙 Night Shift (12 Hours: 08:00 PM – 08:00 AM)</option>
-              <option value="all">🔄 24 Hours (Day &amp; Night Both Shifts)</option>
+              <option value="12h">⏱️ 12 Hours Shift (Runs 12 hours from promotion time)</option>
+              <option value="24h">🔄 24 Hours Shift (Runs 24 hours from promotion time)</option>
+              <option value="day">☀️ Day Shift (12 Hours from promotion time)</option>
+              <option value="night">🌙 Night Shift (12 Hours from promotion time)</option>
             </select>
           </div>
         </div>
@@ -385,7 +412,7 @@ export default function PromotedAdView() {
                       </span>
                       <span className="text-xs font-bold text-gray-600">Coins</span>
                       <span className="text-xs text-gray-500 ml-1.5">
-                        ({pkg.durationDays} {pkg.durationDays === 1 ? "Day" : "Days"})
+                        ({pkg.durationHours ? (pkg.durationHours < 24 ? `${pkg.durationHours} Hours` : `${Math.round(pkg.durationHours / 24)} Days`) : `${pkg.durationDays} ${pkg.durationDays === 1 ? "Day" : "Days"}`})
                       </span>
                     </div>
 
@@ -451,6 +478,71 @@ export default function PromotedAdView() {
           </div>
         </div>
       </SectionPanel>
+
+      {/* Simple Promotion Expiration Popup Modal */}
+      {modalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-red-200 text-center relative">
+            <button
+              type="button"
+              onClick={() => setModalData(null)}
+              className="absolute top-3.5 right-3.5 text-gray-400 hover:text-gray-700 text-xl font-bold p-1 leading-none cursor-pointer"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl">
+              🎉
+            </div>
+
+            <h3 className="mt-3 text-lg font-black text-red-950">
+              Ad Promoted Successfully!
+            </h3>
+
+            <p className="mt-1 text-xs font-semibold text-gray-600 truncate max-w-xs mx-auto">
+              {modalData.adTitle} &bull; <span className="text-red-700 font-bold">{modalData.rankRange}</span>
+            </p>
+
+            {/* Expiry & Time Left Box */}
+            <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/50 p-4 space-y-2.5 text-left">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                  Ad Will Expire At:
+                </p>
+                <p className="text-sm font-black text-red-950 mt-0.5">
+                  {formatDateTime(modalData.promotedUntil)}
+                </p>
+              </div>
+
+              <div className="border-t border-red-100/80 pt-2.5 flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-600">Time Left:</span>
+                <span className="text-sm font-black text-emerald-700 font-mono">
+                  {countdown || "Calculating..."}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-5 flex gap-2">
+              <Link
+                href="/post-ad/your-ads"
+                className="flex-1 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] !text-white text-white py-2.5 text-xs sm:text-sm font-bold transition shadow-xs flex items-center justify-center"
+                style={{ color: "#ffffff" }}
+              >
+                View Your Ads
+              </Link>
+              <button
+                type="button"
+                onClick={() => setModalData(null)}
+                className="rounded-xl border border-gray-300 bg-white hover:bg-gray-50 px-4 py-2.5 text-xs sm:text-sm font-bold text-gray-700 transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

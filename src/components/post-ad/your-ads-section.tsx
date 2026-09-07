@@ -10,6 +10,7 @@ import {
   getTierRankInfo,
   getShiftShortLabel,
   formatDateTime,
+  formatTimeRemaining,
   isAdActiveInCurrentShift,
   getCurrentShiftInfo,
 } from "@/lib/promo-shifts";
@@ -249,7 +250,7 @@ export default function YourAdsSection({
                             <p className="text-emerald-700 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
                               <span>🟢</span>
                               <span>
-                                {isCurrentShift ? "Live in Current Shift" : "Scheduled for Shift"} &bull; Expires: {promoExpiryFormatted}
+                                Live on Top &bull; Expires: {promoExpiryFormatted} ({formatTimeRemaining(ad.promotedUntil)})
                               </span>
                             </p>
                           </>

@@ -4,7 +4,8 @@ import { getAdById, updateAd } from "@/lib/models/ad";
 import { findUserById, updateUserCoins } from "@/lib/models/user";
 import { getPromotionPackages } from "@/lib/models/promotion-package";
 import {
-  calculateExpirationDate,
+  calculatePromoExpiration,
+  formatDateTime,
   normalizeTier,
   getTierRankInfo,
   getShiftLabel,
@@ -34,10 +35,16 @@ export async function POST(
   const coinsCost = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
   const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
 
-  // Determine shift: "day" | "night" | "all"
-  const rawShift = String(body?.shift || "day").toLowerCase();
+  // Determine shift: "12h" | "day" | "night" | "all"
+  const rawShift = String(body?.shift || "12h").toLowerCase();
   const promoShift: PromoShift =
-    rawShift === "night" ? "night" : rawShift === "all" ? "all" : "day";
+    rawShift === "night"
+      ? "night"
+      : rawShift === "all" || rawShift === "24h"
+      ? "all"
+      : rawShift === "day"
+      ? "day"
+      : "12h";
 
   // Determine tier: "platinum" | "gold" | "silver" | "bronze"
   const promoTier = normalizeTier(body?.tier || matchedPkg?.tier, packageName);
@@ -80,9 +87,13 @@ export async function POST(
     );
   }
 
-  // Calculate promotion validity
+  // Calculate promotion validity - runs from current time
   const now = new Date();
-  const promotedUntil = calculateExpirationDate(durationDays, now);
+  const promotedUntil = calculatePromoExpiration(
+    matchedPkg || { durationDays, durationHours: body?.durationHours },
+    promoShift,
+    now
+  );
 
   const updatedAd = await updateAd(id, userId, {
     promoted: true,
@@ -103,14 +114,18 @@ export async function POST(
   }
 
   const shiftText = getShiftLabel(promoShift);
+  const expiryFormatted = formatDateTime(promotedUntil);
 
   return NextResponse.json({
     success: true,
-    message: `🎉 Ad promoted successfully with ${packageName}! Guaranteed position: ${tierInfo.rankRange} during ${shiftText} until ${promotedUntil.toLocaleDateString()}.`,
+    message: `🎉 Ad promoted successfully with ${packageName}! Guaranteed position: ${tierInfo.rankRange} during ${shiftText} until ${expiryFormatted}.`,
     ad: updatedAd,
     remainingCoins: currentCoins - coinsCost,
-    promotedUntil,
-    promoTier,
+    promotedUntil: promotedUntil.toISOString(),
+    expireTimeFormatted: expiryFormatted,
+    rankRange: tierInfo.rankRange,
+    tier: promoTier,
     promoShift,
+    packageName,
   });
 }
