@@ -268,29 +268,26 @@ export default function PromotionPackagesPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-screen bg-red-50 px-3 py-4 sm:px-6 sm:py-8 lg:px-8 w-full max-w-full overflow-x-hidden box-border">
+      <div className="mx-auto max-w-6xl w-full min-w-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-red-200 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b border-red-200 pb-4">
           <div>
-            <h1 className="text-3xl font-black text-red-950">Promotion Package Control</h1>
-            <p className="mt-1 text-sm text-red-900">
-              Manage the 12-hour shift packages shown on the Promote Ad page. Set Tier Ranking (Top 1–3, Top 4–6, Top 7–10, Top 10–15), duration (days), coin cost, badges, and bullet features.
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-black text-red-950 tracking-tight">Promotion Package Control</h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleResetToDefaults}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
+              className="flex-1 sm:flex-none text-center rounded-xl border border-red-300 bg-white px-3 sm:px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
             >
               Reset to Defaults
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs cursor-pointer"
+              className="flex-1 sm:flex-none text-center rounded-xl border border-red-300 bg-white px-3 sm:px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs cursor-pointer"
             >
               + Add Package
             </button>
@@ -298,7 +295,7 @@ export default function PromotionPackagesPage() {
               type="button"
               onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
               disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-emerald-700 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs cursor-pointer"
+              className="w-full sm:w-auto text-center rounded-xl bg-emerald-700 px-4 sm:px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs cursor-pointer"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
@@ -317,43 +314,49 @@ export default function PromotionPackagesPage() {
           </div>
         )}
 
-        {/* Form & Cards Grid */}
-        <form onSubmit={handleSubmit} className="mt-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2">
-            {packages.map((pkg, index) => {
-              const tierInfo = getTierRankInfo(pkg.tier, `${pkg.id} ${pkg.title}`);
+        {/* Loading Indicator */}
+        {loading && packages.length === 0 ? (
+          <div className="mt-12 flex flex-col items-center justify-center text-center p-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-red-200 border-t-red-600 mb-3" />
+            <p className="text-sm font-bold text-red-900">Loading promotion packages...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-6">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-2 min-w-0">
+              {packages.map((pkg, index) => {
+                const tierInfo = getTierRankInfo(pkg.tier, `${pkg.id} ${pkg.title}`);
 
-              return (
-                <div
-                  key={pkg._id || pkg.id || index}
-                  className="relative rounded-2xl border border-red-200 bg-white p-5 shadow-xs flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Top Bar */}
-                    <div className="mb-4 flex items-center justify-between gap-2 border-b border-red-100 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-black text-red-900 uppercase tracking-wider">
-                          Package #{index + 1}
-                        </span>
-                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase text-white ${tierInfo.badgeClass}`}>
-                          {tierInfo.badge}
-                        </span>
-                        {pkg.highlight && (
-                          <span className="rounded-md bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white uppercase">
-                            Featured
+                return (
+                  <div
+                    key={pkg._id || pkg.id || index}
+                    className="relative rounded-2xl border border-red-200 bg-white p-3.5 sm:p-5 shadow-xs flex flex-col justify-between min-w-0 overflow-hidden"
+                  >
+                    <div>
+                      {/* Top Bar */}
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-red-100 pb-3">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+                          <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-black text-red-900 uppercase tracking-wider">
+                            Package #{index + 1}
                           </span>
-                        )}
+                          <span className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase text-white ${tierInfo.badgeClass}`}>
+                            {tierInfo.badge}
+                          </span>
+                          {pkg.highlight && (
+                            <span className="rounded-md bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white uppercase">
+                              Featured
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => void handleDeletePackage(index)}
+                          className="shrink-0 rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition disabled:opacity-50 cursor-pointer ml-auto sm:ml-0"
+                          title="Remove package"
+                        >
+                          &times; Remove
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        disabled={saving}
-                        onClick={() => void handleDeletePackage(index)}
-                        className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition disabled:opacity-50 cursor-pointer"
-                        title="Remove package"
-                      >
-                        &times; Remove
-                      </button>
-                    </div>
 
                     {/* Form Inputs */}
                     <div className="space-y-3.5 text-xs">
@@ -554,11 +557,11 @@ export default function PromotionPackagesPage() {
                   </div>
 
                   {/* Live Card Preview Box */}
-                  <div className="mt-5 rounded-xl border border-dashed border-red-200 bg-pink-50/40 p-3.5">
+                  <div className="mt-5 rounded-xl border border-dashed border-red-200 bg-pink-50/40 p-3 sm:p-3.5 min-w-0 overflow-hidden">
                     <span className="text-[10px] font-black uppercase text-red-800 tracking-wider">
                       Live Preview (User View):
                     </span>
-                    <div className="mt-2 rounded-xl border border-red-200 bg-white p-3.5 shadow-xs relative">
+                    <div className="mt-2 rounded-xl border border-red-200 bg-white p-3 sm:p-3.5 shadow-xs relative min-w-0">
                       {pkg.tag && (
                         <span
                           className={`absolute -top-2.5 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
@@ -572,12 +575,12 @@ export default function PromotionPackagesPage() {
                       )}
 
                       <div className="mb-1.5">
-                        <span className={`inline-block rounded-full px-2 py-0.2 text-[9px] font-black ${tierInfo.badgeClass}`}>
+                        <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-black ${tierInfo.badgeClass}`}>
                           {tierInfo.badge}
                         </span>
                       </div>
 
-                      <p className="text-xs font-black text-red-950 pr-12">
+                      <p className="text-xs font-black text-red-950 pr-14 break-words">
                         {pkg.title || "Untitled Package"}
                       </p>
 
@@ -585,21 +588,23 @@ export default function PromotionPackagesPage() {
                         <span>🎯 Position: {pkg.rankRange || tierInfo.rankRange}</span>
                       </div>
 
-                      <div className="mt-2 flex items-baseline gap-1">
+                      <div className="mt-2 flex flex-wrap items-baseline gap-1">
                         <span className="text-xl font-black text-red-600">
                           {pkg.coinsCost ?? 0}
                         </span>
                         <span className="text-xs font-bold text-gray-600">Coins</span>
-                        <span className="text-xs text-gray-500 ml-2">
-                          ({pkg.durationDays ?? 1} {Number(pkg.durationDays) === 1 ? "Day" : "Days"})
+                        <span className="text-xs text-gray-500 ml-1.5">
+                          ({pkg.durationHours && pkg.durationHours < 24
+                            ? `${pkg.durationHours} Hours`
+                            : `${pkg.durationDays ?? 1} ${Number(pkg.durationDays) === 1 ? "Day" : "Days"}`})
                         </span>
                       </div>
 
-                      <ul className="mt-2.5 space-y-1 text-[11px] text-gray-600">
+                      <ul className="mt-2.5 space-y-1 text-[11px] text-gray-600 break-words">
                         {(pkg.features || []).map((feat, fIdx) => (
                           <li key={fIdx} className="flex items-start gap-1">
-                            <span className="text-emerald-600 font-bold">✓</span>
-                            <span>{feat}</span>
+                            <span className="text-emerald-600 font-bold shrink-0">✓</span>
+                            <span className="min-w-0">{feat}</span>
                           </li>
                         ))}
                       </ul>
@@ -611,23 +616,24 @@ export default function PromotionPackagesPage() {
           </div>
 
           {/* Bottom Action Bar */}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
             <button
               type="submit"
               disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-50 transition shadow-sm cursor-pointer"
+              className="rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-50 transition shadow-sm cursor-pointer text-center"
             >
               {saving ? "Saving..." : `Save All ${packages.length} Packages`}
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition cursor-pointer"
+              className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition cursor-pointer text-center"
             >
               + Add Another Package
             </button>
           </div>
         </form>
+        )}
       </div>
     </main>
   );
