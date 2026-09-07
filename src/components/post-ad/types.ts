@@ -73,6 +73,7 @@ export type Ad = {
   updatedAt?: string | Date;
   promoted?: boolean;
   isPromoted?: boolean;
+  promotedFrom?: string | Date;
   promotedUntil?: string | Date;
   promoPackage?: string;
   promoTier?: string;

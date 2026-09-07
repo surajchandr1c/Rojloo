@@ -5,6 +5,8 @@ import { findUserById, updateUserCoins } from "@/lib/models/user";
 import { getPromotionPackages } from "@/lib/models/promotion-package";
 import {
   calculatePromoExpiration,
+  calculateShiftTiming,
+  normalizeShift,
   formatDateTime,
   normalizeTier,
   getTierRankInfo,
@@ -35,16 +37,9 @@ export async function POST(
   const coinsCost = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
   const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
 
-  // Determine shift: "12h" | "day" | "night" | "all"
-  const rawShift = String(body?.shift || "12h").toLowerCase();
-  const promoShift: PromoShift =
-    rawShift === "night"
-      ? "night"
-      : rawShift === "all" || rawShift === "24h"
-      ? "all"
-      : rawShift === "day"
-      ? "day"
-      : "12h";
+  // Determine shift: "morning" | "afternoon" | "evening" | "night"
+  const rawShift = String(body?.shift || "morning").toLowerCase();
+  const promoShift: PromoShift = normalizeShift(rawShift);
 
   // Determine tier: "platinum" | "gold" | "silver" | "bronze"
   const promoTier = normalizeTier(body?.tier || matchedPkg?.tier, packageName);
@@ -87,18 +82,24 @@ export async function POST(
     );
   }
 
-  // Calculate promotion validity - runs from current time
+  // Calculate promotion shift timing (6-hour window in IST)
   const now = new Date();
-  const promotedUntil = calculatePromoExpiration(
-    matchedPkg || { durationDays, durationHours: body?.durationHours },
-    promoShift,
-    now
-  );
+  const shiftTiming = calculateShiftTiming(promoShift, now);
+
+  // If package has multi-day duration, extend promotedUntil
+  let finalPromotedUntil = shiftTiming.promotedUntil;
+  if (durationDays > 1) {
+    const daysToAdd = Math.floor(durationDays);
+    finalPromotedUntil = new Date(
+      shiftTiming.promotedUntil.getTime() + (daysToAdd - 1) * 24 * 60 * 60 * 1000
+    );
+  }
 
   const updatedAd = await updateAd(id, userId, {
     promoted: true,
     isPromoted: true,
-    promotedUntil,
+    promotedFrom: shiftTiming.promotedFrom,
+    promotedUntil: finalPromotedUntil,
     promoPackage: packageName,
     promoTier,
     promoShift,
@@ -114,15 +115,25 @@ export async function POST(
   }
 
   const shiftText = getShiftLabel(promoShift);
-  const expiryFormatted = formatDateTime(promotedUntil);
+  const startFormatted = formatDateTime(shiftTiming.promotedFrom);
+  const expiryFormatted = formatDateTime(finalPromotedUntil);
+
+  const statusPrefix = shiftTiming.isCurrentShift
+    ? `Active now until ${expiryFormatted}`
+    : `Scheduled to start on ${startFormatted} until ${expiryFormatted}`;
 
   return NextResponse.json({
     success: true,
-    message: `🎉 Ad promoted successfully with ${packageName}! Guaranteed position: ${tierInfo.rankRange} during ${shiftText} until ${expiryFormatted}.`,
+    message: `🎉 Ad promoted successfully with ${packageName}! Position: ${tierInfo.rankRange} during ${shiftText}. ${statusPrefix}.`,
     ad: updatedAd,
     remainingCoins: currentCoins - coinsCost,
-    promotedUntil: promotedUntil.toISOString(),
+    promotedFrom: shiftTiming.promotedFrom.toISOString(),
+    promotedUntil: finalPromotedUntil.toISOString(),
+    startTimeFormatted: startFormatted,
     expireTimeFormatted: expiryFormatted,
+    isCurrentShift: shiftTiming.isCurrentShift,
+    isNextDay: shiftTiming.isNextDay,
+    scheduleDescription: shiftTiming.scheduleDescription,
     rankRange: tierInfo.rankRange,
     tier: promoTier,
     promoShift,

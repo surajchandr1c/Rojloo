@@ -1,14 +1,30 @@
-export type PromoShift = "12h" | "day" | "night" | "all";
+export type PromoShift =
+  | "morning"
+  | "afternoon"
+  | "evening"
+  | "night"
+  | "12h"
+  | "day"
+  | "all";
 
 export type PromoTier = "platinum" | "gold" | "silver" | "bronze";
 
 export interface ShiftInfo {
-  shift: "day" | "night";
+  shift: "morning" | "afternoon" | "evening" | "night";
   label: string;
   hours: string;
-  nextShift: "day" | "night";
+  nextShift: "morning" | "afternoon" | "evening" | "night";
   nextShiftLabel: string;
   nextShiftTime: string;
+}
+
+export interface ShiftTimingResult {
+  promotedFrom: Date;
+  promotedUntil: Date;
+  isCurrentShift: boolean;
+  isNextDay: boolean;
+  shiftLabel: string;
+  scheduleDescription: string;
 }
 
 export interface TierRankInfo {
@@ -21,62 +37,241 @@ export interface TierRankInfo {
   badgeClass: string;
 }
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+export function getISTDate(date: Date = new Date()): Date {
+  return new Date(date.getTime() + IST_OFFSET_MS);
+}
+
+export function createDateFromIST(
+  year: number,
+  monthIndex: number,
+  day: number,
+  hours: number,
+  minutes = 0
+): Date {
+  return new Date(Date.UTC(year, monthIndex, day, hours, minutes, 0, 0) - IST_OFFSET_MS);
+}
+
+export function normalizeShift(
+  shift?: string
+): "morning" | "afternoon" | "evening" | "night" {
+  const norm = (shift || "morning").trim().toLowerCase();
+  if (norm === "morning") return "morning";
+  if (norm === "afternoon") return "afternoon";
+  if (norm === "evening") return "evening";
+  if (norm === "night") return "night";
+  if (norm === "day" || norm === "12h" || norm === "all" || norm === "24h") {
+    return "morning";
+  }
+  return "morning";
+}
+
 /**
- * Returns current shift based on Indian Standard Time (IST, UTC+5:30).
- * Day Shift: 08:00 AM (08:00) to 08:00 PM (20:00)
- * Night Shift: 08:00 PM (20:00) to 08:00 AM (08:00)
+ * Returns current shift based on Indian Standard Time (IST, UTC+5:30):
+ * - Morning Shift: 06:00 AM to 12:00 PM (6 Hours)
+ * - Afternoon Shift: 12:00 PM to 06:00 PM (6 Hours)
+ * - Evening Shift: 06:00 PM to 12:00 AM Midnight (6 Hours)
+ * - Night Shift: 12:00 AM Midnight to 06:00 AM (6 Hours)
  */
-export function getCurrentShift(date: Date = new Date()): "day" | "night" {
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-  // IST is UTC + 5.5 hours
-  const istDate = new Date(utc + 3600000 * 5.5);
-  const hour = istDate.getHours();
-  return hour >= 8 && hour < 20 ? "day" : "night";
+export function getCurrentShift(
+  date: Date = new Date()
+): "morning" | "afternoon" | "evening" | "night" {
+  const istDate = getISTDate(date);
+  const hour = istDate.getUTCHours();
+  if (hour >= 6 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "afternoon";
+  if (hour >= 18 && hour < 24) return "evening";
+  return "night";
 }
 
 export function getCurrentShiftInfo(date: Date = new Date()): ShiftInfo {
   const current = getCurrentShift(date);
-  if (current === "day") {
-    return {
-      shift: "day",
-      label: "Day Shift",
-      hours: "08:00 AM – 08:00 PM (12 Hours)",
-      nextShift: "night",
-      nextShiftLabel: "Night Shift",
-      nextShiftTime: "08:00 PM",
-    };
+  switch (current) {
+    case "morning":
+      return {
+        shift: "morning",
+        label: "Morning Shift",
+        hours: "06:00 AM – 12:00 PM (6 Hours)",
+        nextShift: "afternoon",
+        nextShiftLabel: "Afternoon Shift",
+        nextShiftTime: "12:00 PM",
+      };
+    case "afternoon":
+      return {
+        shift: "afternoon",
+        label: "Afternoon Shift",
+        hours: "12:00 PM – 06:00 PM (6 Hours)",
+        nextShift: "evening",
+        nextShiftLabel: "Evening Shift",
+        nextShiftTime: "06:00 PM",
+      };
+    case "evening":
+      return {
+        shift: "evening",
+        label: "Evening Shift",
+        hours: "06:00 PM – 12:00 AM (6 Hours)",
+        nextShift: "night",
+        nextShiftLabel: "Night Shift",
+        nextShiftTime: "12:00 AM",
+      };
+    case "night":
+      return {
+        shift: "night",
+        label: "Night Shift",
+        hours: "12:00 AM – 06:00 AM (6 Hours)",
+        nextShift: "morning",
+        nextShiftLabel: "Morning Shift",
+        nextShiftTime: "06:00 AM",
+      };
   }
-
-  return {
-    shift: "night",
-    label: "Night Shift",
-    hours: "08:00 PM – 08:00 AM (12 Hours)",
-    nextShift: "day",
-    nextShiftLabel: "Day Shift",
-    nextShiftTime: "08:00 AM",
-  };
 }
 
 export function getShiftLabel(shift?: string): string {
-  const normalized = (shift || "12h").toLowerCase();
-  if (normalized === "12h") {
-    return "12 Hours Shift (Runs 12 hours from promotion time)";
+  const normalized = normalizeShift(shift);
+  if (normalized === "morning") {
+    return "Morning Shift (06:00 AM – 12:00 PM • 6h)";
   }
-  if (normalized === "night") {
-    return "Night Shift (12 Hours from promotion time)";
+  if (normalized === "afternoon") {
+    return "Afternoon Shift (12:00 PM – 06:00 PM • 6h)";
   }
-  if (normalized === "all" || normalized === "24h") {
-    return "24 Hours Shift (Day & Night)";
+  if (normalized === "evening") {
+    return "Evening Shift (06:00 PM – 12:00 AM Midnight • 6h)";
   }
-  return "Day Shift (12 Hours from promotion time)";
+  return "Night Shift (12:00 AM Midnight – 06:00 AM • 6h)";
 }
 
 export function getShiftShortLabel(shift?: string): string {
-  const normalized = (shift || "12h").toLowerCase();
-  if (normalized === "12h") return "⏱️ 12h Shift";
-  if (normalized === "night") return "🌙 Night (12h)";
-  if (normalized === "all" || normalized === "24h") return "🔄 24h Full Day";
-  return "☀️ Day (12h)";
+  const normalized = normalizeShift(shift);
+  if (normalized === "morning") return "🌅 Morning (6h)";
+  if (normalized === "afternoon") return "☀️ Afternoon (6h)";
+  if (normalized === "evening") return "🌇 Evening (6h)";
+  return "🌙 Night (6h)";
+}
+
+/**
+ * Calculates start (promotedFrom) and end (promotedUntil) times for a 6-hour shift:
+ * - If current time is inside the shift: active immediately until the shift ends (6-hour window).
+ * - If current time is before the shift today: scheduled for today's shift window.
+ * - If current time is after the shift today (e.g. morning chosen during evening/afternoon):
+ *   automatically schedules for TOMORROW'S shift window.
+ */
+export function calculateShiftTiming(
+  rawShift?: string,
+  now: Date = new Date()
+): ShiftTimingResult {
+  const shift = normalizeShift(rawShift);
+  const istNow = getISTDate(now);
+
+  const istYear = istNow.getUTCFullYear();
+  const istMonth = istNow.getUTCMonth();
+  const istDay = istNow.getUTCDate();
+  const istHours = istNow.getUTCHours();
+  const istMinutes = istNow.getUTCMinutes();
+  const currentMinutes = istHours * 60 + istMinutes;
+
+  let promotedFrom: Date;
+  let promotedUntil: Date;
+  let isCurrentShift = false;
+  let isNextDay = false;
+
+  switch (shift) {
+    case "morning": {
+      // 06:00 AM (360) to 12:00 PM (720)
+      if (currentMinutes < 360) {
+        promotedFrom = createDateFromIST(istYear, istMonth, istDay, 6, 0);
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay, 12, 0);
+        isCurrentShift = false;
+        isNextDay = false;
+      } else if (currentMinutes < 720) {
+        promotedFrom = now;
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay, 12, 0);
+        isCurrentShift = true;
+        isNextDay = false;
+      } else {
+        // Morning shift passed today -> Next day morning
+        promotedFrom = createDateFromIST(istYear, istMonth, istDay + 1, 6, 0);
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay + 1, 12, 0);
+        isCurrentShift = false;
+        isNextDay = true;
+      }
+      break;
+    }
+
+    case "afternoon": {
+      // 12:00 PM (720) to 06:00 PM (1080)
+      if (currentMinutes < 720) {
+        promotedFrom = createDateFromIST(istYear, istMonth, istDay, 12, 0);
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay, 18, 0);
+        isCurrentShift = false;
+        isNextDay = false;
+      } else if (currentMinutes < 1080) {
+        promotedFrom = now;
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay, 18, 0);
+        isCurrentShift = true;
+        isNextDay = false;
+      } else {
+        // Afternoon shift passed today -> Next day afternoon
+        promotedFrom = createDateFromIST(istYear, istMonth, istDay + 1, 12, 0);
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay + 1, 18, 0);
+        isCurrentShift = false;
+        isNextDay = true;
+      }
+      break;
+    }
+
+    case "evening": {
+      // 06:00 PM (1080) to 12:00 AM Midnight (1440)
+      if (currentMinutes < 1080) {
+        promotedFrom = createDateFromIST(istYear, istMonth, istDay, 18, 0);
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay + 1, 0, 0);
+        isCurrentShift = false;
+        isNextDay = false;
+      } else {
+        promotedFrom = now;
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay + 1, 0, 0);
+        isCurrentShift = true;
+        isNextDay = false;
+      }
+      break;
+    }
+
+    case "night": {
+      // 12:00 AM Midnight (0) to 06:00 AM (360)
+      if (currentMinutes < 360) {
+        promotedFrom = now;
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay, 6, 0);
+        isCurrentShift = true;
+        isNextDay = false;
+      } else {
+        // Night shift passed early today -> Tonight at midnight (starts 00:00 next day)
+        promotedFrom = createDateFromIST(istYear, istMonth, istDay + 1, 0, 0);
+        promotedUntil = createDateFromIST(istYear, istMonth, istDay + 1, 6, 0);
+        isCurrentShift = false;
+        isNextDay = true;
+      }
+      break;
+    }
+  }
+
+  const shiftLabel = getShiftLabel(shift);
+  let scheduleDescription = "";
+  if (isCurrentShift) {
+    scheduleDescription = `Active now: Runs until ${formatDateTime(promotedUntil)} (6-hour shift)`;
+  } else if (isNextDay) {
+    scheduleDescription = `Shift passed today: Scheduled for Tomorrow (${formatDateTime(promotedFrom)} – ${formatDateTime(promotedUntil)})`;
+  } else {
+    scheduleDescription = `Scheduled for Today: Starts at ${formatDateTime(promotedFrom)} and runs until ${formatDateTime(promotedUntil)}`;
+  }
+
+  return {
+    promotedFrom,
+    promotedUntil,
+    isCurrentShift,
+    isNextDay,
+    shiftLabel,
+    scheduleDescription,
+  };
 }
 
 export const TIER_RANK_MAP: Record<PromoTier, TierRankInfo> = {
@@ -147,13 +342,47 @@ export function isAdPromotionActive(
     promoted?: boolean;
     isPromoted?: boolean;
     promotedUntil?: Date | string;
+    promotedFrom?: Date | string;
   },
   now: Date = new Date()
 ): boolean {
   const isFlagged = Boolean(ad.promoted || ad.isPromoted);
   if (!isFlagged || !ad.promotedUntil) return false;
+
   const expiryTime = new Date(ad.promotedUntil).getTime();
-  return !isNaN(expiryTime) && expiryTime > now.getTime();
+  if (isNaN(expiryTime) || expiryTime <= now.getTime()) return false;
+
+  if (ad.promotedFrom) {
+    const startTime = new Date(ad.promotedFrom).getTime();
+    if (!isNaN(startTime) && startTime > now.getTime()) {
+      return false; // Scheduled for a future shift window
+    }
+  }
+
+  return true;
+}
+
+export function isAdScheduledFuture(
+  ad: {
+    promoted?: boolean;
+    isPromoted?: boolean;
+    promotedUntil?: Date | string;
+    promotedFrom?: Date | string;
+  },
+  now: Date = new Date()
+): boolean {
+  const isFlagged = Boolean(ad.promoted || ad.isPromoted);
+  if (!isFlagged || !ad.promotedFrom || !ad.promotedUntil) return false;
+
+  const expiryTime = new Date(ad.promotedUntil).getTime();
+  const startTime = new Date(ad.promotedFrom).getTime();
+
+  return (
+    !isNaN(expiryTime) &&
+    !isNaN(startTime) &&
+    startTime > now.getTime() &&
+    expiryTime > startTime
+  );
 }
 
 export function isAdActiveInCurrentShift(
@@ -161,6 +390,7 @@ export function isAdActiveInCurrentShift(
     promoted?: boolean;
     isPromoted?: boolean;
     promotedUntil?: Date | string;
+    promotedFrom?: Date | string;
     promoShift?: string;
   },
   now: Date = new Date()
@@ -174,7 +404,7 @@ export function calculateExpirationDate(
   isHours = false
 ): Date {
   if (isHours) {
-    const hours = Math.max(1, Number(duration) || 12);
+    const hours = Math.max(1, Number(duration) || 6);
     return new Date(startDate.getTime() + hours * 60 * 60 * 1000);
   }
   const days = Number(duration) || 1;
@@ -186,21 +416,17 @@ export function calculatePromoExpiration(
   shift?: string,
   startDate: Date = new Date()
 ): Date {
-  if (pkg?.durationHours) {
-    return new Date(startDate.getTime() + pkg.durationHours * 60 * 60 * 1000);
+  const timing = calculateShiftTiming(shift, startDate);
+
+  if (pkg?.durationDays && pkg.durationDays >= 1) {
+    // Multi-day package: runs until end of shift on target day
+    const daysToAdd = Math.floor(pkg.durationDays);
+    return new Date(
+      timing.promotedUntil.getTime() + (daysToAdd - 1) * 24 * 60 * 60 * 1000
+    );
   }
 
-  const normShift = (shift || "12h").toLowerCase();
-  if (normShift === "12h" || normShift === "day" || normShift === "night") {
-    if (pkg?.durationDays && pkg.durationDays > 1) {
-      return new Date(startDate.getTime() + pkg.durationDays * 24 * 60 * 60 * 1000);
-    }
-    // Default 12-hour shift: runs for exactly 12 hours from activation
-    return new Date(startDate.getTime() + 12 * 60 * 60 * 1000);
-  }
-
-  const days = Number(pkg?.durationDays) || 1;
-  return new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
+  return timing.promotedUntil;
 }
 
 export function formatDateTime(date?: Date | string): string {
@@ -272,7 +498,7 @@ export function formatDetailedTimeRemaining(expiryDate?: Date | string, now: Dat
  * - Active Gold ads (Top 4 - 6)
  * - Active Silver ads (Top 7 - 10)
  * - Active Bronze ads (Top 10 - 15)
- * - Remaining ads: expired ads and standard free ads (newest first).
+ * - Remaining ads: future scheduled ads, expired ads and standard free ads (newest first).
  */
 export function sortAdsWithPromotions<T extends {
   _id?: string;
@@ -280,6 +506,7 @@ export function sortAdsWithPromotions<T extends {
   promoted?: boolean;
   isPromoted?: boolean;
   promotedUntil?: Date | string;
+  promotedFrom?: Date | string;
   promoPackage?: string;
   promoTier?: string;
   promoShift?: string;

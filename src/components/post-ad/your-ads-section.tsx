@@ -7,6 +7,7 @@ import { cityPlaces } from "@/lib/places";
 import { YourAdsListSkeleton } from "@/components/skeletons/post-ad-skeletons";
 import {
   isAdPromotionActive,
+  isAdScheduledFuture,
   getTierRankInfo,
   getShiftShortLabel,
   formatDateTime,
@@ -227,11 +228,39 @@ export default function YourAdsSection({
                   <div className="sm:text-right space-y-1 text-xs min-w-0">
                     {(() => {
                       const isPromoValid = isAdPromotionActive(ad);
+                      const isScheduled = isAdScheduledFuture(ad);
                       const isPromotedEver = Boolean(ad.promoted || ad.isPromoted || ad.promotedUntil);
                       const tierInfo = getTierRankInfo(ad.promoTier, ad.promoPackage);
                       const shiftLabel = getShiftShortLabel(ad.promoShift);
                       const promoExpiryFormatted = formatDateTime(ad.promotedUntil);
-                      const isCurrentShift = isAdActiveInCurrentShift(ad);
+                      const promoStartFormatted = formatDateTime(ad.promotedFrom);
+
+                      if (isScheduled) {
+                        return (
+                          <>
+                            <div className="flex sm:justify-end items-center gap-1.5">
+                              <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${tierInfo.badgeClass}`}>
+                                {tierInfo.badge}
+                              </span>
+                              <span className="rounded-full bg-indigo-100 border border-indigo-300 px-2.5 py-0.5 text-[10px] font-bold text-indigo-800">
+                                🕒 Scheduled
+                              </span>
+                            </div>
+                            <p className="font-bold text-red-950 text-xs">
+                              Position: <span className="text-red-700 underline">{tierInfo.rankRange}</span>
+                            </p>
+                            <p className="text-gray-600 font-semibold text-[11px]">
+                              Shift: {shiftLabel}
+                            </p>
+                            <p className="text-indigo-700 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
+                              <span>🕒</span>
+                              <span>
+                                Starts: {promoStartFormatted} &bull; Expires: {promoExpiryFormatted}
+                              </span>
+                            </p>
+                          </>
+                        );
+                      }
 
                       if (isPromoValid) {
                         return (
@@ -239,6 +268,9 @@ export default function YourAdsSection({
                             <div className="flex sm:justify-end items-center gap-1.5">
                               <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${tierInfo.badgeClass}`}>
                                 {tierInfo.badge}
+                              </span>
+                              <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                🟢 Live
                               </span>
                             </div>
                             <p className="font-bold text-red-950 text-xs">

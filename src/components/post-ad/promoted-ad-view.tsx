@@ -17,8 +17,10 @@ import {
 
 import {
   getShiftLabel,
+  getShiftShortLabel,
   getTierRankInfo,
   calculatePromoExpiration,
+  calculateShiftTiming,
   formatDateTime,
   formatDetailedTimeRemaining,
   type PromoShift,
@@ -27,7 +29,11 @@ import {
 interface PromoModalData {
   adTitle: string;
   rankRange: string;
+  shiftName: string;
+  promotedFrom: Date;
   promotedUntil: Date;
+  isCurrentShift: boolean;
+  isNextDay: boolean;
 }
 
 export default function PromotedAdView() {
@@ -41,7 +47,7 @@ export default function PromotedAdView() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [promoPackages, setPromoPackages] = useState<PromotionPackage[]>(DEFAULT_PROMO_PACKAGES);
   const [selectedAdId, setSelectedAdId] = useState<string>(adIdParam);
-  const [selectedShift, setSelectedShift] = useState<PromoShift>("12h");
+  const [selectedShift, setSelectedShift] = useState<PromoShift>("morning");
   const [selectedPackageId, setSelectedPackageId] = useState<string>("platinum-vip");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -126,7 +132,8 @@ export default function PromotedAdView() {
   const userCoins = Number(user?.coins ?? 0);
   const hasEnoughCoins = userCoins >= selectedPkg.coinsCost;
 
-  // Real-time projected expiration calculation
+  // Real-time projected shift timing and expiration calculation
+  const currentShiftTiming = calculateShiftTiming(selectedShift);
   const projectedExpiration = calculatePromoExpiration(selectedPkg, selectedShift);
   const formattedProjectedExpiry = formatDateTime(projectedExpiration);
 
@@ -174,11 +181,16 @@ export default function PromotedAdView() {
       const expiry = new Date(
         data.promotedUntil || calculatePromoExpiration(selectedPkg, selectedShift)
       );
+      const start = new Date(data.promotedFrom || currentShiftTiming.promotedFrom);
 
       setModalData({
         adTitle: selectedAd.name || selectedAd.title || "Your Ad",
         rankRange: data.rankRange || selectedRankRange,
+        shiftName: getShiftShortLabel(selectedShift),
+        promotedFrom: start,
         promotedUntil: expiry,
+        isCurrentShift: Boolean(data.isCurrentShift ?? currentShiftTiming.isCurrentShift),
+        isNextDay: Boolean(data.isNextDay ?? currentShiftTiming.isNextDay),
       });
 
       await refreshAuth();
@@ -345,11 +357,42 @@ export default function PromotedAdView() {
               onChange={(e) => setSelectedShift(e.target.value as PromoShift)}
               className="w-full rounded-xl border border-red-200 bg-pink-50/30 p-2.5 text-xs sm:text-sm font-bold text-red-950 focus:border-red-600 focus:outline-none"
             >
-              <option value="12h">⏱️ 12 Hours Shift (Runs 12 hours from promotion time)</option>
-              <option value="24h">🔄 24 Hours Shift (Runs 24 hours from promotion time)</option>
-              <option value="day">☀️ Day Shift (12 Hours from promotion time)</option>
-              <option value="night">🌙 Night Shift (12 Hours from promotion time)</option>
+              <option value="morning">🌅 Morning Shift (06:00 AM – 12:00 PM • 6 Hours)</option>
+              <option value="afternoon">☀️ Afternoon Shift (12:00 PM – 06:00 PM • 6 Hours)</option>
+              <option value="evening">🌇 Evening Shift (06:00 PM – 12:00 AM Midnight • 6 Hours)</option>
+              <option value="night">🌙 Night Shift (12:00 AM Midnight – 06:00 AM • 6 Hours)</option>
             </select>
+          </div>
+
+          {/* Real-time Shift Schedule Note */}
+          <div className="mt-3 rounded-xl border border-red-100 bg-pink-50/40 p-3 max-w-md text-xs font-semibold">
+            {currentShiftTiming.isCurrentShift ? (
+              <p className="text-emerald-800 flex items-start gap-1.5 leading-relaxed">
+                <span className="text-sm shrink-0">🟢</span>
+                <span>
+                  <strong>Active Now:</strong> Your ad will post immediately and stay on top until{" "}
+                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedUntil)}</strong> (end of this 6-hour shift).
+                </span>
+              </p>
+            ) : currentShiftTiming.isNextDay ? (
+              <p className="text-indigo-900 flex items-start gap-1.5 leading-relaxed">
+                <span className="text-sm shrink-0">📅</span>
+                <span>
+                  <strong>Shift has passed today:</strong> Your ad is scheduled to start on{" "}
+                  <strong className="underline">Tomorrow ({formatDateTime(currentShiftTiming.promotedFrom)})</strong> and run until{" "}
+                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
+                </span>
+              </p>
+            ) : (
+              <p className="text-amber-900 flex items-start gap-1.5 leading-relaxed">
+                <span className="text-sm shrink-0">🕒</span>
+                <span>
+                  <strong>Scheduled for Today:</strong> Your ad will start at{" "}
+                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and run until{" "}
+                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
+                </span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -509,17 +552,33 @@ export default function PromotedAdView() {
             <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/50 p-4 space-y-2.5 text-left">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">
-                  Ad Will Expire At:
+                  Shift Timing:
                 </p>
-                <p className="text-sm font-black text-red-950 mt-0.5">
-                  {formatDateTime(modalData.promotedUntil)}
+                <p className="text-xs font-bold text-red-950 mt-0.5">
+                  {modalData.shiftName} {modalData.isCurrentShift ? "• 🟢 Live Now" : modalData.isNextDay ? "• 📅 Tomorrow" : "• 🕒 Scheduled"}
                 </p>
               </div>
 
-              <div className="border-t border-red-100/80 pt-2.5 flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-600">Time Left:</span>
+              <div className="border-t border-red-100/80 pt-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                  {modalData.isCurrentShift ? "Ad Expire Time:" : "Promotion Schedule:"}
+                </p>
+                {!modalData.isCurrentShift && (
+                  <p className="text-xs font-bold text-indigo-900 mt-0.5">
+                    Starts: {formatDateTime(modalData.promotedFrom)}
+                  </p>
+                )}
+                <p className="text-sm font-black text-red-950 mt-0.5">
+                  Expires: {formatDateTime(modalData.promotedUntil)}
+                </p>
+              </div>
+
+              <div className="border-t border-red-100/80 pt-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-600">
+                  {modalData.isCurrentShift ? "Time Left:" : "Shift Length:"}
+                </span>
                 <span className="text-sm font-black text-emerald-700 font-mono">
-                  {countdown || "Calculating..."}
+                  {modalData.isCurrentShift ? (countdown || "Calculating...") : "6 Hours"}
                 </span>
               </div>
             </div>

@@ -19,14 +19,14 @@ const emptyPackage = (): PromotionPackage => ({
   title: "New VIP Package",
   tier: "bronze",
   rankRange: "Top 10 - 15",
-  durationDays: 0.5,
-  durationHours: 12,
+  durationDays: 0.25,
+  durationHours: 6,
   coinsCost: 5,
   tag: "",
   highlight: false,
   features: [
     "Top placement in your city",
-    "Runs 12 Hours from promotion time",
+    "Runs 6 Hours for selected shift",
     "Highlighted card badge",
     "Instant activation",
   ],
@@ -440,7 +440,7 @@ export default function PromotionPackagesPage() {
                               value={pkg.durationHours && pkg.durationHours < 24 ? "hours" : "days"}
                               onChange={(e) => {
                                 if (e.target.value === "hours") {
-                                  updatePackage(index, "durationHours", 12);
+                                  updatePackage(index, "durationHours", 6);
                                 } else {
                                   const days = Math.max(1, Math.round((pkg.durationHours || 24) / 24));
                                   updatePackage(index, "durationDays", days);
@@ -448,17 +448,17 @@ export default function PromotionPackagesPage() {
                               }}
                               className="rounded-lg border border-red-200 px-2.5 py-2 text-red-950 font-bold outline-none focus:border-red-500 bg-white shrink-0"
                             >
-                              <option value="hours">Hours (12h Shift)</option>
+                              <option value="hours">Hours (6h Shift)</option>
                               <option value="days">Days</option>
                             </select>
                           </div>
                           <div className="mt-1.5 flex flex-wrap gap-1 text-[10px]">
                             <button
                               type="button"
-                              onClick={() => updatePackage(index, "durationHours", 12)}
+                              onClick={() => updatePackage(index, "durationHours", 6)}
                               className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
                             >
-                              12h (Shift)
+                              6h (Shift)
                             </button>
                             <button
                               type="button"
