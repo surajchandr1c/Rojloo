@@ -4,6 +4,7 @@ import { getDb } from "../db";
 import { readStore, writeStore } from "../persist";
 import type { ServiceRate } from "@/components/post-ad/types";
 import { getActiveVipPhoneOverride, VipPhoneOverride } from "./vip";
+import { sortAdsWithPromotions } from "../promo-shifts";
 
 export interface Ad {
   _id?: string;
@@ -28,6 +29,8 @@ export interface Ad {
   isPromoted?: boolean;
   promotedUntil?: Date | string;
   promoPackage?: string;
+  promoTier?: string;
+  promoShift?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -200,11 +203,14 @@ export async function listAdsByCity(city: string): Promise<PublicAd[]> {
     ) as unknown as Ad[];
 
   if (!collection) {
-    return memoryAds.map((a) => toPublicAd(a, override));
+    const sortedMemoryAds = sortAdsWithPromotions(memoryAds);
+    return sortedMemoryAds.map((a) => toPublicAd(a, override));
   }
 
   const docs = await collectionListByCity(city);
-  return mergeAds(docs, memoryAds).map((a) => toPublicAd(a, override));
+  const merged = mergeAds(docs, memoryAds);
+  const sorted = sortAdsWithPromotions(merged);
+  return sorted.map((a) => toPublicAd(a, override));
 }
 
 export async function getAdById(
@@ -609,6 +615,8 @@ export function toPublicAd(ad: Ad, override?: VipPhoneOverride | null): PublicAd
     isPromoted: ad.isPromoted,
     promotedUntil: ad.promotedUntil,
     promoPackage: ad.promoPackage,
+    promoTier: ad.promoTier,
+    promoShift: ad.promoShift,
     createdAt: ad.createdAt,
     updatedAt: ad.updatedAt,
   };

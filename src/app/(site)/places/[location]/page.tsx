@@ -11,6 +11,7 @@ import { getCitySeo } from "@/lib/models/city-seo";
 import { getCityBySlug } from "@/lib/models/city";
 import { listLocalAreas } from "@/lib/models/localArea";
 import { CityPageSkeleton } from "@/components/skeletons/places-skeletons";
+import { isAdActiveInCurrentShift, getTierRankInfo } from "@/lib/promo-shifts";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -112,6 +113,12 @@ async function CityContent({ slug }: { slug: string }) {
                       aria-label={`View details for ${ad.name}`}
                       className="absolute inset-0 z-0 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                     />
+                  )}
+
+                  {isAdActiveInCurrentShift(ad) && (
+                    <span className={`pointer-events-none absolute left-3.5 top-3.5 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black sm:left-6 sm:top-6 shadow-xs ${getTierRankInfo(ad.promoTier, ad.promoPackage).badgeClass}`}>
+                      {getTierRankInfo(ad.promoTier, ad.promoPackage).badge}
+                    </span>
                   )}
 
                   {ad.city && (

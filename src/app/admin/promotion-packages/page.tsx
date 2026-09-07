@@ -7,16 +7,25 @@ import {
   DEFAULT_PROMO_PACKAGES,
   type PromotionPackage,
 } from "@/lib/promotion-packages";
+import {
+  type PromoTier,
+  TIER_RANK_MAP,
+  normalizeTier,
+  getTierRankInfo,
+} from "@/lib/promo-shifts";
 
 const emptyPackage = (): PromotionPackage => ({
   id: `promo-${Date.now().toString(36)}`,
   title: "New VIP Package",
+  tier: "bronze",
+  rankRange: "Top 10 - 15",
   durationDays: 1,
   coinsCost: 5,
   tag: "",
   highlight: false,
   features: [
-    "Top VIP placement in your city",
+    "Top placement in your city",
+    "12h Shift priority display",
     "Highlighted card badge",
     "Instant activation",
   ],
@@ -48,16 +57,22 @@ export default function PromotionPackagesPage() {
 
       if (items.length > 0) {
         setPackages(
-          items.map((item: PromotionPackage) => ({
-            _id: item._id,
-            id: item.id || `promo-${Date.now()}`,
-            title: item.title || "",
-            durationDays: Number(item.durationDays || 1),
-            coinsCost: Number(item.coinsCost || 0),
-            tag: item.tag || "",
-            highlight: Boolean(item.highlight),
-            features: Array.isArray(item.features) ? item.features : [],
-          }))
+          items.map((item: PromotionPackage) => {
+            const tier: PromoTier = normalizeTier(item.tier, `${item.id || ""} ${item.title || ""}`);
+            const defaultRank = TIER_RANK_MAP[tier]?.rankRange || "Top 10 - 15";
+            return {
+              _id: item._id,
+              id: item.id || `promo-${Date.now()}`,
+              title: item.title || "",
+              tier,
+              rankRange: item.rankRange || defaultRank,
+              durationDays: Number(item.durationDays || 1),
+              coinsCost: Number(item.coinsCost || 0),
+              tag: item.tag || "",
+              highlight: Boolean(item.highlight),
+              features: Array.isArray(item.features) ? item.features : [],
+            };
+          })
         );
       } else {
         setPackages(DEFAULT_PROMO_PACKAGES);
@@ -94,7 +109,7 @@ export default function PromotionPackagesPage() {
         if (field === "coinsCost") return { ...pkg, coinsCost: Math.max(0, Number(value) || 0) };
         if (field === "highlight") return { ...pkg, highlight: Boolean(value) };
         if (field === "features") return { ...pkg, features: value as string[] };
-        return { ...pkg, [field]: String(value) };
+        return { ...pkg, [field]: value };
       })
     );
   }
@@ -158,7 +173,7 @@ export default function PromotionPackagesPage() {
   async function handleResetToDefaults() {
     if (
       !window.confirm(
-        "Are you sure you want to reset to the default 4 promotion packages? Any custom packages or changes will be overwritten."
+        "Are you sure you want to reset to the default 4 promotion packages (Platinum Top 1-3, Gold Top 4-6, Silver Top 7-10, Bronze Top 10-15)? Any custom packages will be replaced."
       )
     ) {
       return;
@@ -183,7 +198,7 @@ export default function PromotionPackagesPage() {
         return;
       }
 
-      setSuccess("Reset to default 4 promotion packages successfully.");
+      setSuccess("Reset to default tiered promotion packages successfully.");
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
       }
@@ -249,7 +264,7 @@ export default function PromotionPackagesPage() {
           <div>
             <h1 className="text-3xl font-black text-red-950">Promotion Package Control</h1>
             <p className="mt-1 text-sm text-red-900">
-              Manage the packages shown in &quot;Choose a Promotion Package&quot; on the Promote Ad page. Set duration (days), coin cost, badges, and features.
+              Manage the 12-hour shift packages shown on the Promote Ad page. Set Tier Ranking (Top 1–3, Top 4–6, Top 7–10, Top 10–15), duration (days), coin cost, badges, and bullet features.
             </p>
           </div>
 
@@ -257,14 +272,14 @@ export default function PromotionPackagesPage() {
             <button
               type="button"
               onClick={handleResetToDefaults}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs"
+              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
             >
               Reset to Defaults
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs"
+              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs cursor-pointer"
             >
               + Add Package
             </button>
@@ -272,7 +287,7 @@ export default function PromotionPackagesPage() {
               type="button"
               onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
               disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-emerald-700 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs"
+              className="rounded-xl bg-emerald-700 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs cursor-pointer"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
@@ -294,179 +309,235 @@ export default function PromotionPackagesPage() {
         {/* Form & Cards Grid */}
         <form onSubmit={handleSubmit} className="mt-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2">
-            {packages.map((pkg, index) => (
-              <div
-                key={pkg._id || pkg.id || index}
-                className="relative rounded-2xl border border-red-200 bg-white p-5 shadow-xs flex flex-col justify-between"
-              >
-                <div>
-                  {/* Top Bar */}
-                  <div className="mb-4 flex items-center justify-between gap-2 border-b border-red-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-black text-red-900 uppercase tracking-wider">
-                        Package #{index + 1}
-                      </span>
-                      {pkg.highlight && (
-                        <span className="rounded-md bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white uppercase">
-                          Featured
+            {packages.map((pkg, index) => {
+              const tierInfo = getTierRankInfo(pkg.tier, `${pkg.id} ${pkg.title}`);
+
+              return (
+                <div
+                  key={pkg._id || pkg.id || index}
+                  className="relative rounded-2xl border border-red-200 bg-white p-5 shadow-xs flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Top Bar */}
+                    <div className="mb-4 flex items-center justify-between gap-2 border-b border-red-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-black text-red-900 uppercase tracking-wider">
+                          Package #{index + 1}
+                        </span>
+                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase text-white ${tierInfo.badgeClass}`}>
+                          {tierInfo.badge}
+                        </span>
+                        {pkg.highlight && (
+                          <span className="rounded-md bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white uppercase">
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => void handleDeletePackage(index)}
+                        className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition disabled:opacity-50 cursor-pointer"
+                        title="Remove package"
+                      >
+                        &times; Remove
+                      </button>
+                    </div>
+
+                    {/* Form Inputs */}
+                    <div className="space-y-3.5 text-xs">
+                      <div>
+                        <label className="block font-bold text-red-950">Package Title</label>
+                        <input
+                          type="text"
+                          value={pkg.title}
+                          onChange={(e) => updatePackage(index, "title", e.target.value)}
+                          placeholder="e.g. Platinum VIP (Top 1-3)"
+                          className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
+                          required
+                        />
+                      </div>
+
+                      {/* Tier Selector and Rank Range */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-red-950">
+                            Placement Tier <span className="text-red-600 font-semibold">*</span>
+                          </label>
+                          <select
+                            value={pkg.tier || "bronze"}
+                            onChange={(e) => {
+                              const newTier = e.target.value as PromoTier;
+                              const info = TIER_RANK_MAP[newTier] || TIER_RANK_MAP.bronze;
+                              updatePackage(index, "tier", newTier);
+                              updatePackage(index, "rankRange", info.rankRange);
+                            }}
+                            className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500 bg-white"
+                          >
+                            <option value="platinum">👑 Platinum VIP (Top 1 - 3)</option>
+                            <option value="gold">🥇 Gold VIP (Top 4 - 6)</option>
+                            <option value="silver">🥈 Silver VIP (Top 7 - 10)</option>
+                            <option value="bronze">🥉 Bronze VIP (Top 10 - 15)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-red-950">
+                            Rank Position Label
+                          </label>
+                          <input
+                            type="text"
+                            value={pkg.rankRange || tierInfo.rankRange}
+                            onChange={(e) => updatePackage(index, "rankRange", e.target.value)}
+                            placeholder="e.g. Top 1 - 3"
+                            className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-bold text-red-950">
+                            Duration (Days) <span className="text-red-600 font-semibold">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={pkg.durationDays || ""}
+                            onChange={(e) => updatePackage(index, "durationDays", e.target.value)}
+                            placeholder="e.g. 7"
+                            className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-bold text-red-950">
+                            Cost (Coins) <span className="text-red-600 font-semibold">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={pkg.coinsCost !== undefined ? pkg.coinsCost : ""}
+                            onChange={(e) => updatePackage(index, "coinsCost", e.target.value)}
+                            placeholder="e.g. 25"
+                            className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block font-semibold text-red-900">
+                            Badge Tag <span className="text-gray-400 font-normal">(e.g. Highest Exposure)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={pkg.tag || ""}
+                            onChange={(e) => updatePackage(index, "tag", e.target.value)}
+                            placeholder="e.g. Most Popular"
+                            className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 outline-none focus:border-red-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold text-red-900">
+                            Internal Identifier (Slug)
+                          </label>
+                          <input
+                            type="text"
+                            value={pkg.id || ""}
+                            onChange={(e) => updatePackage(index, "id", e.target.value)}
+                            placeholder="e.g. platinum-vip"
+                            className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 outline-none focus:border-red-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-1">
+                        <label className="flex items-center gap-2 cursor-pointer font-semibold text-red-950">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(pkg.highlight)}
+                            onChange={(e) => updatePackage(index, "highlight", e.target.checked)}
+                            className="h-4 w-4 rounded accent-red-700"
+                          />
+                          Highlight with Premium Badge (Red header tag)
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-red-950">
+                          Bullet Features <span className="text-gray-400 font-normal">(one per line)</span>
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={(pkg.features || []).join("\n")}
+                          onChange={(e) => handleFeaturesChange(index, e.target.value)}
+                          placeholder="Top 1 - 3 placement in your city&#10;12h Shift priority boost&#10;Unlocks all ad gallery images"
+                          className="mt-1 w-full rounded-lg border border-red-200 p-2.5 text-xs text-red-950 outline-none focus:border-red-500 font-sans"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Card Preview Box */}
+                  <div className="mt-5 rounded-xl border border-dashed border-red-200 bg-pink-50/40 p-3.5">
+                    <span className="text-[10px] font-black uppercase text-red-800 tracking-wider">
+                      Live Preview (User View):
+                    </span>
+                    <div className="mt-2 rounded-xl border border-red-200 bg-white p-3.5 shadow-xs relative">
+                      {pkg.tag && (
+                        <span
+                          className={`absolute -top-2.5 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                            pkg.highlight
+                              ? "bg-red-700 text-white shadow-xs"
+                              : "bg-red-100 text-red-900 border border-red-200"
+                          }`}
+                        >
+                          {pkg.tag}
                         </span>
                       )}
-                    </div>
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => void handleDeletePackage(index)}
-                      className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition disabled:opacity-50"
-                      title="Remove package"
-                    >
-                      &times; Remove
-                    </button>
-                  </div>
 
-                  {/* Form Inputs */}
-                  <div className="space-y-3.5 text-xs">
-                    <div>
-                      <label className="block font-bold text-red-950">Package Title</label>
-                      <input
-                        type="text"
-                        value={pkg.title}
-                        onChange={(e) => updatePackage(index, "title", e.target.value)}
-                        placeholder="e.g. VIP Super 3 Days (3 TOP-US)"
-                        className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
-                        required
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-bold text-red-950">
-                          Duration (Days) <span className="text-red-600 font-semibold">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={pkg.durationDays || ""}
-                          onChange={(e) => updatePackage(index, "durationDays", e.target.value)}
-                          placeholder="e.g. 3"
-                          className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
-                          required
-                        />
+                      <div className="mb-1.5">
+                        <span className={`inline-block rounded-full px-2 py-0.2 text-[9px] font-black ${tierInfo.badgeClass}`}>
+                          {tierInfo.badge}
+                        </span>
                       </div>
 
-                      <div>
-                        <label className="block font-bold text-red-950">
-                          Cost (Coins) <span className="text-red-600 font-semibold">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={pkg.coinsCost !== undefined ? pkg.coinsCost : ""}
-                          onChange={(e) => updatePackage(index, "coinsCost", e.target.value)}
-                          placeholder="e.g. 12"
-                          className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
-                          required
-                        />
-                      </div>
-                    </div>
+                      <p className="text-xs font-black text-red-950 pr-12">
+                        {pkg.title || "Untitled Package"}
+                      </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-semibold text-red-900">
-                          Badge Tag <span className="text-gray-400 font-normal">(e.g. Most Popular)</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={pkg.tag || ""}
-                          onChange={(e) => updatePackage(index, "tag", e.target.value)}
-                          placeholder="e.g. Most Popular"
-                          className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 outline-none focus:border-red-500"
-                        />
+                      <div className="mt-1 inline-flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-black text-red-900">
+                        <span>🎯 Position: {pkg.rankRange || tierInfo.rankRange}</span>
                       </div>
 
-                      <div>
-                        <label className="block font-semibold text-red-900">
-                          Internal Identifier (Slug)
-                        </label>
-                        <input
-                          type="text"
-                          value={pkg.id || ""}
-                          onChange={(e) => updatePackage(index, "id", e.target.value)}
-                          placeholder="e.g. vip-3-days"
-                          className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 outline-none focus:border-red-500"
-                          required
-                        />
+                      <div className="mt-2 flex items-baseline gap-1">
+                        <span className="text-xl font-black text-red-600">
+                          {pkg.coinsCost ?? 0}
+                        </span>
+                        <span className="text-xs font-bold text-gray-600">Coins</span>
+                        <span className="text-xs text-gray-500 ml-2">
+                          ({pkg.durationDays ?? 1} {Number(pkg.durationDays) === 1 ? "Day" : "Days"})
+                        </span>
                       </div>
-                    </div>
 
-                    <div className="pt-1">
-                      <label className="flex items-center gap-2 cursor-pointer font-semibold text-red-950">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(pkg.highlight)}
-                          onChange={(e) => updatePackage(index, "highlight", e.target.checked)}
-                          className="h-4 w-4 rounded accent-red-700"
-                        />
-                        Highlight with Premium Badge (Red header tag)
-                      </label>
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-red-950">
-                        Bullet Features <span className="text-gray-400 font-normal">(one per line)</span>
-                      </label>
-                      <textarea
-                        rows={4}
-                        value={(pkg.features || []).join("\n")}
-                        onChange={(e) => handleFeaturesChange(index, e.target.value)}
-                        placeholder="Top VIP placement in your city&#10;Unlocks all ad gallery images&#10;VIP rotation slot"
-                        className="mt-1 w-full rounded-lg border border-red-200 p-2.5 text-xs text-red-950 outline-none focus:border-red-500 font-sans"
-                      />
+                      <ul className="mt-2.5 space-y-1 text-[11px] text-gray-600">
+                        {(pkg.features || []).map((feat, fIdx) => (
+                          <li key={fIdx} className="flex items-start gap-1">
+                            <span className="text-emerald-600 font-bold">✓</span>
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 </div>
-
-                {/* Live Card Preview Box */}
-                <div className="mt-5 rounded-xl border border-dashed border-red-200 bg-pink-50/40 p-3.5">
-                  <span className="text-[10px] font-black uppercase text-red-800 tracking-wider">
-                    Live Preview (User View):
-                  </span>
-                  <div className="mt-2 rounded-xl border border-red-200 bg-white p-3.5 shadow-xs relative">
-                    {pkg.tag && (
-                      <span
-                        className={`absolute -top-2.5 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                          pkg.highlight
-                            ? "bg-red-700 text-white shadow-xs"
-                            : "bg-red-100 text-red-900 border border-red-200"
-                        }`}
-                      >
-                        {pkg.tag}
-                      </span>
-                    )}
-                    <p className="text-xs font-black text-red-950 pr-12">
-                      {pkg.title || "Untitled Package"}
-                    </p>
-                    <div className="mt-1.5 flex items-baseline gap-1">
-                      <span className="text-xl font-black text-red-600">
-                        {pkg.coinsCost ?? 0}
-                      </span>
-                      <span className="text-xs font-bold text-gray-600">Coins</span>
-                      <span className="text-xs text-gray-500 ml-2">
-                        ({pkg.durationDays ?? 1} {Number(pkg.durationDays) === 1 ? "Day" : "Days"})
-                      </span>
-                    </div>
-
-                    <ul className="mt-2.5 space-y-1 text-[11px] text-gray-600">
-                      {(pkg.features || []).map((feat, fIdx) => (
-                        <li key={fIdx} className="flex items-start gap-1">
-                          <span className="text-emerald-600 font-bold">✓</span>
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Bottom Action Bar */}
@@ -474,14 +545,14 @@ export default function PromotionPackagesPage() {
             <button
               type="submit"
               disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-50 transition shadow-sm"
+              className="rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-50 transition shadow-sm cursor-pointer"
             >
               {saving ? "Saving..." : `Save All ${packages.length} Packages`}
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition"
+              className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition cursor-pointer"
             >
               + Add Another Package
             </button>

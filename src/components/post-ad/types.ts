@@ -75,6 +75,8 @@ export type Ad = {
   isPromoted?: boolean;
   promotedUntil?: string | Date;
   promoPackage?: string;
+  promoTier?: string;
+  promoShift?: string;
 };
 
 export type AdForm = {

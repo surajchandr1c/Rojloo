@@ -5,6 +5,14 @@ import Link from "next/link";
 import type { Ad } from "./types";
 import { cityPlaces } from "@/lib/places";
 import { YourAdsListSkeleton } from "@/components/skeletons/post-ad-skeletons";
+import {
+  isAdPromotionActive,
+  getTierRankInfo,
+  getShiftShortLabel,
+  formatDateTime,
+  isAdActiveInCurrentShift,
+  getCurrentShiftInfo,
+} from "@/lib/promo-shifts";
 
 function getCityUrl(cityName: string) {
   if (!cityName) return "/places";
@@ -73,8 +81,7 @@ export default function YourAdsSection({
   const [activeTab, setActiveTab] = useState<TabType>("all");
 
   const isAdPromoted = (ad: Ad) => {
-    const raw = ad as unknown as Record<string, unknown>;
-    return Boolean(raw.promoted || raw.isPromoted || raw.promotedUntil || raw.isVip);
+    return isAdPromotionActive(ad);
   };
 
   const allAds = ads.filter((ad) => (ad.status ?? "active") !== "deleted");
@@ -198,17 +205,61 @@ export default function YourAdsSection({
 
                   {/* Right VIP / Promo Schedule */}
                   <div className="sm:text-right space-y-1 text-xs min-w-0">
-                    <p className="font-bold text-red-950">{isPromoted ? "VIP 1x3" : "Vip 1x3"}</p>
-                    <p className="text-gray-500 text-[11px]">12 pm - 03 pm</p>
-                    <p className="text-gray-600 font-semibold text-[11px]">3 TOP-US 1 Day</p>
-                    <p className="text-red-600 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
-                      <span>⚠</span>
-                      <span>
-                        {isPromoted
-                          ? `Promotion active until: ${expireShort}`
-                          : `Your promotion has expired! : ${todayFormatted}`}
-                      </span>
-                    </p>
+                    {(() => {
+                      const isPromoValid = isAdPromotionActive(ad);
+                      const isPromotedEver = Boolean(ad.promoted || ad.isPromoted || ad.promotedUntil);
+                      const tierInfo = getTierRankInfo(ad.promoTier, ad.promoPackage);
+                      const shiftLabel = getShiftShortLabel(ad.promoShift);
+                      const promoExpiryFormatted = formatDateTime(ad.promotedUntil);
+                      const isCurrentShift = isAdActiveInCurrentShift(ad);
+
+                      if (isPromoValid) {
+                        return (
+                          <>
+                            <div className="flex sm:justify-end items-center gap-1.5">
+                              <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${tierInfo.badgeClass}`}>
+                                {tierInfo.badge}
+                              </span>
+                            </div>
+                            <p className="font-bold text-red-950 text-xs">
+                              Position: <span className="text-red-700 underline">{tierInfo.rankRange}</span>
+                            </p>
+                            <p className="text-gray-600 font-semibold text-[11px]">
+                              Shift: {shiftLabel}
+                            </p>
+                            <p className="text-emerald-700 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
+                              <span>🟢</span>
+                              <span>
+                                {isCurrentShift ? "Live in Current Shift" : "Scheduled for Shift"} &bull; Expires: {promoExpiryFormatted}
+                              </span>
+                            </p>
+                          </>
+                        );
+                      }
+
+                      if (isPromotedEver && ad.promotedUntil) {
+                        return (
+                          <>
+                            <p className="font-bold text-gray-600">{tierInfo.title}</p>
+                            <p className="text-gray-400 text-[11px]">Shift: {shiftLabel}</p>
+                            <p className="text-rose-600 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
+                              <span>⚠</span>
+                              <span>Promotion expired: {promoExpiryFormatted} (Moved below)</span>
+                            </p>
+                          </>
+                        );
+                      }
+
+                      return (
+                        <>
+                          <p className="font-bold text-gray-600">Standard Free Ad</p>
+                          <p className="text-gray-400 text-[11px]">No active promotion</p>
+                          <p className="text-gray-500 text-[11px] pt-0.5">
+                            Ranked in standard listings
+                          </p>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 

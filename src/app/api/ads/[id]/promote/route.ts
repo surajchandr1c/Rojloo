@@ -3,6 +3,13 @@ import { getAuthenticatedUserId } from "@/lib/auth-user";
 import { getAdById, updateAd } from "@/lib/models/ad";
 import { findUserById, updateUserCoins } from "@/lib/models/user";
 import { getPromotionPackages } from "@/lib/models/promotion-package";
+import {
+  calculateExpirationDate,
+  normalizeTier,
+  getTierRankInfo,
+  getShiftLabel,
+  type PromoShift,
+} from "@/lib/promo-shifts";
 
 export async function POST(
   request: NextRequest,
@@ -25,7 +32,16 @@ export async function POST(
 
   const durationDays = Number(matchedPkg ? matchedPkg.durationDays : (body?.durationDays ?? 1));
   const coinsCost = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
-  const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "VIP 1 Day");
+  const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
+
+  // Determine shift: "day" | "night" | "all"
+  const rawShift = String(body?.shift || "day").toLowerCase();
+  const promoShift: PromoShift =
+    rawShift === "night" ? "night" : rawShift === "all" ? "all" : "day";
+
+  // Determine tier: "platinum" | "gold" | "silver" | "bronze"
+  const promoTier = normalizeTier(body?.tier || matchedPkg?.tier, packageName);
+  const tierInfo = getTierRankInfo(promoTier);
 
   if (!id) {
     return NextResponse.json({ error: "Ad ID is required." }, { status: 400 });
@@ -66,13 +82,15 @@ export async function POST(
 
   // Calculate promotion validity
   const now = new Date();
-  const promotedUntil = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+  const promotedUntil = calculateExpirationDate(durationDays, now);
 
   const updatedAd = await updateAd(id, userId, {
     promoted: true,
     isPromoted: true,
     promotedUntil,
     promoPackage: packageName,
+    promoTier,
+    promoShift,
   });
 
   if (!updatedAd) {
@@ -84,10 +102,15 @@ export async function POST(
     );
   }
 
+  const shiftText = getShiftLabel(promoShift);
+
   return NextResponse.json({
     success: true,
-    message: `Ad promoted successfully with ${packageName}!`,
+    message: `🎉 Ad promoted successfully with ${packageName}! Guaranteed position: ${tierInfo.rankRange} during ${shiftText} until ${promotedUntil.toLocaleDateString()}.`,
     ad: updatedAd,
     remainingCoins: currentCoins - coinsCost,
+    promotedUntil,
+    promoTier,
+    promoShift,
   });
 }

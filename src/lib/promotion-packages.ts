@@ -1,7 +1,13 @@
+import type { PromoTier } from "./promo-shifts";
+
+export type { PromoTier };
+
 export type PromotionPackage = {
   _id?: string;
   id: string;
   title: string;
+  tier: PromoTier;
+  rankRange: string;
   durationDays: number;
   coinsCost: number;
   tag?: string;
@@ -14,55 +20,68 @@ export type PromotionPackage = {
 
 export const DEFAULT_PROMO_PACKAGES: PromotionPackage[] = [
   {
-    id: "vip-1-day",
-    title: "VIP Top 1 Day (3 TOP-US)",
-    durationDays: 1,
-    coinsCost: 5,
-    tag: "Quick Boost",
-    features: [
-      "Top VIP placement in your city",
-      "Highlighted card badge",
-      "2x higher search visibility",
-      "Instant activation",
-    ],
-  },
-  {
-    id: "vip-3-days",
-    title: "VIP Super 3 Days (3 TOP-US)",
-    durationDays: 3,
-    coinsCost: 12,
-    tag: "Most Popular",
-    highlight: true,
-    features: [
-      "3x visibility across city listings",
-      "Unlocks all ad gallery images",
-      "VIP 1x3 rotation slot",
-      "High priority lead placement",
-    ],
-  },
-  {
-    id: "vip-7-days",
-    title: "VIP Premium 7 Days (VIP 1x3)",
+    id: "platinum-vip",
+    title: "Platinum VIP (Top 1-3)",
+    tier: "platinum",
+    rankRange: "Top 1 - 3",
     durationDays: 7,
     coinsCost: 25,
-    tag: "Best Value",
+    tag: "Highest Rank",
+    highlight: true,
     features: [
-      "Maximum exposure for 7 full days",
-      "Prime VIP carousel rotation",
-      "All gallery photos unlocked",
-      "Priority WhatsApp & call display",
+      "Guaranteed Top 1 - 3 position on city listings",
+      "Priority 12h shift display (Day or Night)",
+      "Unlocks all ad gallery images",
+      "Maximum inquiries via WhatsApp & calls",
+      "Distinctive Platinum VIP crown badge",
     ],
   },
   {
-    id: "unlock-images",
-    title: "Unlock Images Pack (30 Days)",
-    durationDays: 30,
-    coinsCost: 3,
-    tag: "Photo Pack",
+    id: "gold-vip",
+    title: "Gold VIP (Top 4-6)",
+    tier: "gold",
+    rankRange: "Top 4 - 6",
+    durationDays: 3,
+    coinsCost: 15,
+    tag: "Most Popular",
     features: [
-      "Instantly unlock all photos",
-      "Visible to all potential clients",
-      "Valid for full 30 days",
+      "Guaranteed Top 4 - 6 position on city listings",
+      "12h shift priority boost (Day or Night)",
+      "Unlocks all ad gallery images",
+      "3x higher search visibility",
+      "Distinctive Gold VIP badge",
+    ],
+  },
+  {
+    id: "silver-vip",
+    title: "Silver VIP (Top 7-10)",
+    tier: "silver",
+    rankRange: "Top 7 - 10",
+    durationDays: 2,
+    coinsCost: 10,
+    tag: "Great Value",
+    features: [
+      "Guaranteed Top 7 - 10 position on city listings",
+      "12h shift priority placement",
+      "2x higher search visibility",
+      "Highlighted card badge",
+      "Distinctive Silver VIP badge",
+    ],
+  },
+  {
+    id: "bronze-vip",
+    title: "Bronze VIP (Top 10-15)",
+    tier: "bronze",
+    rankRange: "Top 10 - 15",
+    durationDays: 1,
+    coinsCost: 5,
+    tag: "Starter Boost",
+    features: [
+      "Guaranteed Top 10 - 15 position on city listings",
+      "12h shift priority placement",
+      "Instant promotion activation",
+      "Highlighted card badge",
+      "Distinctive Bronze VIP badge",
     ],
   },
 ];
