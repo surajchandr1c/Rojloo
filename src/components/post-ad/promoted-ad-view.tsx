@@ -214,7 +214,7 @@ export default function PromotedAdView() {
                 Promote The Ad
               </h1>
               <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-black text-red-900 uppercase">
-                12h Shift System
+                6-Hour Shift Rotation
               </span>
             </div>
           </div>
@@ -456,7 +456,9 @@ export default function PromotedAdView() {
                       </span>
                       <span className="text-xs font-bold text-gray-600">Coins</span>
                       <span className="text-xs text-gray-500 ml-1.5">
-                        ({pkg.durationHours ? (pkg.durationHours < 24 ? `${pkg.durationHours} Hours` : `${Math.round(pkg.durationHours / 24)} Days`) : `${pkg.durationDays} ${pkg.durationDays === 1 ? "Day" : "Days"}`})
+                        ({pkg.durationHours && pkg.durationHours < 24
+                          ? `${pkg.durationHours} Hours (${pkg.durationHours === 6 ? "1 Shift" : `${pkg.durationHours}h`})`
+                          : `${pkg.durationDays ?? 1} ${Number(pkg.durationDays) === 1 ? "Day" : "Days"} (Daily Shift)`})
                       </span>
                     </div>
 

@@ -33,7 +33,13 @@ export async function POST(
       (body?.title && p.title === body.title)
   );
 
-  const durationDays = Number(matchedPkg ? matchedPkg.durationDays : (body?.durationDays ?? 1));
+  const durationDays = Number(
+    matchedPkg?.durationDays !== undefined
+      ? matchedPkg.durationDays
+      : matchedPkg?.durationHours && matchedPkg.durationHours >= 24
+      ? Math.floor(matchedPkg.durationHours / 24)
+      : (body?.durationDays ?? 1)
+  );
   const coinsCost = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
   const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
 
@@ -86,14 +92,12 @@ export async function POST(
   const now = new Date();
   const shiftTiming = calculateShiftTiming(promoShift, now);
 
-  // If package has multi-day duration, extend promotedUntil
-  let finalPromotedUntil = shiftTiming.promotedUntil;
-  if (durationDays > 1) {
-    const daysToAdd = Math.floor(durationDays);
-    finalPromotedUntil = new Date(
-      shiftTiming.promotedUntil.getTime() + (daysToAdd - 1) * 24 * 60 * 60 * 1000
-    );
-  }
+  // If package has multi-day duration, calculate final expiration
+  const finalPromotedUntil = calculatePromoExpiration(
+    matchedPkg || { durationDays, durationHours: body?.durationHours },
+    promoShift,
+    now
+  );
 
   const updatedAd = await updateAd(id, userId, {
     promoted: true,

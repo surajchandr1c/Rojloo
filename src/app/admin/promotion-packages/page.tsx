@@ -314,6 +314,17 @@ export default function PromotionPackagesPage() {
           </div>
         )}
 
+        {/* Multi-Day Shift & 30-Minute Fair Rotation System Explanatory Banner */}
+        <div className="mt-4 rounded-xl bg-pink-50/80 border border-red-200 p-3.5 text-xs text-red-950 flex items-start gap-2.5">
+          <span className="text-base shrink-0">ℹ️</span>
+          <div>
+            <p className="font-bold text-red-950">Multi-Day Shift &amp; 30-Minute Fair Rotation System:</p>
+            <p className="text-red-900 mt-0.5 leading-relaxed">
+              When users select a package with 2 or more days, their ad appears on top in their paid tier during their chosen shift (Morning, Afternoon, Evening, or Night) every day. Outside their shift, ads move down so other shift ads take the top spots. If more ads are active on a shift than the tier capacity (Top 1–3, Top 4–6, Top 7–10, Top 10–15), ads rotate positions fairly every 30 minutes!
+            </p>
+          </div>
+        </div>
+
         {/* Loading Indicator */}
         {loading && packages.length === 0 ? (
           <div className="mt-12 flex flex-col items-center justify-center text-center p-8">
@@ -462,10 +473,17 @@ export default function PromotionPackagesPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => updatePackage(index, "durationHours", 24)}
+                              onClick={() => updatePackage(index, "durationDays", 1)}
                               className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
                             >
-                              24h (1 Day)
+                              1 Day
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePackage(index, "durationDays", 2)}
+                              className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
+                            >
+                              2 Days
                             </button>
                             <button
                               type="button"
@@ -480,6 +498,20 @@ export default function PromotionPackagesPage() {
                               className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
                             >
                               7 Days
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePackage(index, "durationDays", 15)}
+                              className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
+                            >
+                              15 Days
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePackage(index, "durationDays", 30)}
+                              className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
+                            >
+                              30 Days
                             </button>
                           </div>
                         </div>
@@ -549,7 +581,7 @@ export default function PromotionPackagesPage() {
                           rows={4}
                           value={(pkg.features || []).join("\n")}
                           onChange={(e) => handleFeaturesChange(index, e.target.value)}
-                          placeholder="Top 1 - 3 placement in your city&#10;12h Shift priority boost&#10;Unlocks all ad gallery images"
+                          placeholder="Top 1 - 3 placement in your city&#10;6h Shift priority daily boost&#10;Fair 30-min slot balancing&#10;Unlocks all ad gallery images"
                           className="mt-1 w-full rounded-lg border border-red-200 p-2.5 text-xs text-red-950 outline-none focus:border-red-500 font-sans"
                         />
                       </div>
@@ -595,8 +627,8 @@ export default function PromotionPackagesPage() {
                         <span className="text-xs font-bold text-gray-600">Coins</span>
                         <span className="text-xs text-gray-500 ml-1.5">
                           ({pkg.durationHours && pkg.durationHours < 24
-                            ? `${pkg.durationHours} Hours`
-                            : `${pkg.durationDays ?? 1} ${Number(pkg.durationDays) === 1 ? "Day" : "Days"}`})
+                            ? `${pkg.durationHours} Hours (${pkg.durationHours === 6 ? "1 Shift" : `${pkg.durationHours}h`})`
+                            : `${pkg.durationDays ?? 1} ${Number(pkg.durationDays) === 1 ? "Day" : "Days"} (Daily Shift)`})
                         </span>
                       </div>
 

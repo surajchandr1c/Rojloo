@@ -395,7 +395,111 @@ export function isAdActiveInCurrentShift(
   },
   now: Date = new Date()
 ): boolean {
-  return isAdPromotionActive(ad, now);
+  if (!isAdPromotionActive(ad, now)) {
+    return false;
+  }
+
+  const rawShift = (ad.promoShift || "morning").trim().toLowerCase();
+  if (rawShift === "all" || rawShift === "24h") {
+    return true; // 24-hour full day shift
+  }
+
+  const currentShift = getCurrentShift(now);
+  const adShift = normalizeShift(rawShift);
+
+  return currentShift === adShift;
+}
+
+export function isAdShiftResting(
+  ad: {
+    promoted?: boolean;
+    isPromoted?: boolean;
+    promotedUntil?: Date | string;
+    promotedFrom?: Date | string;
+    promoShift?: string;
+  },
+  now: Date = new Date()
+): boolean {
+  if (!isAdPromotionActive(ad, now)) {
+    return false;
+  }
+  return !isAdActiveInCurrentShift(ad, now);
+}
+
+export function getNextShiftStart(
+  rawShift?: string,
+  now: Date = new Date()
+): Date {
+  const shift = normalizeShift(rawShift);
+  const istNow = getISTDate(now);
+
+  const istYear = istNow.getUTCFullYear();
+  const istMonth = istNow.getUTCMonth();
+  const istDay = istNow.getUTCDate();
+  const istHours = istNow.getUTCHours();
+  const istMinutes = istNow.getUTCMinutes();
+  const currentMinutes = istHours * 60 + istMinutes;
+
+  switch (shift) {
+    case "morning": {
+      if (currentMinutes < 360) {
+        return createDateFromIST(istYear, istMonth, istDay, 6, 0);
+      }
+      return createDateFromIST(istYear, istMonth, istDay + 1, 6, 0);
+    }
+    case "afternoon": {
+      if (currentMinutes < 720) {
+        return createDateFromIST(istYear, istMonth, istDay, 12, 0);
+      }
+      return createDateFromIST(istYear, istMonth, istDay + 1, 12, 0);
+    }
+    case "evening": {
+      if (currentMinutes < 1080) {
+        return createDateFromIST(istYear, istMonth, istDay, 18, 0);
+      }
+      return createDateFromIST(istYear, istMonth, istDay + 1, 18, 0);
+    }
+    case "night": {
+      if (currentMinutes < 360) {
+        return createDateFromIST(istYear, istMonth, istDay, 0, 0);
+      }
+      return createDateFromIST(istYear, istMonth, istDay + 1, 0, 0);
+    }
+  }
+}
+
+export const TIER_CAPACITIES: Record<PromoTier, number> = {
+  platinum: 3, // Top 1 - 3
+  gold: 3,     // Top 4 - 6
+  silver: 4,   // Top 7 - 10
+  bronze: 6,   // Top 10 - 15
+};
+
+/**
+ * 30-minute fair rotation algorithm:
+ * When the number of active ads in a shift exceeds the tier's slot capacity,
+ * rotate the order every 30 minutes deterministically based on epoch time:
+ * Math.floor(now.getTime() / (30 * 60 * 1000)) % totalAds.
+ * Every advertiser gets equal exposure at the top of their tier!
+ */
+export function rotateTierAds<T>(
+  tierAds: T[],
+  capacity: number,
+  now: Date = new Date()
+): T[] {
+  if (tierAds.length <= capacity || tierAds.length === 0) {
+    return tierAds;
+  }
+
+  // 30-minute interval index
+  const intervalIndex = Math.floor(now.getTime() / (30 * 60 * 1000));
+  const offset = intervalIndex % tierAds.length;
+
+  if (offset === 0) {
+    return tierAds;
+  }
+
+  return [...tierAds.slice(offset), ...tierAds.slice(0, offset)];
 }
 
 export function calculateExpirationDate(
@@ -418,9 +522,16 @@ export function calculatePromoExpiration(
 ): Date {
   const timing = calculateShiftTiming(shift, startDate);
 
-  if (pkg?.durationDays && pkg.durationDays >= 1) {
+  const days =
+    pkg?.durationDays !== undefined && pkg.durationDays > 0
+      ? Number(pkg.durationDays)
+      : pkg?.durationHours && pkg.durationHours >= 24
+      ? Math.floor(pkg.durationHours / 24)
+      : 0;
+
+  if (days >= 1) {
     // Multi-day package: runs until end of shift on target day
-    const daysToAdd = Math.floor(pkg.durationDays);
+    const daysToAdd = Math.floor(days);
     return new Date(
       timing.promotedUntil.getTime() + (daysToAdd - 1) * 24 * 60 * 60 * 1000
     );
@@ -494,11 +605,11 @@ export function formatDetailedTimeRemaining(expiryDate?: Date | string, now: Dat
 
 /**
  * Sorts ads by promotion tier:
- * - Active Platinum ads (Top 1 - 3)
- * - Active Gold ads (Top 4 - 6)
- * - Active Silver ads (Top 7 - 10)
- * - Active Bronze ads (Top 10 - 15)
- * - Remaining ads: future scheduled ads, expired ads and standard free ads (newest first).
+ * - Active Platinum ads (Top 1 - 3, rotated every 30 min if > 3 ads)
+ * - Active Gold ads (Top 4 - 6, rotated every 30 min if > 3 ads)
+ * - Active Silver ads (Top 7 - 10, rotated every 30 min if > 4 ads)
+ * - Active Bronze ads (Top 10 - 15, rotated every 30 min if > 6 ads)
+ * - Remaining ads: ads resting between shifts on multi-day packages, future scheduled ads, expired ads, and standard free ads.
  */
 export function sortAdsWithPromotions<T extends {
   _id?: string;
@@ -518,9 +629,10 @@ export function sortAdsWithPromotions<T extends {
   const otherAds: T[] = [];
 
   for (const ad of ads) {
-    const isActivePromo = isAdPromotionActive(ad, now);
+    // Only ads active in the current shift qualify for top placement!
+    const isShiftActive = isAdActiveInCurrentShift(ad, now);
 
-    if (isActivePromo) {
+    if (isShiftActive) {
       const tier = normalizeTier(ad.promoTier, ad.promoPackage);
       if (tier === "platinum") {
         platinumAds.push(ad);
@@ -534,7 +646,8 @@ export function sortAdsWithPromotions<T extends {
       continue;
     }
 
-    // Ads not active (expired or standard free ads)
+    // Ads outside their shift (resting between days on multi-day packages),
+    // future scheduled ads, expired ads, and standard free ads
     otherAds.push(ad);
   }
 
@@ -548,11 +661,17 @@ export function sortAdsWithPromotions<T extends {
   bronzeAds.sort(sortByDate);
   otherAds.sort(sortByDate);
 
+  // Apply 30-minute fair rotation when ads exceed tier slot capacity
+  const rotatedPlatinum = rotateTierAds(platinumAds, TIER_CAPACITIES.platinum, now);
+  const rotatedGold = rotateTierAds(goldAds, TIER_CAPACITIES.gold, now);
+  const rotatedSilver = rotateTierAds(silverAds, TIER_CAPACITIES.silver, now);
+  const rotatedBronze = rotateTierAds(bronzeAds, TIER_CAPACITIES.bronze, now);
+
   return [
-    ...platinumAds,
-    ...goldAds,
-    ...silverAds,
-    ...bronzeAds,
+    ...rotatedPlatinum,
+    ...rotatedGold,
+    ...rotatedSilver,
+    ...rotatedBronze,
     ...otherAds,
   ];
 }

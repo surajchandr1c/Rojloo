@@ -13,6 +13,8 @@ import {
   formatDateTime,
   formatTimeRemaining,
   isAdActiveInCurrentShift,
+  isAdShiftResting,
+  getNextShiftStart,
   getCurrentShiftInfo,
 } from "@/lib/promo-shifts";
 
@@ -263,21 +265,53 @@ export default function YourAdsSection({
                       }
 
                       if (isPromoValid) {
+                        const isCurrentShiftActive = isAdActiveInCurrentShift(ad);
+                        const isResting = isAdShiftResting(ad);
+                        const nextShiftDate = getNextShiftStart(ad.promoShift);
+                        const nextShiftFormatted = formatDateTime(nextShiftDate);
+
+                        if (isResting) {
+                          return (
+                            <>
+                              <div className="flex sm:justify-end items-center gap-1.5">
+                                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${tierInfo.badgeClass}`}>
+                                  {tierInfo.badge}
+                                </span>
+                                <span className="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold text-amber-800">
+                                  ⏸️ Shift Resting
+                                </span>
+                              </div>
+                              <p className="font-bold text-red-950 text-xs">
+                                Position: <span className="text-red-700 underline">{tierInfo.rankRange}</span>
+                              </p>
+                              <p className="text-gray-600 font-semibold text-[11px]">
+                                Shift: {shiftLabel} &bull; <span className="text-amber-700 font-bold">Resting (Off-Shift)</span>
+                              </p>
+                              <p className="text-indigo-700 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
+                                <span>🔄</span>
+                                <span>
+                                  Returns to Top: {nextShiftFormatted} &bull; Expires: {promoExpiryFormatted}
+                                </span>
+                              </p>
+                            </>
+                          );
+                        }
+
                         return (
                           <>
                             <div className="flex sm:justify-end items-center gap-1.5">
                               <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${tierInfo.badgeClass}`}>
                                 {tierInfo.badge}
                               </span>
-                              <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                                🟢 Live
+                              <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                                🟢 Live on Top
                               </span>
                             </div>
                             <p className="font-bold text-red-950 text-xs">
                               Position: <span className="text-red-700 underline">{tierInfo.rankRange}</span>
                             </p>
                             <p className="text-gray-600 font-semibold text-[11px]">
-                              Shift: {shiftLabel}
+                              Shift: {shiftLabel} &bull; <span className="text-emerald-700 font-bold">Active Now</span>
                             </p>
                             <p className="text-emerald-700 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
                               <span>🟢</span>
