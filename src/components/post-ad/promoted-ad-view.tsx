@@ -16,15 +16,10 @@ import {
 } from "@/lib/promotion-packages";
 
 import {
-  getCurrentShiftInfo,
   getShiftLabel,
-  getShiftShortLabel,
   getTierRankInfo,
   calculateExpirationDate,
   formatDateTime,
-  formatTimeRemaining,
-  isAdPromotionActive,
-  isAdActiveInCurrentShift,
   type PromoShift,
 } from "@/lib/promo-shifts";
 
@@ -45,15 +40,6 @@ export default function PromotedAdView() {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [currentShiftInfo, setCurrentShiftInfo] = useState(getCurrentShiftInfo());
-
-  // Periodically refresh current shift status
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentShiftInfo(getCurrentShiftInfo());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
 
   const loadAds = () => {
     setLoading(true);
@@ -128,8 +114,6 @@ export default function PromotedAdView() {
     const raw = ad as unknown as Record<string, unknown>;
     return Boolean(raw.promoted || raw.isPromoted || raw.promotedUntil || raw.isVip);
   };
-
-  const currentlyPromotedAds = ads.filter(isAdPromoted);
 
   const handlePromote = async () => {
     if (!selectedAd || !selectedAd._id) {
@@ -341,15 +325,12 @@ export default function PromotedAdView() {
           </div>
         </div>
 
-        {/* 3. Promotion Packages Grid with Tier Ranking */}
+        {/* Promotion Packages Grid */}
         <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
           <div className="border-b border-red-100 pb-3">
             <h2 className="text-sm sm:text-base font-black text-red-950">
-              3. Choose a Promotion Package (Position Ranking)
+              Choose a Promotion Package
             </h2>
-            <p className="mt-0.5 text-xs text-gray-500">
-              Each package guarantees your placement tier in city listings: <strong>Platinum (Top 1–3)</strong>, <strong>Gold (Top 4–6)</strong>, <strong>Silver (Top 7–10)</strong>, <strong>Bronze (Top 10–15)</strong>.
-            </p>
           </div>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -434,76 +415,9 @@ export default function PromotedAdView() {
               );
             })}
           </div>
-        </div>
 
-        {/* 4. Real-Time Expiration & Promotion Summary Card */}
-        <div className="mt-6 rounded-2xl bg-pink-50/50 border border-red-200 p-4 sm:p-6 shadow-xs">
-          <h2 className="text-sm sm:text-base font-black text-red-950">
-            4. Promotion Details &amp; Expiration Summary
-          </h2>
-          <p className="mt-0.5 text-xs text-gray-600">
-            Review your shift, guaranteed rank position, and exact expiration time before activating.
-          </p>
-
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Left specifications list */}
-            <div className="rounded-xl bg-white border border-red-100 p-3.5 sm:p-4 space-y-2 text-xs">
-              <div className="flex justify-between border-b border-red-50 pb-2">
-                <span className="text-gray-500 font-semibold">Target Ad:</span>
-                <strong className="text-red-950 font-bold truncate max-w-[200px]">
-                  {selectedAd ? selectedAd.name || selectedAd.title : "None Selected"}
-                </strong>
-              </div>
-              <div className="flex justify-between border-b border-red-50 pb-2">
-                <span className="text-gray-500 font-semibold">Selected Shift:</span>
-                <strong className="text-red-950 font-bold flex items-center gap-1">
-                  {getShiftShortLabel(selectedShift)} ({selectedShift === "night" ? "08:00 PM - 08:00 AM" : "08:00 AM - 08:00 PM"})
-                </strong>
-              </div>
-              <div className="flex justify-between border-b border-red-50 pb-2">
-                <span className="text-gray-500 font-semibold">Guaranteed Position:</span>
-                <span className="font-black text-red-700 rounded bg-red-50 px-2 py-0.5">
-                  {selectedTierInfo.rankRange}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-red-50 pb-2">
-                <span className="text-gray-500 font-semibold">Duration:</span>
-                <strong className="text-red-950 font-bold">
-                  {selectedPkg.durationDays} {selectedPkg.durationDays === 1 ? "Day (24h validity)" : "Days"}
-                </strong>
-              </div>
-              <div className="flex justify-between pt-1">
-                <span className="text-gray-500 font-semibold">Exact Expiration Time:</span>
-                <strong className="text-red-900 font-black text-xs sm:text-[13px]">
-                  ⏰ {formattedProjectedExpiry}
-                </strong>
-              </div>
-            </div>
-
-            {/* Right explanation of rotation and expiration */}
-            <div className="rounded-xl bg-white border border-red-100 p-3.5 sm:p-4 text-xs flex flex-col justify-between">
-              <div className="space-y-2 text-gray-700">
-                <p className="font-bold text-red-950 flex items-center gap-1.5">
-                  <span>ℹ️</span>
-                  <span>How the Shift &amp; Expiration System Works:</span>
-                </p>
-                <p className="text-[11px] leading-relaxed text-gray-600">
-                  &bull; During your chosen <strong>{getShiftShortLabel(selectedShift)}</strong>, your ad stays positioned at <strong>{selectedTierInfo.rankRange}</strong> in city listings.
-                </p>
-                <p className="text-[11px] leading-relaxed text-gray-600">
-                  &bull; <strong>When the package expires on {formattedProjectedExpiry}</strong>, your ad automatically moves below the top promoted slots, and other users who paid for promotion packages will show their ads on top during their selected shifts.
-                </p>
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-red-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-600">Cost:</span>
-                <span className="text-lg font-black text-red-600">{selectedPkg.coinsCost} Coins</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action CTA Button */}
-          <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+          {/* Action CTA */}
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-pink-50/40 border border-red-100 p-4">
             <div>
               <p className="text-xs text-gray-600 font-medium">Selected Package</p>
               <p className="text-sm font-black text-red-950">
@@ -516,14 +430,10 @@ export default function PromotedAdView() {
                 type="button"
                 disabled={submitting || !selectedAd}
                 onClick={handlePromote}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] disabled:opacity-50 text-white px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-md cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] disabled:opacity-50 text-white px-6 py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-md cursor-pointer"
               >
                 <span>🚀</span>
-                <span>
-                  {submitting
-                    ? "Promoting Ad..."
-                    : `Promote for ${selectedTierInfo.rankRange} (${selectedPkg.coinsCost} Coins)`}
-                </span>
+                <span>{submitting ? "Promoting..." : `Promote Now (${selectedPkg.coinsCost} Coins)`}</span>
               </button>
             ) : (
               <div className="flex items-center gap-2">
@@ -532,7 +442,7 @@ export default function PromotedAdView() {
                 </span>
                 <Link
                   href="/post-ad/buy-coin"
-                  className="rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] text-white px-4 py-2.5 text-xs font-bold transition"
+                  className="rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] text-white px-4 py-2 text-xs font-bold transition"
                 >
                   Buy Coins &rarr;
                 </Link>
@@ -540,101 +450,6 @@ export default function PromotedAdView() {
             )}
           </div>
         </div>
-
-        {/* 5. Currently Promoted Ads Section */}
-        {currentlyPromotedAds.length > 0 && (
-          <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
-            <div className="flex items-center justify-between border-b border-red-100 pb-3">
-              <h2 className="text-sm sm:text-base font-black text-red-950">
-                Your Active Promoted Ads ({currentlyPromotedAds.length})
-              </h2>
-              <span className="text-xs text-gray-500">Live Status &amp; Expiration Monitor</span>
-            </div>
-
-            <div className="mt-3 space-y-3">
-              {currentlyPromotedAds.map((ad) => {
-                const isPromoValid = isAdPromotionActive(ad);
-                const isLiveInShift = isAdActiveInCurrentShift(ad);
-                const tierInfo = getTierRankInfo(ad.promoTier, ad.promoPackage);
-                const expiryString = formatDateTime(ad.promotedUntil);
-                const timeRemaining = formatTimeRemaining(ad.promotedUntil);
-                const shiftLabel = getShiftShortLabel(ad.promoShift);
-
-                return (
-                  <div
-                    key={ad._id}
-                    className={`rounded-xl border p-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs transition ${
-                      isPromoValid
-                        ? "border-emerald-200 bg-emerald-50/40"
-                        : "border-gray-200 bg-gray-50/70 opacity-80"
-                    }`}
-                  >
-                    <div className="flex items-start sm:items-center gap-3 min-w-0">
-                      <span className="text-xl">
-                        {isPromoValid ? "⭐" : "⌛"}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <p className="font-black text-red-950 text-sm truncate">
-                            {ad.city ? `[${ad.city.toUpperCase()}] ` : ""}
-                            {ad.title || ad.name}
-                          </p>
-                          <span className={`rounded-full px-2 py-0.2 text-[10px] font-black ${tierInfo.badgeClass}`}>
-                            {tierInfo.badge}
-                          </span>
-                          <span className="rounded-full bg-pink-100 px-2 py-0.2 text-[10px] font-bold text-red-900 border border-red-200">
-                            {shiftLabel}
-                          </span>
-                        </div>
-
-                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-600">
-                          <span>
-                            Package: <strong>{ad.promoPackage || tierInfo.title}</strong>
-                          </span>
-                          <span>
-                            Guaranteed: <strong>{tierInfo.rankRange}</strong>
-                          </span>
-                          <span>
-                            Expires: <strong className="text-red-950">{expiryString || "N/A"}</strong>
-                          </span>
-                          <span className="font-semibold text-emerald-800">
-                            ({timeRemaining})
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
-                      {isPromoValid ? (
-                        isLiveInShift ? (
-                          <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-1 text-[11px] font-black text-emerald-800 flex items-center gap-1">
-                            <span className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse" />
-                            Live on Top ({currentShiftInfo.label})
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-indigo-100 border border-indigo-300 px-2.5 py-1 text-[11px] font-bold text-indigo-900">
-                            ⏳ Scheduled for {ad.promoShift === "night" ? "Night" : "Day"} Shift
-                          </span>
-                        )
-                      ) : (
-                        <span className="rounded-full bg-rose-100 border border-rose-300 px-2.5 py-1 text-[11px] font-bold text-rose-800">
-                          🔴 Expired &bull; Moved Below
-                        </span>
-                      )}
-
-                      <Link
-                        href="/post-ad/your-ads"
-                        className="rounded-lg bg-white border border-red-200 px-2.5 py-1 text-[11px] font-bold text-red-900 hover:bg-pink-50 transition"
-                      >
-                        View Ad &rarr;
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </SectionPanel>
     </main>
   );

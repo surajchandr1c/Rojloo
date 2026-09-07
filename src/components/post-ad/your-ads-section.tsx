@@ -84,19 +84,35 @@ export default function YourAdsSection({
     return isAdPromotionActive(ad);
   };
 
-  const allAds = ads.filter((ad) => (ad.status ?? "active") !== "deleted");
-  const promotedAds = allAds.filter((ad) => isAdPromoted(ad));
-  const freeAds = allAds.filter((ad) => !isAdPromoted(ad));
-  const notPublishedAds = ads.filter(
-    (ad) => ad.status === "suspended" || ad.status === "pending" || ad.status === "draft"
+  const publishedAds = ads.filter(
+    (ad) =>
+      (ad.status ?? "active") !== "deleted" &&
+      ad.status !== "suspended" &&
+      ad.status !== "pending" &&
+      ad.status !== "draft"
   );
+
+  const notPublishedAds = ads.filter(
+    (ad) =>
+      (ad.status ?? "active") !== "deleted" &&
+      (ad.status === "suspended" || ad.status === "pending" || ad.status === "draft")
+  );
+
+  // Active promoted ads: published AND active promotion (promotedUntil > now)
+  const promotedAds = publishedAds.filter((ad) => isAdPromotionActive(ad));
+
+  // Free ads: published AND NOT actively promoted (includes ads that were never promoted, and ads whose promo expired!)
+  const freeAds = publishedAds.filter((ad) => !isAdPromotionActive(ad));
+
+  // All ads: all non-deleted ads
+  const allAds = ads.filter((ad) => (ad.status ?? "active") !== "deleted");
 
   let currentList: Ad[] = [];
   let countLabel = "active ads";
 
   if (activeTab === "all") {
     currentList = allAds;
-    countLabel = "active ads";
+    countLabel = "total ads";
   } else if (activeTab === "promoted") {
     currentList = promotedAds;
     countLabel = "promoted ads";
@@ -149,9 +165,12 @@ export default function YourAdsSection({
           </p>
           <Link
             href="/post-ad/new"
-            className="mt-4 inline-block rounded-xl bg-[#450a0a] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#7f1d1d] transition shadow-xs"
+            className="mt-4 inline-block rounded-xl bg-[#450a0a] px-5 py-2.5 text-xs font-bold !text-white text-white hover:bg-[#7f1d1d] transition shadow-xs"
+            style={{ color: "#ffffff" }}
           >
-            + Post a New Ad
+            <span style={{ color: "#ffffff" }} className="!text-white text-white">
+              + Post a New Ad
+            </span>
           </Link>
         </div>
       ) : (
@@ -240,11 +259,15 @@ export default function YourAdsSection({
                       if (isPromotedEver && ad.promotedUntil) {
                         return (
                           <>
-                            <p className="font-bold text-gray-600">{tierInfo.title}</p>
-                            <p className="text-gray-400 text-[11px]">Shift: {shiftLabel}</p>
+                            <div className="flex sm:justify-end items-center gap-1.5">
+                              <span className="rounded-full bg-rose-100 border border-rose-300 px-2.5 py-0.5 text-[10px] font-bold text-rose-800">
+                                🔴 Promo Expired &bull; Moved to Free
+                              </span>
+                            </div>
+                            <p className="font-bold text-gray-700 text-xs">{tierInfo.title}</p>
+                            <p className="text-gray-500 text-[11px]">Shift: {shiftLabel}</p>
                             <p className="text-rose-600 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
-                              <span>⚠</span>
-                              <span>Promotion expired: {promoExpiryFormatted} (Moved below)</span>
+                              <span>Expired on: {promoExpiryFormatted}</span>
                             </p>
                           </>
                         );
@@ -368,13 +391,37 @@ export default function YourAdsSection({
                   </button>
                 </div>
 
-                {/* Promoted The Ad Action Button */}
+                {/* Promote The Ad Action Button */}
                 <Link
                   href={ad._id ? `/post-ad/your-ads/promoted?adId=${ad._id}` : "/post-ad/your-ads/promoted"}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-pink-50/70 hover:bg-pink-100 px-4 py-2.5 text-xs sm:text-sm font-bold text-red-900 transition shadow-xs w-full text-center"
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition shadow-xs w-full text-center ${
+                    activeTab === "free" || activeTab === "not_published" || !isPromoted
+                      ? "bg-[#450a0a] hover:bg-[#7f1d1d] !text-white text-white shadow-md border border-transparent"
+                      : "border border-red-200 bg-pink-50/70 hover:bg-pink-100 text-red-900"
+                  }`}
+                  style={
+                    activeTab === "free" || activeTab === "not_published" || !isPromoted
+                      ? { color: "#ffffff" }
+                      : undefined
+                  }
                 >
-                  <span>🔓</span>
-                  <span>Promoted the ad</span>
+                  <span>{isPromoted && activeTab === "promoted" ? "⭐" : "🚀"}</span>
+                  <span
+                    className={
+                      activeTab === "free" || activeTab === "not_published" || !isPromoted
+                        ? "!text-white text-white font-bold"
+                        : "text-red-900 font-bold"
+                    }
+                    style={
+                      activeTab === "free" || activeTab === "not_published" || !isPromoted
+                        ? { color: "#ffffff" }
+                        : undefined
+                    }
+                  >
+                    {isPromoted && activeTab === "promoted"
+                      ? "Promoted Ad (Manage / Re-promote)"
+                      : "Promote the ad"}
+                  </span>
                 </Link>
               </article>
             );
