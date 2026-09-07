@@ -194,9 +194,6 @@ export default function PromotedAdView() {
                 12h Shift System
               </span>
             </div>
-            <p className="mt-1 text-xs sm:text-sm text-red-900/80">
-              Boost your ad to the top search results in 12-hour shifts: <strong>Top 1–3 for Platinum</strong>, <strong>Top 4–6 for Gold</strong>, <strong>Top 7–10 for Silver</strong>, and <strong>Top 10–15 for Bronze</strong>.
-            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -205,59 +202,8 @@ export default function PromotedAdView() {
               onClick={() => router.push("/post-ad/your-ads")}
               className="!text-black text-xs sm:text-sm font-bold"
             >
-              &larr; Back to Your Ads
+              &larr; Back
             </Button>
-          </div>
-        </div>
-
-        {/* User Coin Balance Banner & Live Shift Status */}
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {/* Balance card */}
-          <div className="flex items-center justify-between gap-3 rounded-2xl bg-white border border-red-200/90 p-3.5 sm:p-4 shadow-xs">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-lg">
-                🪙
-              </span>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">Your Available Balance</p>
-                <p className="text-base sm:text-lg font-black text-red-950">
-                  {userCoins} <span className="text-xs font-bold text-red-800">Coins</span>
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/post-ad/buy-coin"
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] !text-white px-3.5 py-2 text-xs font-bold transition shadow-xs"
-              style={{ color: "#ffffff" }}
-            >
-              <span className="text-white">+ Buy Coins</span>
-            </Link>
-          </div>
-
-          {/* Current Live Shift Indicator */}
-          <div className="flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-pink-50 to-red-50/50 border border-red-200/90 p-3.5 sm:p-4 shadow-xs">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-red-200 text-lg shadow-xs">
-                {currentShiftInfo.shift === "day" ? "☀️" : "🌙"}
-              </span>
-              <div>
-                <p className="text-[11px] text-red-800 font-semibold uppercase tracking-wider">
-                  Live Indian Time (IST)
-                </p>
-                <p className="text-sm font-black text-red-950 flex items-center gap-1.5">
-                  <span>{currentShiftInfo.label} Active</span>
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                </p>
-              </div>
-            </div>
-
-            <div className="text-right text-[11px] text-gray-600 font-medium">
-              <p className="font-bold text-red-950">{currentShiftInfo.hours}</p>
-              <p className="text-gray-500 text-[10px]">
-                Next: {currentShiftInfo.nextShiftLabel} at {currentShiftInfo.nextShiftTime}
-              </p>
-            </div>
           </div>
         </div>
 
@@ -377,120 +323,12 @@ export default function PromotedAdView() {
           )}
         </div>
 
-        {/* 2. Shift Selection Section (12h Shifts) */}
+        {/* Shift Selection Dropdown */}
         <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-red-100 pb-3">
-            <div>
-              <h2 className="text-sm sm:text-base font-black text-red-950">
-                2. Select Promotion Shift (12-Hour Shift Rotation)
-              </h2>
-              <p className="mt-0.5 text-xs text-gray-500">
-                Choose the 12-hour window when your ad will appear at the top in search results.
-              </p>
-            </div>
-            <span className="rounded-full border border-red-200 bg-pink-50 px-3 py-1 text-[11px] font-bold text-red-900">
-              Current: {currentShiftInfo.label} ({currentShiftInfo.hours.split(" ")[0]}-{currentShiftInfo.hours.split(" ")[3]})
-            </span>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Day Shift Button */}
-            <div
-              onClick={() => setSelectedShift("day")}
-              className={`cursor-pointer rounded-2xl p-4 border transition-all flex flex-col justify-between ${
-                selectedShift === "day"
-                  ? "border-red-600 bg-amber-50/70 shadow-sm ring-2 ring-red-500/20"
-                  : "border-red-100 bg-white hover:border-red-300 hover:bg-pink-50/30"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-2xl">☀️</span>
-                {currentShiftInfo.shift === "day" && (
-                  <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                    Live Now
-                  </span>
-                )}
-              </div>
-              <div className="mt-3">
-                <h3 className="text-sm font-black text-red-950">Day Shift</h3>
-                <p className="text-xs font-bold text-red-700">08:00 AM – 08:00 PM</p>
-                <p className="mt-1 text-[11px] text-gray-600">
-                  12-hour prime day boost. Ideal for high daytime search queries and immediate inquiries.
-                </p>
-              </div>
-              <div className="mt-3 pt-2 border-t border-red-100/60 text-right">
-                <span className={`text-xs font-bold ${selectedShift === "day" ? "text-red-900" : "text-gray-400"}`}>
-                  {selectedShift === "day" ? "Selected ✓" : "Choose Day Shift"}
-                </span>
-              </div>
-            </div>
-
-            {/* Night Shift Button */}
-            <div
-              onClick={() => setSelectedShift("night")}
-              className={`cursor-pointer rounded-2xl p-4 border transition-all flex flex-col justify-between ${
-                selectedShift === "night"
-                  ? "border-indigo-600 bg-indigo-50/70 shadow-sm ring-2 ring-indigo-500/20"
-                  : "border-red-100 bg-white hover:border-red-300 hover:bg-pink-50/30"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-2xl">🌙</span>
-                {currentShiftInfo.shift === "night" && (
-                  <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                    Live Now
-                  </span>
-                )}
-              </div>
-              <div className="mt-3">
-                <h3 className="text-sm font-black text-red-950">Night Shift</h3>
-                <p className="text-xs font-bold text-indigo-800">08:00 PM – 08:00 AM</p>
-                <p className="mt-1 text-[11px] text-gray-600">
-                  12-hour evening &amp; late night boost. Dominates search results during night peak hours.
-                </p>
-              </div>
-              <div className="mt-3 pt-2 border-t border-red-100/60 text-right">
-                <span className={`text-xs font-bold ${selectedShift === "night" ? "text-indigo-900" : "text-gray-400"}`}>
-                  {selectedShift === "night" ? "Selected ✓" : "Choose Night Shift"}
-                </span>
-              </div>
-            </div>
-
-            {/* 24h Full Day Option */}
-            <div
-              onClick={() => setSelectedShift("all")}
-              className={`cursor-pointer rounded-2xl p-4 border transition-all flex flex-col justify-between ${
-                selectedShift === "all"
-                  ? "border-red-600 bg-pink-50/80 shadow-sm ring-2 ring-red-500/20"
-                  : "border-red-100 bg-white hover:border-red-300 hover:bg-pink-50/30"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-2xl">🔄</span>
-                <span className="rounded-full bg-purple-100 border border-purple-300 px-2 py-0.5 text-[10px] font-bold text-purple-900">
-                  24h Non-Stop
-                </span>
-              </div>
-              <div className="mt-3">
-                <h3 className="text-sm font-black text-red-950">24 Hours (Full Day)</h3>
-                <p className="text-xs font-bold text-purple-800">Day &amp; Night Shifts</p>
-                <p className="mt-1 text-[11px] text-gray-600">
-                  Stay pinned on top across both shifts without switching or yielding top positions.
-                </p>
-              </div>
-              <div className="mt-3 pt-2 border-t border-red-100/60 text-right">
-                <span className={`text-xs font-bold ${selectedShift === "all" ? "text-red-900" : "text-gray-400"}`}>
-                  {selectedShift === "all" ? "Selected ✓" : "Choose 24 Hours"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Shift Dropdown Selector Alternative */}
-          <div className="mt-4 pt-3 border-t border-red-100 max-w-md">
-            <label className="block text-xs font-bold text-gray-600 mb-1">
-              Quick Dropdown Selector:
-            </label>
+          <h2 className="text-sm sm:text-base font-black text-red-950">
+            select your shift
+          </h2>
+          <div className="mt-3 max-w-md">
             <select
               value={selectedShift}
               onChange={(e) => setSelectedShift(e.target.value as PromoShift)}
