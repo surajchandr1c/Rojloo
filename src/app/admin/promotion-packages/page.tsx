@@ -19,13 +19,14 @@ const emptyPackage = (): PromotionPackage => ({
   title: "New VIP Package",
   tier: "bronze",
   rankRange: "Top 10 - 15",
-  durationDays: 1,
+  durationDays: 0.5,
+  durationHours: 12,
   coinsCost: 5,
   tag: "",
   highlight: false,
   features: [
     "Top placement in your city",
-    "12h Shift priority display",
+    "Runs 12 Hours from promotion time",
     "Highlighted card badge",
     "Instant activation",
   ],
@@ -60,13 +61,16 @@ export default function PromotionPackagesPage() {
           items.map((item: PromotionPackage) => {
             const tier: PromoTier = normalizeTier(item.tier, `${item.id || ""} ${item.title || ""}`);
             const defaultRank = TIER_RANK_MAP[tier]?.rankRange || "Top 10 - 15";
+            const durationHours = Number(item.durationHours || (item.durationDays ? item.durationDays * 24 : 12));
+            const durationDays = Number(item.durationDays || (durationHours / 24));
             return {
               _id: item._id,
               id: item.id || `promo-${Date.now()}`,
               title: item.title || "",
               tier,
               rankRange: item.rankRange || defaultRank,
-              durationDays: Number(item.durationDays || 1),
+              durationDays,
+              durationHours,
               coinsCost: Number(item.coinsCost || 0),
               tag: item.tag || "",
               highlight: Boolean(item.highlight),
@@ -105,7 +109,14 @@ export default function PromotionPackagesPage() {
     setPackages((prev) =>
       prev.map((pkg, i) => {
         if (i !== index) return pkg;
-        if (field === "durationDays") return { ...pkg, durationDays: Math.max(1, Number(value) || 1) };
+        if (field === "durationHours") {
+          const hours = Math.max(1, Number(value) || 12);
+          return { ...pkg, durationHours: hours, durationDays: hours / 24 };
+        }
+        if (field === "durationDays") {
+          const days = Math.max(0.1, Number(value) || 1);
+          return { ...pkg, durationDays: days, durationHours: Math.round(days * 24) };
+        }
         if (field === "coinsCost") return { ...pkg, coinsCost: Math.max(0, Number(value) || 0) };
         if (field === "highlight") return { ...pkg, highlight: Boolean(value) };
         if (field === "features") return { ...pkg, features: value as string[] };
@@ -220,7 +231,7 @@ export default function PromotionPackagesPage() {
       const payload = packages.filter(
         (pkg) =>
           pkg.title.trim().length > 0 &&
-          Number(pkg.durationDays) > 0 &&
+          (Number(pkg.durationDays) > 0 || Number(pkg.durationHours) > 0) &&
           Number(pkg.coinsCost) >= 0
       );
 
@@ -398,17 +409,76 @@ export default function PromotionPackagesPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block font-bold text-red-950">
-                            Duration (Days) <span className="text-red-600 font-semibold">*</span>
+                            Shift Duration <span className="text-red-600 font-semibold">*</span>
                           </label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={pkg.durationDays || ""}
-                            onChange={(e) => updatePackage(index, "durationDays", e.target.value)}
-                            placeholder="e.g. 7"
-                            className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
-                            required
-                          />
+                          <div className="mt-1 flex gap-2">
+                            <input
+                              type="number"
+                              min="0.5"
+                              step="any"
+                              value={
+                                pkg.durationHours && pkg.durationHours < 24
+                                  ? pkg.durationHours
+                                  : pkg.durationDays || 1
+                              }
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 1;
+                                const isHours = Boolean(pkg.durationHours && pkg.durationHours < 24);
+                                if (isHours) {
+                                  updatePackage(index, "durationHours", val);
+                                } else {
+                                  updatePackage(index, "durationDays", val);
+                                }
+                              }}
+                              className="w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
+                              required
+                            />
+                            <select
+                              value={pkg.durationHours && pkg.durationHours < 24 ? "hours" : "days"}
+                              onChange={(e) => {
+                                if (e.target.value === "hours") {
+                                  updatePackage(index, "durationHours", 12);
+                                } else {
+                                  const days = Math.max(1, Math.round((pkg.durationHours || 24) / 24));
+                                  updatePackage(index, "durationDays", days);
+                                }
+                              }}
+                              className="rounded-lg border border-red-200 px-2.5 py-2 text-red-950 font-bold outline-none focus:border-red-500 bg-white shrink-0"
+                            >
+                              <option value="hours">Hours (12h Shift)</option>
+                              <option value="days">Days</option>
+                            </select>
+                          </div>
+                          <div className="mt-1.5 flex flex-wrap gap-1 text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => updatePackage(index, "durationHours", 12)}
+                              className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
+                            >
+                              12h (Shift)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePackage(index, "durationHours", 24)}
+                              className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
+                            >
+                              24h (1 Day)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePackage(index, "durationDays", 3)}
+                              className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
+                            >
+                              3 Days
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updatePackage(index, "durationDays", 7)}
+                              className="rounded bg-pink-100 hover:bg-pink-200 text-red-900 px-2 py-0.5 font-bold cursor-pointer transition"
+                            >
+                              7 Days
+                            </button>
+                          </div>
                         </div>
 
                         <div>

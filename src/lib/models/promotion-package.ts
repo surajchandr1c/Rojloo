@@ -12,13 +12,28 @@ function normalizePackage(pkg: Partial<PromotionPackage>, index = 0): PromotionP
   const tier: PromoTier = normalizeTier(pkg.tier, `${pkg.id || ""} ${pkg.title || ""}`);
   const rankInfo = TIER_RANK_MAP[tier] || TIER_RANK_MAP.bronze;
 
+  let durationHours = Number(pkg.durationHours || 0);
+  let durationDays = Number(pkg.durationDays || 0);
+
+  if (!durationHours && durationDays) {
+    durationHours = Math.round(durationDays * 24);
+  } else if (!durationHours) {
+    durationHours = tier === "bronze" ? 12 : tier === "silver" ? 24 : tier === "gold" ? 72 : 168;
+    durationDays = durationHours / 24;
+  }
+
+  if (!durationDays && durationHours) {
+    durationDays = durationHours / 24;
+  }
+
   return {
     _id: pkg._id || `promo-pkg-${index + 1}`,
     id: pkg.id || `promo-${tier}-${index + 1}`,
     title: pkg.title || rankInfo.title,
     tier,
     rankRange: pkg.rankRange || rankInfo.rankRange,
-    durationDays: Math.max(1, Math.round(Number(pkg.durationDays || 1))),
+    durationDays: durationDays > 0 ? durationDays : 1,
+    durationHours: durationHours > 0 ? durationHours : 24,
     coinsCost: Math.max(0, Math.round(Number(pkg.coinsCost || 0))),
     tag: typeof pkg.tag === "string" ? pkg.tag.trim() : "",
     highlight: Boolean(pkg.highlight),
@@ -61,7 +76,8 @@ export async function savePromotionPackages(
     title: string;
     tier?: string;
     rankRange?: string;
-    durationDays: number;
+    durationDays?: number;
+    durationHours?: number;
     coinsCost: number;
     tag?: string;
     highlight?: boolean;
@@ -74,12 +90,24 @@ export async function savePromotionPackages(
         pkg &&
         typeof pkg.title === "string" &&
         pkg.title.trim().length > 0 &&
-        Number(pkg.durationDays) > 0 &&
+        (Number(pkg.durationDays) > 0 || Number(pkg.durationHours) > 0) &&
         Number(pkg.coinsCost) >= 0
     )
     .map((pkg, idx) => {
       const tier = normalizeTier(pkg.tier, `${pkg.id || ""} ${pkg.title || ""}`);
       const rankInfo = TIER_RANK_MAP[tier] || TIER_RANK_MAP.bronze;
+
+      let durationHours = Number(pkg.durationHours || 0);
+      let durationDays = Number(pkg.durationDays || 0);
+
+      if (durationHours > 0 && !durationDays) {
+        durationDays = durationHours / 24;
+      } else if (durationDays > 0 && !durationHours) {
+        durationHours = Math.round(durationDays * 24);
+      } else if (!durationHours && !durationDays) {
+        durationHours = tier === "bronze" ? 12 : 24;
+        durationDays = durationHours / 24;
+      }
 
       const generatedId =
         pkg.id && pkg.id.trim()
@@ -95,7 +123,8 @@ export async function savePromotionPackages(
         title: pkg.title.trim(),
         tier,
         rankRange: pkg.rankRange?.trim() || rankInfo.rankRange,
-        durationDays: Math.max(1, Math.round(Number(pkg.durationDays))),
+        durationDays,
+        durationHours,
         coinsCost: Math.max(0, Math.round(Number(pkg.coinsCost))),
         tag: typeof pkg.tag === "string" ? pkg.tag.trim() : "",
         highlight: Boolean(pkg.highlight),

@@ -122,6 +122,7 @@ export default function PromotedAdView() {
     DEFAULT_PROMO_PACKAGES[0];
 
   const selectedTierInfo = getTierRankInfo(selectedPkg.tier, `${selectedPkg.id} ${selectedPkg.title}`);
+  const selectedRankRange = selectedPkg.rankRange || selectedTierInfo.rankRange;
   const userCoins = Number(user?.coins ?? 0);
   const hasEnoughCoins = userCoins >= selectedPkg.coinsCost;
 
@@ -176,7 +177,7 @@ export default function PromotedAdView() {
 
       setModalData({
         adTitle: selectedAd.name || selectedAd.title || "Your Ad",
-        rankRange: selectedTierInfo.rankRange,
+        rankRange: data.rankRange || selectedRankRange,
         promotedUntil: expiry,
       });
 
@@ -403,7 +404,7 @@ export default function PromotedAdView() {
                     {/* Guaranteed Position Pill */}
                     <div className="mt-2 inline-flex items-center gap-1 rounded-lg bg-red-100/80 px-2 py-0.5 text-[11px] font-extrabold text-red-950">
                       <span>🎯 Position:</span>
-                      <span className="text-red-700 underline">{tierInfo.rankRange}</span>
+                      <span className="text-red-700 underline">{pkg.rankRange || tierInfo.rankRange}</span>
                     </div>
 
                     <div className="mt-2.5 flex items-baseline gap-1">
