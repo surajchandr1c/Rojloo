@@ -276,18 +276,18 @@ export default function PromotionPackagesPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-red-950 tracking-tight">Promotion Package Control</h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleResetToDefaults}
-              className="flex-1 sm:flex-none text-center rounded-xl border border-red-300 bg-white px-3 sm:px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
+              className="w-full sm:w-auto text-center rounded-xl border border-red-300 bg-white px-3 sm:px-4 py-2.5 sm:py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
             >
               Reset to Defaults
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="flex-1 sm:flex-none text-center rounded-xl border border-red-300 bg-white px-3 sm:px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs cursor-pointer"
+              className="w-full sm:w-auto text-center rounded-xl border border-red-300 bg-white px-3 sm:px-4 py-2.5 sm:py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs cursor-pointer"
             >
               + Add Package
             </button>
@@ -295,7 +295,7 @@ export default function PromotionPackagesPage() {
               type="button"
               onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
               disabled={saving || loading || packages.length === 0}
-              className="w-full sm:w-auto text-center rounded-xl bg-emerald-700 px-4 sm:px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs cursor-pointer"
+              className="w-full sm:w-auto text-center rounded-xl bg-emerald-700 px-4 sm:px-5 py-2.5 sm:py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs cursor-pointer"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
@@ -304,12 +304,12 @@ export default function PromotionPackagesPage() {
 
         {/* Notifications */}
         {error && (
-          <div className="mt-4 rounded-xl bg-red-100 border border-red-200 p-3 text-sm text-red-900 font-semibold">
+          <div className="mt-4 rounded-xl bg-red-100 border border-red-200 p-3 text-sm text-red-900 font-semibold w-full break-words">
             {error}
           </div>
         )}
         {success && (
-          <div className="mt-4 rounded-xl bg-green-100 border border-green-200 p-3 text-sm text-green-900 font-semibold">
+          <div className="mt-4 rounded-xl bg-green-100 border border-green-200 p-3 text-sm text-green-900 font-semibold w-full break-words">
             {success}
           </div>
         )}
@@ -321,15 +321,15 @@ export default function PromotionPackagesPage() {
             <p className="text-sm font-bold text-red-900">Loading promotion packages...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-6">
-            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-2 min-w-0">
+          <form onSubmit={handleSubmit} className="mt-6 w-full">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 w-full min-w-0">
               {packages.map((pkg, index) => {
                 const tierInfo = getTierRankInfo(pkg.tier, `${pkg.id} ${pkg.title}`);
 
                 return (
                   <div
                     key={pkg._id || pkg.id || index}
-                    className="relative rounded-2xl border border-red-200 bg-white p-3.5 sm:p-5 shadow-xs flex flex-col justify-between min-w-0 overflow-hidden"
+                    className="relative rounded-2xl border border-red-200 bg-white p-3.5 sm:p-5 shadow-xs flex flex-col justify-between w-full min-w-0 overflow-hidden"
                   >
                     <div>
                       {/* Top Bar */}
@@ -616,18 +616,18 @@ export default function PromotionPackagesPage() {
           </div>
 
           {/* Bottom Action Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+          <div className="mt-8 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full">
             <button
               type="submit"
               disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-50 transition shadow-sm cursor-pointer text-center"
+              className="w-full sm:w-auto rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-50 transition shadow-sm cursor-pointer text-center"
             >
               {saving ? "Saving..." : `Save All ${packages.length} Packages`}
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition cursor-pointer text-center"
+              className="w-full sm:w-auto rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition cursor-pointer text-center"
             >
               + Add Another Package
             </button>
