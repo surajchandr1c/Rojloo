@@ -1,10 +1,25 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SectionPanel } from "@/components/ui/card";
+import { siteConfig } from "@/lib/config/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Rojlo",
   description: "Read how Rojlo collects, uses, and protects your information.",
+  alternates: {
+    canonical: `${siteConfig.url}/privacy-policy`,
+  },
+  openGraph: {
+    title: "Privacy Policy | Rojlo",
+    description: "Read how Rojlo collects, uses, and protects your information.",
+    url: `${siteConfig.url}/privacy-policy`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy | Rojlo",
+    description: "Read how Rojlo collects, uses, and protects your information.",
+  },
 };
 
 export default function PrivacyPolicy() {

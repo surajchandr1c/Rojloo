@@ -1,7 +1,16 @@
-"use client";
-
+import type { Metadata } from "next";
 import { AdminProvider } from "@/components/admin/admin-context";
 import AdminLayoutContent from "@/components/admin/admin-layout-content";
+
+export const metadata: Metadata = {
+  title: "Admin | Rojlo",
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+  },
+};
 
 export default function AdminLayout({
   children,

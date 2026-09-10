@@ -1,10 +1,25 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SectionPanel } from "@/components/ui/card";
+import { siteConfig } from "@/lib/config/site";
 
 export const metadata: Metadata = {
   title: "Return Policy | Rojlo",
   description: "Read Rojlo's return policy for products, services, and listings.",
+  alternates: {
+    canonical: `${siteConfig.url}/return-policy`,
+  },
+  openGraph: {
+    title: "Return Policy | Rojlo",
+    description: "Read Rojlo's return policy for products, services, and listings.",
+    url: `${siteConfig.url}/return-policy`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Return Policy | Rojlo",
+    description: "Read Rojlo's return policy for products, services, and listings.",
+  },
 };
 
 export default function ReturnPolicy() {

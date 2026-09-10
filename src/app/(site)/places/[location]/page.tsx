@@ -12,6 +12,8 @@ import { getCityBySlug } from "@/lib/models/city";
 import { listLocalAreas } from "@/lib/models/localArea";
 import { CityPageSkeleton } from "@/components/skeletons/places-skeletons";
 import { isAdActiveInCurrentShift, getTierRankInfo } from "@/lib/promo-shifts";
+import { siteConfig } from "@/lib/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -23,7 +25,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { location: slug } = await params;
   const city = await getCityBySlug(slug);
-  if (!city) return { title: "City not found | Rojlo" };
+  if (!city) {
+    return {
+      title: "City not found | Rojlo",
+      robots: { index: false, follow: false },
+    };
+  }
 
   const seo = await getCitySeo(slug);
   const title =
@@ -40,11 +47,27 @@ export async function generateMetadata({
       .filter(Boolean)
       .join(", ") || undefined;
 
+  const canonical = seo?.canonicalUrl?.trim() || `${siteConfig.url}/places/${slug}`;
+
   return {
     title,
     description,
     keywords,
-    openGraph: { title, description, type: "website" },
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+      siteName: siteConfig.name,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
@@ -71,8 +94,47 @@ async function CityContent({ slug }: { slug: string }) {
     listLocalAreas({ cityName: city.name, citySlug: city.slug }),
   ]);
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: siteConfig.url,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Places",
+        item: `${siteConfig.url}/places`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: city.name,
+        item: `${siteConfig.url}/places/${city.slug}`,
+      },
+    ],
+  };
+
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `Services in ${city.name}`,
+    description: `Explore verified services and places in ${city.name} on Rojlo.`,
+    url: `${siteConfig.url}/places/${city.slug}`,
+    about: {
+      "@type": "City",
+      name: city.name,
+      containedInPlace: city.state ? { "@type": "AdministrativeArea", name: city.state } : undefined,
+    },
+  };
+
   return (
     <main>
+      <JsonLd data={[breadcrumbSchema, collectionSchema]} />
       <section className="px-4 py-10 sm:px-6">
         <SectionPanel>
           <Eyebrow>Services in {city.name}</Eyebrow>

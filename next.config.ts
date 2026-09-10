@@ -49,6 +49,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/(admin|vip|post-ad|api)/:path*",
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow",
+          },
+        ],
+      },
+      {
         source: "/(.*)",
         headers: [
           { key: "X-Frame-Options", value: "SAMEORIGIN" },

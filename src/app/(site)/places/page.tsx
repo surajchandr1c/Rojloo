@@ -4,13 +4,31 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { listAllCities } from "@/lib/models/city";
 import { getAdCountsByCity } from "@/lib/models/ad";
 import PlacesExplorer from "@/components/places/places-explorer";
+import { siteConfig } from "@/lib/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Places | Rojlo",
+  title: "Explore Places & Local Cities | Rojlo",
   description:
-    "Explore places and local services across Indian cities and states.",
+    "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
+  alternates: {
+    canonical: `${siteConfig.url}/places`,
+  },
+  openGraph: {
+    title: "Explore Places & Local Cities | Rojlo",
+    description:
+      "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
+    url: `${siteConfig.url}/places`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Explore Places & Local Cities | Rojlo",
+    description:
+      "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
+  },
 };
 
 export default async function Places({
@@ -38,8 +56,38 @@ export default async function Places({
       0,
   }));
 
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: siteConfig.url,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Places",
+          item: `${siteConfig.url}/places`,
+        },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Explore Places & Local Cities",
+      description:
+        "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
+      url: `${siteConfig.url}/places`,
+    },
+  ];
+
   return (
     <div className="w-full min-w-0 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <JsonLd data={schema} />
       <SectionPanel>
         <Eyebrow>Places</Eyebrow>
         <h1 className="mt-2 text-3xl font-black text-red-950 sm:text-4xl">

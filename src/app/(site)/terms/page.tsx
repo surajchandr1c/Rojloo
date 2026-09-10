@@ -1,11 +1,28 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SectionPanel } from "@/components/ui/card";
+import { siteConfig } from "@/lib/config/site";
 
 export const metadata: Metadata = {
   title: "Terms and Conditions | Rojlo",
   description:
     "Read the terms and conditions for using Rojlo, including accounts, listings, payments, and acceptable use.",
+  alternates: {
+    canonical: `${siteConfig.url}/terms`,
+  },
+  openGraph: {
+    title: "Terms and Conditions | Rojlo",
+    description:
+      "Read the terms and conditions for using Rojlo, including accounts, listings, payments, and acceptable use.",
+    url: `${siteConfig.url}/terms`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Terms and Conditions | Rojlo",
+    description:
+      "Read the terms and conditions for using Rojlo, including accounts, listings, payments, and acceptable use.",
+  },
 };
 
 const sections = [

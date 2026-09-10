@@ -2,15 +2,51 @@ import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Card, SectionPanel } from "@/components/ui/card";
 import { siteInfo } from "@/lib/site";
+import { siteConfig } from "@/lib/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Contact Us | Rojlo",
   description: "Get in touch with the Rojlo support team by email, phone, or mail.",
+  alternates: {
+    canonical: `${siteConfig.url}/contact`,
+  },
+  openGraph: {
+    title: "Contact Us | Rojlo",
+    description: "Get in touch with the Rojlo support team by email, phone, or mail.",
+    url: `${siteConfig.url}/contact`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Contact Us | Rojlo",
+    description: "Get in touch with the Rojlo support team by email, phone, or mail.",
+  },
 };
 
 export default function Contact() {
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: siteConfig.url,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Contact Us",
+        item: `${siteConfig.url}/contact`,
+      },
+    ],
+  };
+
   return (
     <main className="px-4 py-10 sm:px-6 lg:px-8">
+      <JsonLd data={breadcrumbSchema} />
       <SectionPanel>
         <Eyebrow>Contact</Eyebrow>
         <h1 className="mt-3 text-3xl font-black text-red-950 sm:text-4xl">

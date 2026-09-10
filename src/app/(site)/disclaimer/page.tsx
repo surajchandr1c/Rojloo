@@ -1,10 +1,25 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SectionPanel } from "@/components/ui/card";
+import { siteConfig } from "@/lib/config/site";
 
 export const metadata: Metadata = {
   title: "Disclaimer | Rojlo",
   description: "Read the disclaimer for using the Rojlo platform.",
+  alternates: {
+    canonical: `${siteConfig.url}/disclaimer`,
+  },
+  openGraph: {
+    title: "Disclaimer | Rojlo",
+    description: "Read the disclaimer for using the Rojlo platform.",
+    url: `${siteConfig.url}/disclaimer`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Disclaimer | Rojlo",
+    description: "Read the disclaimer for using the Rojlo platform.",
+  },
 };
 
 export default function Disclaimer() {

@@ -11,6 +11,8 @@ import { getPublicAdById, listAdsByCity } from "@/lib/models/ad";
 import { getCityBySlug } from "@/lib/models/city";
 import { DEFAULT_SERVICE_RATES } from "@/components/post-ad/types";
 import { AdDetailSkeleton } from "@/components/skeletons/places-skeletons";
+import { siteConfig } from "@/lib/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -20,15 +22,52 @@ export async function generateMetadata({
 }: {
   params: Promise<{ location: string; id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { location, id } = await params;
   const ad = await getPublicAdById(id);
-  if (!ad) return { title: "Ad not found | Rojlo" };
+  if (!ad) {
+    return {
+      title: "Ad not found | Rojlo",
+      robots: { index: false, follow: false },
+    };
+  }
 
-  const description = ad.about?.slice(0, 160) || `View ${ad.name} in ${ad.city} on Rojlo.`;
+  const isDeleted = (ad.status ?? "active") === "deleted";
+  if (isDeleted) {
+    return {
+      title: "Listing Unavailable | Rojlo",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = `${ad.name} in ${ad.city} | Rojlo`;
+  const description =
+    ad.about?.trim()?.slice(0, 160) || `View ${ad.name} in ${ad.city} on Rojlo.`;
+  const canonical = `${siteConfig.url}/places/${location}/${id}`;
+  const images =
+    ad.images && ad.images.length > 0
+      ? [{ url: ad.images[0], alt: `${ad.name} image` }]
+      : [{ url: `${siteConfig.url}/rojlo.png`, alt: "Rojlo" }];
+
   return {
-    title: `${ad.name} in ${ad.city} | Rojlo`,
+    title,
     description,
-    openGraph: { title: `${ad.name} in ${ad.city}`, description, type: "website" },
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "article",
+      siteName: siteConfig.name,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: images.map((img) => img.url),
+    },
   };
 }
 
@@ -62,8 +101,62 @@ async function AdContent({ location, id }: { location: string; id: string }) {
     (profile) => profile._id && profile._id !== ad._id
   );
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: siteConfig.url,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Places",
+        item: `${siteConfig.url}/places`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: cityName,
+        item: `${siteConfig.url}/places/${location}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: ad.name,
+        item: `${siteConfig.url}/places/${location}/${id}`,
+      },
+    ],
+  };
+
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemPage",
+    name: ad.name,
+    description: ad.about,
+    url: `${siteConfig.url}/places/${location}/${id}`,
+    image: ad.images?.[0] || undefined,
+    mainEntity: {
+      "@type": "Service",
+      name: ad.name,
+      description: ad.about,
+      areaServed: {
+        "@type": "City",
+        name: cityName,
+      },
+      provider: {
+        "@type": "Person",
+        name: ad.name,
+      },
+    },
+  };
+
   return (
     <main>
+      <JsonLd data={[breadcrumbSchema, serviceSchema]} />
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <SectionPanel>
           {isDeleted && (

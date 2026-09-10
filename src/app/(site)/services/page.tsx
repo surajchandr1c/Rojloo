@@ -1,12 +1,57 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Button from "@/components/ui/button";
 import { Card, SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { serviceCards } from "@/lib/services";
+import { siteConfig } from "@/lib/config/site";
+import { JsonLd } from "@/components/seo/json-ld";
+
+export const metadata: Metadata = {
+  title: "Our Services | Rojlo",
+  description:
+    "Explore local services, adult entertainment, companionship, and wellness services available across Indian cities on Rojlo.",
+  alternates: {
+    canonical: `${siteConfig.url}/services`,
+  },
+  openGraph: {
+    title: "Our Services | Rojlo",
+    description:
+      "Explore local services, adult entertainment, companionship, and wellness services available across Indian cities on Rojlo.",
+    url: `${siteConfig.url}/services`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Our Services | Rojlo",
+    description:
+      "Explore local services, adult entertainment, companionship, and wellness services available across Indian cities on Rojlo.",
+  },
+};
 
 export default function Services() {
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: siteConfig.url,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Services",
+        item: `${siteConfig.url}/services`,
+      },
+    ],
+  };
+
   return (
     <main className="px-4 py-10 sm:px-6 lg:px-8">
+      <JsonLd data={breadcrumbSchema} />
       <SectionPanel>
         <Eyebrow>Services</Eyebrow>
         <h1 className="mt-3 text-3xl font-black text-red-950 sm:text-4xl">

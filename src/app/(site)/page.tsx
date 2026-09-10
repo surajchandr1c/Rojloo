@@ -1,7 +1,31 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Button from "@/components/ui/button";
 import SearchBar from "@/components/search-bar";
 import { serviceCards } from "@/lib/services";
+import { siteConfig } from "@/lib/config/site";
+
+export const metadata: Metadata = {
+  title: "Rojlo – Find Services, Places & Post Ads in Your City",
+  description:
+    "Rojlo connects you with call girls, male escorts, wellness, and the best local spots and services across Indian cities. Post your ad today.",
+  alternates: {
+    canonical: siteConfig.url,
+  },
+  openGraph: {
+    title: "Rojlo – Find Services, Places & Post Ads in Your City",
+    description:
+      "Rojlo connects you with call girls, male escorts, wellness, and the best local spots and services across Indian cities.",
+    url: siteConfig.url,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rojlo – Find Services, Places & Post Ads in Your City",
+    description:
+      "Rojlo connects you with call girls, male escorts, wellness, and the best local spots and services across Indian cities.",
+  },
+};
 
 export default function Home() {
   return (
