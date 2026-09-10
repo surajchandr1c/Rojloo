@@ -129,7 +129,11 @@ export default function VipPage() {
       }
 
       const label = accessType === "state" ? `State: ${stateName}` : `Cities: ${cities}`;
-      setSuccess(`VIP access assigned for ${label}. Login credentials (email and password) sent to ${email.trim()}.`);
+      if (data.emailSent === false) {
+        setSuccess(`VIP access assigned for ${label}. Notice: Email delivery could not be completed (${data.emailError || "SMTP issue"}). VIP login details: Email: ${email.trim()}, Password: ${phone.trim()}`);
+      } else {
+        setSuccess(`VIP access assigned for ${label}. Login credentials (email and password) sent to ${email.trim()}.`);
+      }
 
       setStateName("");
       setCities("");

@@ -178,7 +178,7 @@ export async function syncVipStatus() {
     const expiresAt = new Date(item.expiresAt);
     if (expiresAt < now && item.status !== "inactive") {
       await updateVipAssignment(String(item._id), { status: "inactive" });
-    } else if (expiresAt >= now && item.status === "inactive") {
+    } else if (expiresAt >= now && (item.status === "inactive" || item.status === "pending")) {
       await updateVipAssignment(String(item._id), { status: "active" });
     }
   }
@@ -322,6 +322,22 @@ export async function upsertVipUserWithPhone(
   }
 }
 
+export function phoneMatches(inputPass: string, phoneTarget?: string): boolean {
+  if (!phoneTarget) return false;
+  const p1 = inputPass.trim();
+  const p2 = phoneTarget.trim();
+  if (p1 === p2) return true;
+  const d1 = p1.replace(/\D/g, "");
+  const d2 = p2.replace(/\D/g, "");
+  if (!d1 || !d2) return false;
+  if (d1 === d2) return true;
+  // Match without leading zeros
+  if (d1.replace(/^0+/, "") === d2.replace(/^0+/, "")) return true;
+  // Match last 10 digits for Indian and international numbers
+  if (d1.length >= 10 && d2.length >= 10 && d1.slice(-10) === d2.slice(-10)) return true;
+  return false;
+}
+
 export async function verifyVipCredentials(
   email: string,
   password: string
@@ -335,22 +351,21 @@ export async function verifyVipCredentials(
   const cleanPassword = password.trim();
   await syncVipStatus();
 
-  // Check that the VIP has at least one active assignment
-  const assignments = await getVipAssignmentsForEmail(cleanEmail);
-  const hasActive = assignments.some((a) => a.status === "active");
-  if (!hasActive) {
-    return {
-      success: false,
-      error: "Your VIP access is inactive or expired. Please contact support.",
-    };
-  }
-
   let store = await readStore();
   let vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
   let user = vipUsers.find((u) => u.email.toLowerCase() === cleanEmail);
 
-  // If user doesn't exist yet, check assignment phone to auto-create user
-  const assignmentWithPhone = assignments.find((a) => a.phone);
+  // Check assignments for this email
+  const assignments = await getVipAssignmentsForEmail(cleanEmail);
+  const now = new Date();
+
+  // Any non-inactive assignment that hasn't expired counts as active
+  const hasActive = assignments.some((a) => {
+    const exp = new Date(a.expiresAt);
+    return exp > now && a.status !== "inactive";
+  });
+
+  const assignmentWithPhone = assignments.find((a) => Boolean(a.phone));
   const phonePassword = user?.phone || assignmentWithPhone?.phone;
 
   if (!user && phonePassword) {
@@ -359,25 +374,55 @@ export async function verifyVipCredentials(
     vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
   }
 
-  if (!user) {
+  if (!user && !assignmentWithPhone) {
     return {
       success: false,
-      error: "VIP user record not found. Please contact support.",
+      error: "Invalid email or password.",
     };
   }
 
+  // Verify password against passwordHash, user.phone, or assignment.phone
   let matches = false;
-  if (user.passwordHash) {
+  if (user?.passwordHash) {
     matches = await bcrypt.compare(cleanPassword, user.passwordHash).catch(() => false);
   }
-  if (!matches && phonePassword) {
-    matches =
-      cleanPassword === phonePassword.trim() ||
-      cleanPassword.replace(/\D/g, "") === phonePassword.replace(/\D/g, "");
+  if (!matches) {
+    matches = phoneMatches(cleanPassword, user?.phone) || phoneMatches(cleanPassword, phonePassword);
+  }
+  if (!matches && assignments.length > 0) {
+    matches = assignments.some((a) => phoneMatches(cleanPassword, a.phone));
   }
 
   if (!matches) {
     return { success: false, error: "Invalid email or password." };
+  }
+
+  // Password matched! Now verify active VIP access assignment exists
+  if (!hasActive) {
+    return {
+      success: false,
+      error: "Your VIP access is inactive or expired. Please contact support.",
+    };
+  }
+
+  // If user was missing or password matched via phone, ensure user record and hash are up to date
+  if (!user) {
+    user = await upsertVipUserWithPhone(cleanEmail, cleanPassword);
+    store = await readStore();
+    vipUsers = ((store.vipUsers ?? []) as unknown as VipUser[]).filter(Boolean);
+  } else if (!user.passwordHash) {
+    const newHash = await bcrypt.hash(cleanPassword, 12);
+    const uIdx = vipUsers.findIndex((u) => u._id === user?._id);
+    if (uIdx >= 0) {
+      vipUsers[uIdx].passwordHash = newHash;
+    }
+  }
+
+  // Activate any pending assignment that hasn't expired
+  for (const a of assignments) {
+    if (a.status === "pending" && new Date(a.expiresAt) > now) {
+      await updateVipAssignment(String(a._id), { status: "active" });
+    }
   }
 
   const sessionToken = randomUUID();

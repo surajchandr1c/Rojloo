@@ -15,47 +15,39 @@ export type EmailResult =
   | { sent: true }
   | { sent: false; reason: string; error?: string };
 
-// Cached transporter singleton to avoid renegotiating TLS on every request
-let cachedTransporter: nodemailer.Transporter | null = null;
+const FALLBACK_USER = "rojloofficial@gmail.com";
+const FALLBACK_PASS = "svsgsykzenlxtpmw";
 
-function getTransporter(
+function createDirectTransporter(
   host: string,
   port: number,
   user: string,
   pass: string,
   isGmail: boolean
 ): nodemailer.Transporter {
-  if (cachedTransporter) {
-    return cachedTransporter;
-  }
-
   const transportOptions = isGmail
     ? {
         host: "smtp.gmail.com",
         port: 465,
         secure: true,
-        pool: true,
-        maxConnections: 3,
-        maxMessages: 100,
         auth: { user, pass },
         connectionTimeout: 8000,
         greetingTimeout: 8000,
-        socketTimeout: 12000,
+        socketTimeout: 10000,
       }
     : {
         host,
         port,
         secure: port === 465,
         auth: { user, pass },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000,
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
       };
 
-  cachedTransporter = nodemailer.createTransport(
+  return nodemailer.createTransport(
     transportOptions as nodemailer.TransportOptions
   );
-  return cachedTransporter;
 }
 
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
@@ -65,9 +57,9 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   const rawUser = cleanEnv(process.env.SMTP_USER);
   const rawPass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
 
-  // Safe fallback to verified official Gmail credentials so Vercel can always send OTPs
-  const user = (rawUser && rawUser !== "suraj@gmail.com") ? rawUser : "rojloofficial@gmail.com";
-  const pass = (rawPass && rawPass !== "vanni12") ? rawPass : "svsgsykzenlxtpmw";
+  // Safe fallback to verified official Gmail credentials so Vercel can always send emails
+  const user = (rawUser && rawUser !== "suraj@gmail.com") ? rawUser : FALLBACK_USER;
+  const pass = (rawPass && rawPass !== "vanni12") ? rawPass : FALLBACK_PASS;
 
   const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "Rojlo";
   const customFrom = cleanEnv(process.env.SMTP_FROM);
@@ -82,13 +74,13 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     };
   }
 
+  const isGmail =
+    host.toLowerCase().includes("gmail") ||
+    user.toLowerCase().endsWith("@gmail.com");
+
+  // Attempt 1: Send using primary credentials
   try {
-    const isGmail =
-      host.toLowerCase().includes("gmail") ||
-      user.toLowerCase().endsWith("@gmail.com");
-
-    const transporter = getTransporter(host, port, user, pass, isGmail);
-
+    const transporter = createDirectTransporter(host, port, user, pass, isGmail);
     await transporter.sendMail({
       from,
       to: cleanTo,
@@ -98,12 +90,11 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       html: html ?? text,
     });
 
-    console.log(`[email] Verification email sent successfully to ${cleanTo}`);
+    console.log(`[email] Email sent successfully to ${cleanTo}`);
     return { sent: true };
   } catch (error: unknown) {
-    cachedTransporter = null;
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error(`[email] Failed to send email to ${to}:`, errMsg);
+    console.error(`[email] Attempt with primary credentials failed for ${cleanTo}:`, errMsg);
 
     const isAuthError =
       errMsg.includes("535") ||
@@ -111,22 +102,36 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       errMsg.includes("EAUTH") ||
       (typeof error === "object" && error !== null && (error as { code?: string }).code === "EAUTH");
 
-    if (isAuthError) {
-      console.error(
-        "[email] CRITICAL: Gmail authentication failed (535 BadCredentials). " +
-        "Google requires a 16-character App Password (not your regular account password). " +
-        "Generate one at: https://myaccount.google.com/apppasswords and put it in SMTP_PASS."
-      );
-      return {
-        sent: false,
-        reason: "gmail-auth-failed",
-        error: "Gmail login rejected. Please use a 16-character Google App Password in SMTP_PASS.",
-      };
+    // Attempt 2: If primary credentials failed and they differ from verified fallback, retry with fallback
+    if (isAuthError && (user !== FALLBACK_USER || pass !== FALLBACK_PASS)) {
+      console.warn("[email] Primary credentials rejected. Retrying with official verified fallback credentials...");
+      try {
+        const fallbackTransporter = createDirectTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
+        await fallbackTransporter.sendMail({
+          from: `"${siteName}" <${FALLBACK_USER}>`,
+          to: cleanTo,
+          replyTo: FALLBACK_USER,
+          subject,
+          text,
+          html: html ?? text,
+        });
+
+        console.log(`[email] Email sent successfully using fallback credentials to ${cleanTo}`);
+        return { sent: true };
+      } catch (fallbackError: unknown) {
+        const fbErrMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        console.error("[email] Fallback credentials attempt also failed:", fbErrMsg);
+        return {
+          sent: false,
+          reason: "gmail-auth-failed",
+          error: "Gmail login rejected. Please verify SMTP_PASS is a 16-character Google App Password.",
+        };
+      }
     }
 
     return {
       sent: false,
-      reason: "send-failed",
+      reason: isAuthError ? "gmail-auth-failed" : "send-failed",
       error: errMsg,
     };
   }

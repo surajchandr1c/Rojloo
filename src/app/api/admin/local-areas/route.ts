@@ -8,7 +8,7 @@ import { getAdminContext, canAccess } from "@/lib/admin-access";
 
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
-  if (!ctx || !canAccess(ctx, "city")) {
+  if (!ctx || (!canAccess(ctx, "city") && !canAccess(ctx, "state"))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const ctx = await getAdminContext(request);
-  if (!ctx || !canAccess(ctx, "city")) {
+  if (!ctx || (!canAccess(ctx, "city") && !canAccess(ctx, "state"))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const ctx = await getAdminContext(request);
-  if (!ctx || !canAccess(ctx, "city")) {
+  if (!ctx || (!canAccess(ctx, "city") && !canAccess(ctx, "state"))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

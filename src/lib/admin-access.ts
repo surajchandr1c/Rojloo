@@ -11,10 +11,15 @@ export type AdminContext =
 
 export const ADMIN_SECTIONS = [
   { key: "dashboard", name: "Dashboard" },
+  { key: "state", name: "State" },
   { key: "city", name: "City" },
   { key: "city-seo", name: "City SEO" },
   { key: "ads", name: "Ads" },
   { key: "users", name: "Users" },
+  { key: "upi", name: "UPI" },
+  { key: "coupon", name: "Coupon" },
+  { key: "payment-request", name: "Payment Request" },
+  { key: "payment-history", name: "Payment History" },
   { key: "set-coins", name: "Set Coins" },
   { key: "promotion-packages", name: "Promotion Package" },
   { key: "vip", name: "VIP" },

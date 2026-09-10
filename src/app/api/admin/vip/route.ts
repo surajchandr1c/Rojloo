@@ -148,19 +148,33 @@ export async function POST(request: NextRequest) {
     const latestExpiry = created[0]?.expiresAt || new Date();
 
     // Send notification email containing VIP login credentials
-    await sendVipInviteEmail({
-      to: email,
-      areaLabel,
-      phone,
-      loginUrl,
-      expiresAt: latestExpiry,
-    });
+    let emailSent = false;
+    let emailError: string | undefined;
+    try {
+      const emailResult = await sendVipInviteEmail({
+        to: email,
+        areaLabel,
+        phone,
+        loginUrl,
+        expiresAt: latestExpiry,
+      });
+      emailSent = emailResult.sent;
+      if (!emailResult.sent && "error" in emailResult) {
+        emailError = emailResult.error || emailResult.reason;
+      }
+    } catch (err) {
+      console.error("[admin/vip] Failed to send VIP email:", err);
+      emailSent = false;
+      emailError = err instanceof Error ? err.message : "Failed to send notification email.";
+    }
 
     return NextResponse.json(
       {
         success: true,
         assignments: created,
         loginUrl,
+        emailSent,
+        emailError,
       },
       { status: 201 }
     );

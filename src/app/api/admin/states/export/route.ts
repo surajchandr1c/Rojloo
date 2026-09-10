@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
-  if (!ctx || !canAccess(ctx, "city")) {
+  if (!ctx || (!canAccess(ctx, "state") && !canAccess(ctx, "city"))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
