@@ -46,10 +46,12 @@ export default async function AdPage({
 }
 
 async function AdContent({ location, id }: { location: string; id: string }) {
-  const ad = await getPublicAdById(id);
+  const [ad, cityInfo] = await Promise.all([
+    getPublicAdById(id),
+    getCityBySlug(location),
+  ]);
   if (!ad) notFound();
 
-  const cityInfo = await getCityBySlug(location);
   const cityName = cityInfo?.name ?? location;
   const isDeleted = (ad.status ?? "active") === "deleted";
   const serviceRates =

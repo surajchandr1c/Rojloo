@@ -3,22 +3,6 @@
 import { useEffect, useState } from "react";
 import { AdminStatSkeleton } from "@/components/skeletons/admin-skeletons";
 
-type PaymentRequest = {
-  status?: "pending" | "confirmed" | "declined";
-};
-
-type PaymentHistory = {
-  coins?: number;
-  finalAmount?: number;
-  amount?: number;
-  discount?: number;
-  createdAt?: string;
-};
-
-type Coupon = {
-  active?: boolean;
-};
-
 type Stats = {
   users: number;
   ads: number;
@@ -52,42 +36,22 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/admin/users", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/ads", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/cities", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/states", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/subadmins", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/upi", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/coupon", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/payment-request", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/admin/payment-history", { credentials: "include" }).then((r) => r.json()),
-    ])
-      .then(([u, a, c, s, sa, upiRes, couponRes, paymentReqRes, paymentHistoryRes]) => {
-        const upis = Array.isArray(upiRes.upis) ? upiRes.upis : [];
-        const coupons = Array.isArray(couponRes.coupons) ? couponRes.coupons : [];
-        const requests = Array.isArray(paymentReqRes.requests) ? paymentReqRes.requests : [];
-        const history = Array.isArray(paymentHistoryRes.history) ? paymentHistoryRes.history : [];
-
+    fetch("/api/admin/stats", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
         setStats({
-          users: u.users?.length ?? 0,
-          ads: a.ads?.length ?? 0,
-          cities: c.cities?.length ?? 0,
-          states: s.states?.length ?? 0,
-          subAdmins: sa.admins?.length ?? 0,
-          upiTotal: upis.length,
-          activeCoupons: coupons.filter((coupon: Coupon) => coupon.active).length,
-          pendingPayments: requests.filter((request: PaymentRequest) => request.status === "pending").length,
-          confirmedPayments: requests.filter((request: PaymentRequest) => request.status === "confirmed").length,
-          declinedPayments: requests.filter((request: PaymentRequest) => request.status === "declined").length,
-          totalAmountAfterDiscount: history.reduce((sum: number, item: PaymentHistory) => {
-            const finalAmount =
-              typeof item.finalAmount === "number"
-                ? item.finalAmount
-                : Math.max(0, (item.amount ?? 0) - (item.discount ?? 0));
-            return sum + finalAmount;
-          }, 0),
-          totalCoinsSold: history.reduce((sum: number, item: PaymentHistory) => sum + (item.coins ?? 0), 0),
+          users: data.users ?? 0,
+          ads: data.ads ?? 0,
+          cities: data.cities ?? 0,
+          states: data.states ?? 0,
+          subAdmins: data.subAdmins ?? 0,
+          upiTotal: data.upiTotal ?? 0,
+          activeCoupons: data.activeCoupons ?? 0,
+          pendingPayments: data.pendingPayments ?? 0,
+          confirmedPayments: data.confirmedPayments ?? 0,
+          declinedPayments: data.declinedPayments ?? 0,
+          totalAmountAfterDiscount: data.totalAmountAfterDiscount ?? 0,
+          totalCoinsSold: data.totalCoinsSold ?? 0,
         });
       })
       .catch(() => {

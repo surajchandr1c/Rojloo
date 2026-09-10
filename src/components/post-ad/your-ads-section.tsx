@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Ad } from "./types";
 import { cityPlaces } from "@/lib/places";
 import { YourAdsListSkeleton } from "@/components/skeletons/post-ad-skeletons";
@@ -12,10 +13,8 @@ import {
   getShiftShortLabel,
   formatDateTime,
   formatTimeRemaining,
-  isAdActiveInCurrentShift,
   isAdShiftResting,
   getNextShiftStart,
-  getCurrentShiftInfo,
 } from "@/lib/promo-shifts";
 
 function getCityUrl(cityName: string) {
@@ -42,15 +41,6 @@ function formatShortDate(date?: string | Date) {
   const month = months[d.getMonth()] || "Oct";
   const year = String(d.getFullYear()).slice(-2);
   return `${day} ${month} ${year}`;
-}
-
-function formatFullDate(date?: string | Date) {
-  const d = date ? new Date(date) : new Date();
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 type TabType = "all" | "promoted" | "free" | "not_published";
@@ -185,7 +175,6 @@ export default function YourAdsSection({
             const created = ad.createdAt ? new Date(ad.createdAt) : new Date();
             const expireDate = new Date(created.getTime() + 30 * 24 * 60 * 60 * 1000);
             const expireShort = formatShortDate(expireDate);
-            const todayFormatted = formatFullDate(new Date());
 
             const displayTitle = ad.city
               ? `[${ad.city.toUpperCase()}] • √ ${ad.title || ad.name}`
@@ -265,7 +254,6 @@ export default function YourAdsSection({
                       }
 
                       if (isPromoValid) {
-                        const isCurrentShiftActive = isAdActiveInCurrentShift(ad);
                         const isResting = isAdShiftResting(ad);
                         const nextShiftDate = getNextShiftStart(ad.promoShift);
                         const nextShiftFormatted = formatDateTime(nextShiftDate);
@@ -357,11 +345,13 @@ export default function YourAdsSection({
                 <div className="w-full min-w-0 rounded-xl border border-red-100/90 bg-pink-50/20 p-3 sm:p-4 flex flex-col sm:flex-row gap-3.5 sm:gap-4 overflow-hidden box-border">
                   {/* Thumbnail Photo with Image Count */}
                   <div className="relative shrink-0 w-full sm:w-40 sm:min-w-[160px] h-48 sm:h-36 rounded-xl overflow-hidden bg-pink-100 flex items-center justify-center border border-red-200/60">
-                    {hasImage ? (
-                      <img
-                        src={ad.images?.[0]}
+                    {hasImage && ad.images?.[0] ? (
+                      <Image
+                        src={ad.images[0]}
                         alt={ad.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 160px"
                       />
                     ) : (
                       <div className="p-3 text-center text-xs text-gray-500 font-medium leading-relaxed">

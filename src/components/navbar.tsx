@@ -44,16 +44,14 @@ export default function NavBar() {
   const isLoggedIn = Boolean(user);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !isLoggedIn) return;
 
     const refresh = () => {
       void refreshAuth();
     };
     const handleCoinsUpdated = () => refresh();
 
-    refresh();
-
-    const intervalId = window.setInterval(refresh, 15000);
+    const intervalId = window.setInterval(refresh, 30000);
     const handleFocus = () => refresh();
     const handleVisibility = () => {
       if (!document.hidden) refresh();
@@ -69,7 +67,7 @@ export default function NavBar() {
       window.removeEventListener("coins:updated", handleCoinsUpdated);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [isLoading, refreshAuth, pathname]);
+  }, [isLoading, isLoggedIn, refreshAuth]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#7f1d1d] bg-[#450a0a] text-white shadow-sm">

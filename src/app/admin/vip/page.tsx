@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDate, formatDisplayDateTime } from "@/lib/date";
 
@@ -219,16 +220,17 @@ export default function VipPage() {
           <div>
             <h1 className="text-3xl font-black text-red-950">VIP Access Control</h1>
             <p className="mt-2 text-red-900">
-              Assign City or State level VIP access. The VIP's phone number serves as their password to access their dedicated VIP Panel.
+              Assign City or State level VIP access. The VIP&apos;s phone number serves as their password to access their dedicated VIP Panel.
             </p>
           </div>
-          <a
+          <Link
             href="/api/admin/go-to-vip"
+            prefetch={false}
             className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline transition shrink-0"
           >
             <span>Go to VIP Dashboard</span>
             <span>&rarr;</span>
-          </a>
+          </Link>
         </div>
 
         {error && <div className="mt-4 rounded-xl bg-red-100 p-3 text-sm text-red-800">{error}</div>}

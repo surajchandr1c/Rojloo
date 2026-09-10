@@ -1087,7 +1087,6 @@ export default function AdminStates() {
                 <StateHierarchyCard
                   key={stateKey}
                   state={state}
-                  stateKey={stateKey}
                   isExpanded={isStateExpanded}
                   isSearching={isSearching}
                   matchingCities={matchingCities}
@@ -1109,7 +1108,6 @@ export default function AdminStates() {
 
 function StateHierarchyCard({
   state,
-  stateKey,
   isExpanded,
   isSearching,
   matchingCities,
@@ -1121,7 +1119,6 @@ function StateHierarchyCard({
   onRemoveState,
 }: {
   state: StateRecord;
-  stateKey: string;
   isExpanded: boolean;
   isSearching: boolean;
   matchingCities: Array<{
@@ -1313,7 +1310,6 @@ function StateHierarchyCard({
                     <CityHierarchyItem
                       key={`${city.source}-${city._id}`}
                       city={city}
-                      cityKey={cityKey}
                       stateName={state.name}
                       cityAreas={cityAreas}
                       isExpanded={isCityExpanded}
@@ -1335,7 +1331,6 @@ function StateHierarchyCard({
 
 function CityHierarchyItem({
   city,
-  cityKey,
   stateName,
   cityAreas,
   isExpanded,
@@ -1345,7 +1340,6 @@ function CityHierarchyItem({
   onChanged,
 }: {
   city: CityRow;
-  cityKey: string;
   stateName: string;
   cityAreas: LocalAreaRow[];
   isExpanded: boolean;

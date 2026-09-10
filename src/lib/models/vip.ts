@@ -511,7 +511,6 @@ export async function getVipScopedStates(email: string) {
     slug: String(s.slug ?? ""),
   }));
 
-  const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
   return scope.states.map((stateName) => {
     const match = storeStates.find((s) => s.name.toLowerCase() === stateName.toLowerCase());
     return {

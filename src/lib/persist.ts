@@ -4,8 +4,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import { getDb } from "./db";
 
-const isProd = process.env.NODE_ENV === "production";
-
 const FILE = path.join(process.cwd(), ".data", "store.json");
 
 type StoreRecord = {

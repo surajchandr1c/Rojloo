@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Button from "@/components/ui/button";
 import { TextInput, TextArea, Select, FileInput } from "@/components/ui/field";
 import { cityPlaces } from "@/lib/places";
@@ -39,7 +39,7 @@ export default function PostAdSection({
 }) {
   const [stateOptions, setStateOptions] = useState<StateOption[]>([]);
   const [allCities, setAllCities] = useState<CityOption[]>(cityPlaces);
-  const [stateCities, setStateCities] = useState<CityOption[]>([]);
+  const [serverCities, setServerCities] = useState<CityOption[]>([]);
   const [cityLoading, setCityLoading] = useState<boolean>(false);
   const [localAreaOptions, setLocalAreaOptions] = useState<LocalAreaOption[]>([]);
   const [showStatePrompt, setShowStatePrompt] = useState<boolean>(false);
@@ -77,23 +77,25 @@ export default function PostAdSection({
       .catch(() => {});
   }, []);
 
+  const localMatches = useMemo(() => {
+    if (!form.state || !form.state.trim()) return [];
+    const targetState = form.state.trim().toLowerCase();
+    return allCities.filter(
+      (c) => c.state && c.state.trim().toLowerCase() === targetState
+    );
+  }, [allCities, form.state]);
+
   useEffect(() => {
     if (!form.state || !form.state.trim()) {
-      setStateCities([]);
       return;
     }
 
-    const targetState = form.state.trim().toLowerCase();
-
-    // 1. Immediately filter from already-loaded allCities for instant zero-latency feedback
-    const localMatches = allCities.filter(
-      (c) => c.state && c.state.trim().toLowerCase() === targetState
-    );
-    setStateCities(localMatches);
-
-    // 2. Also fetch from backend /api/cities?state=... to capture any custom additions
     let ignore = false;
-    setCityLoading(true);
+    queueMicrotask(() => {
+      if (!ignore) {
+        setCityLoading(true);
+      }
+    });
     fetch(`/api/cities?state=${encodeURIComponent(form.state.trim())}`)
       .then((r) => r.json())
       .then((data) => {
@@ -105,17 +107,7 @@ export default function PostAdSection({
               state: c.state,
             })
           );
-          const seen = new Set<string>();
-          const combined: CityOption[] = [];
-          for (const c of [...fetchedCities, ...localMatches]) {
-            const key = c.name.trim().toLowerCase();
-            if (!seen.has(key)) {
-              seen.add(key);
-              combined.push(c);
-            }
-          }
-          combined.sort((a, b) => a.name.localeCompare(b.name));
-          setStateCities(combined);
+          setServerCities(fetchedCities);
         }
       })
       .catch(() => {})
@@ -126,7 +118,21 @@ export default function PostAdSection({
     return () => {
       ignore = true;
     };
-  }, [form.state, allCities]);
+  }, [form.state]);
+
+  const stateCities = useMemo(() => {
+    if (!form.state || !form.state.trim()) return [];
+    const seen = new Set<string>();
+    const combined: CityOption[] = [];
+    for (const c of [...serverCities, ...localMatches]) {
+      const key = c.name.trim().toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(c);
+      }
+    }
+    return combined.sort((a, b) => a.name.localeCompare(b.name));
+  }, [form.state, serverCities, localMatches]);
 
   useEffect(() => {
     if (!form.city) {

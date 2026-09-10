@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Button from "@/components/ui/button";
 import { SectionPanel } from "@/components/ui/card";
 import { useAuthGuard } from "./use-auth-guard";
@@ -16,7 +17,6 @@ import {
 } from "@/lib/promotion-packages";
 
 import {
-  getShiftLabel,
   getShiftShortLabel,
   getTierRankInfo,
   calculatePromoExpiration,
@@ -66,7 +66,7 @@ export default function PromotedAdView() {
     return () => clearInterval(interval);
   }, [modalData]);
 
-  const loadAds = () => {
+  const loadAds = useCallback(() => {
     setLoading(true);
     authenticatedFetch("/api/ads")
       .then((r) => r.json())
@@ -77,13 +77,13 @@ export default function PromotedAdView() {
         setAds(list);
         if (adIdParam && list.some((a) => a._id === adIdParam)) {
           setSelectedAdId(adIdParam);
-        } else if (list.length > 0 && !selectedAdId) {
-          setSelectedAdId(list[0]._id || "");
+        } else if (list.length > 0) {
+          setSelectedAdId((prev) => prev || list[0]._id || "");
         }
       })
       .catch(() => setAds([]))
       .finally(() => setLoading(false));
-  };
+  }, [adIdParam]);
 
   useEffect(() => {
     fetch(`/api/promotion-packages?_t=${Date.now()}`, { cache: "no-store" })
@@ -108,16 +108,32 @@ export default function PromotedAdView() {
   }, []);
 
   useEffect(() => {
-    if (ready) {
-      loadAds();
-    }
-  }, [ready]);
-
-  useEffect(() => {
-    if (adIdParam && ads.some((a) => a._id === adIdParam)) {
-      setSelectedAdId(adIdParam);
-    }
-  }, [adIdParam, ads]);
+    if (!ready) return;
+    let active = true;
+    authenticatedFetch("/api/ads")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!active) return;
+        const list: Ad[] = (data.ads ?? []).filter(
+          (a: Ad) => (a.status ?? "active") !== "deleted"
+        );
+        setAds(list);
+        if (adIdParam && list.some((a) => a._id === adIdParam)) {
+          setSelectedAdId(adIdParam);
+        } else if (list.length > 0) {
+          setSelectedAdId((prev) => prev || list[0]._id || "");
+        }
+      })
+      .catch(() => {
+        if (active) setAds([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [ready, adIdParam]);
 
   if (!ready) return null;
 
@@ -135,7 +151,7 @@ export default function PromotedAdView() {
   // Real-time projected shift timing and expiration calculation
   const currentShiftTiming = calculateShiftTiming(selectedShift);
   const projectedExpiration = calculatePromoExpiration(selectedPkg, selectedShift);
-  const formattedProjectedExpiry = formatDateTime(projectedExpiration);
+  void projectedExpiration;
 
   const isAdPromoted = (ad: Ad) => {
     const raw = ad as unknown as Record<string, unknown>;
@@ -296,10 +312,12 @@ export default function PromotedAdView() {
                 <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/25 p-3 sm:p-4 flex flex-col sm:flex-row gap-3.5 sm:gap-4 overflow-hidden">
                   <div className="relative shrink-0 w-full sm:w-36 h-40 sm:h-28 rounded-xl overflow-hidden bg-pink-100 flex items-center justify-center border border-red-200/60">
                     {selectedAd.images?.[0] ? (
-                      <img
+                      <Image
                         src={selectedAd.images[0]}
                         alt={selectedAd.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 144px"
                       />
                     ) : (
                       <div className="text-xs text-gray-500 font-medium">No Image</div>

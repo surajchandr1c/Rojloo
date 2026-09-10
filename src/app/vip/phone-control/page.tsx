@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useVipContext } from "@/components/vip/use-vip-context";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
-import { formatDisplayDate, formatDisplayDateTime } from "@/lib/date";
+import { formatDisplayDateTime } from "@/lib/date";
 
 type OverrideItem = {
   _id: string;
@@ -37,6 +37,26 @@ export default function VipPhoneControlPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  async function loadData() {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/vip/phone-control", { credentials: "include" });
+      const data = await res.json();
+      if (res.ok) {
+        const cityList = Array.isArray(data.cities) ? data.cities : [];
+        setCities(cityList);
+        if (cityList.length > 0) {
+          setSelectedCity((prev) => prev || cityList[0]);
+        }
+        setOverrides(Array.isArray(data.overrides) ? data.overrides : []);
+      }
+    } catch {
+      setError("Failed to load contact control data.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (me && !me.authenticated) {
       if (typeof window !== "undefined") {
@@ -47,28 +67,34 @@ export default function VipPhoneControlPage() {
 
   useEffect(() => {
     if (!me || !me.authenticated) return;
-    loadData();
-  }, [me]);
+    let active = true;
 
-  async function loadData() {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/vip/phone-control", { credentials: "include" });
-      const data = await res.json();
-      if (res.ok) {
-        const cityList = Array.isArray(data.cities) ? data.cities : [];
-        setCities(cityList);
-        if (cityList.length > 0 && !selectedCity) {
-          setSelectedCity(cityList[0]);
+    fetch("/api/vip/phone-control", { credentials: "include" })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!active) return;
+        if (ok) {
+          const cityList = Array.isArray(data.cities) ? data.cities : [];
+          setCities(cityList);
+          if (cityList.length > 0) {
+            setSelectedCity((prev) => prev || cityList[0]);
+          }
+          setOverrides(Array.isArray(data.overrides) ? data.overrides : []);
+        } else {
+          setError(data.error || "Failed to load contact control data.");
         }
-        setOverrides(Array.isArray(data.overrides) ? data.overrides : []);
-      }
-    } catch {
-      setError("Failed to load contact control data.");
-    } finally {
-      setLoading(false);
-    }
-  }
+      })
+      .catch(() => {
+        if (active) setError("Failed to load contact control data.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [me]);
 
   function handleSelectCity(cityVal: string) {
     setSelectedCity(cityVal);

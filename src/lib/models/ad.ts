@@ -233,7 +233,19 @@ export async function getAdById(
   return ad && ad.userId === userId ? ad : null;
 }
 
+let adCountsCache: { counts: Record<string, number>; expiresAt: number } | null = null;
+const AD_COUNTS_CACHE_TTL_MS = 60_000;
+
+export function invalidateAdCountsCache(): void {
+  adCountsCache = null;
+}
+
 export async function getAdCountsByCity(): Promise<Record<string, number>> {
+  const now = Date.now();
+  if (adCountsCache && now < adCountsCache.expiresAt) {
+    return adCountsCache.counts;
+  }
+
   const collection = await getAdsCollection();
   const counts: Record<string, number> = {};
 
@@ -251,6 +263,7 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
           counts[String(item._id).trim().toLowerCase()] = item.count;
         }
       }
+      adCountsCache = { counts, expiresAt: now + AD_COUNTS_CACHE_TTL_MS };
       return counts;
     } catch (err) {
       console.error("[ad] getAdCountsByCity aggregation failed:", err);
@@ -264,6 +277,7 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
       counts[key] = (counts[key] ?? 0) + 1;
     }
   }
+  adCountsCache = { counts, expiresAt: now + AD_COUNTS_CACHE_TTL_MS };
   return counts;
 }
 
@@ -367,6 +381,7 @@ export async function createAd(
   const now = new Date();
   const ad: Ad = { ...data, createdAt: now, updatedAt: now };
 
+  invalidateAdCountsCache();
   if (!collection) {
     return toPublicAd(await memoryUpsert(ad));
   }
@@ -382,6 +397,7 @@ export async function updateAd(
 ): Promise<PublicAd | null> {
   const collection = await getAdsCollection();
   const now = new Date();
+  invalidateAdCountsCache();
 
   if (!collection) {
     const existing = await memoryFindById(id);
@@ -413,6 +429,7 @@ export async function deleteAd(
   id: string,
   userId: string
 ): Promise<boolean> {
+  invalidateAdCountsCache();
   const collection = await getAdsCollection();
   if (!collection) return await memoryDelete(id, userId);
 
@@ -428,6 +445,7 @@ export async function softDeleteAd(
   id: string,
   userId: string
 ): Promise<boolean> {
+  invalidateAdCountsCache();
   const collection = await getAdsCollection();
   if (!collection) {
     const store = await readStore();
@@ -456,6 +474,7 @@ export async function restoreAd(
   id: string,
   userId: string
 ): Promise<boolean> {
+  invalidateAdCountsCache();
   const collection = await getAdsCollection();
   if (!collection) {
     const store = await readStore();
@@ -514,6 +533,7 @@ export async function setAdStatus(
   id: string,
   status: string
 ): Promise<PublicAd | null> {
+  invalidateAdCountsCache();
   const collection = await getAdsCollection();
   const now = new Date();
 
@@ -546,6 +566,7 @@ export async function setAdStatus(
 }
 
 export async function adminDeleteAd(id: string): Promise<boolean> {
+  invalidateAdCountsCache();
   const collection = await getAdsCollection();
 
   if (!collection) {

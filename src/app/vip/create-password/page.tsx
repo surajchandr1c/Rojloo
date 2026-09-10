@@ -13,26 +13,29 @@ function CreatePasswordContent() {
   const emailParam = searchParams.get("email") || "";
   const tokenParam = searchParams.get("token") || "";
 
+  const hasParams = Boolean(tokenParam && emailParam);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    hasParams ? "" : "Invalid or missing password creation link."
+  );
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [validatingToken, setValidatingToken] = useState(true);
+  const [validatingToken, setValidatingToken] = useState(hasParams);
   const [tokenValid, setTokenValid] = useState(false);
 
   useEffect(() => {
     if (!tokenParam || !emailParam) {
-      setValidatingToken(false);
-      setError("Invalid or missing password creation link.");
       return;
     }
 
+    let isMounted = true;
     // Verify token validity
     fetch(`/api/vip/create-password?token=${encodeURIComponent(tokenParam)}&email=${encodeURIComponent(emailParam)}`)
       .then((r) => r.json())
       .then((data) => {
+        if (!isMounted) return;
         if (data.valid) {
           setTokenValid(true);
         } else {
@@ -40,11 +43,18 @@ function CreatePasswordContent() {
         }
       })
       .catch(() => {
+        if (!isMounted) return;
         setError("Network error while validating setup link.");
       })
       .finally(() => {
-        setValidatingToken(false);
+        if (isMounted) {
+          setValidatingToken(false);
+        }
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, [tokenParam, emailParam]);
 
   async function handleSubmit(e: React.FormEvent) {

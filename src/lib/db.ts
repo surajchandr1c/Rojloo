@@ -12,7 +12,6 @@ const uri = process.env.MONGODB_URI?.trim().replace(/^['"]|['"]$/g, "");
 const dbName = (process.env.MONGODB_DB || "rojlo")
   .trim()
   .replace(/^['"]|['"]$/g, "");
-const isProduction = process.env.NODE_ENV === "production";
 const retryAfterMs = 30_000;
 
 // Validate URI format
@@ -81,8 +80,8 @@ export async function getDb(): Promise<Db | null> {
 
   if (!globalCache.promise) {
     const client = new MongoClient(uri, {
-      maxPoolSize: 50,
-      minPoolSize: 5,
+      maxPoolSize: 10,
+      minPoolSize: 0,
       maxIdleTimeMS: 30000,
       socketTimeoutMS: 15000,
       serverSelectionTimeoutMS: 10000,

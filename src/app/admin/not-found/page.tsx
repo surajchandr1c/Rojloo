@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
-import { AdminStatSkeleton, AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
+import { AdminStatSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type NotFoundItem = {
   _id: string;
@@ -73,8 +73,44 @@ export default function AdminNotFoundPage() {
       router.replace("/admin/login");
       return;
     }
-    loadData();
-  }, [loadData, me, router]);
+    let active = true;
+    const params = new URLSearchParams();
+    if (filter !== "all") params.set("status", filter);
+    if (searchTerm.trim()) params.set("search", searchTerm.trim());
+
+    fetch(`/api/admin/not-found?${params.toString()}`, {
+      credentials: "include",
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          router.replace("/admin/login");
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!active || !data) return;
+        setLogs(data.logs || []);
+        setTotalCount(data.totalCount || 0);
+        setTotalHits(data.totalHits || 0);
+        setUnresolvedCount(data.unresolvedCount || 0);
+        setResolvedCount(data.resolvedCount || 0);
+        setError("");
+      })
+      .catch((err) => {
+        if (active) {
+          console.error(err);
+          setError("Failed to load 404 error logs.");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [filter, me, router, searchTerm]);
 
   async function handleToggleResolved(item: NotFoundItem) {
     try {

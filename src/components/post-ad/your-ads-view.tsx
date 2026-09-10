@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button";
 import { SectionPanel } from "@/components/ui/card";
@@ -17,17 +17,32 @@ export default function YourAdsView() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadAds = () => {
+  const loadAds = useCallback(() => {
     setLoading(true);
     authenticatedFetch("/api/ads")
       .then((r) => r.json())
       .then((data) => setAds(data.ads ?? []))
       .catch(() => setAds([]))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
-    if (ready) loadAds();
+    if (!ready) return;
+    let active = true;
+    authenticatedFetch("/api/ads")
+      .then((r) => r.json())
+      .then((data) => {
+        if (active) setAds(data.ads ?? []);
+      })
+      .catch(() => {
+        if (active) setAds([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [ready]);
 
   const handleEdit = (ad: Ad) => router.push(`/post-ad/edit/${ad._id}`);

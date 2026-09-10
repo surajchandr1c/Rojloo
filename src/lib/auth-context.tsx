@@ -83,6 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem(STORAGE_KEY);
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+    const hasSessionCookie =
+      typeof document !== "undefined" && document.cookie.includes("rojlo_auth");
+
+    if (!storedToken && !hasSessionCookie) {
+      queueMicrotask(() => {
+        setIsLoading(false);
+      });
+      return;
+    }
 
     queueMicrotask(() => {
       if (storedToken) {

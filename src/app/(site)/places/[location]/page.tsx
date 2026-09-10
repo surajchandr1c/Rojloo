@@ -102,7 +102,7 @@ async function CityContent({ slug }: { slug: string }) {
             </p>
           ) : (
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {ads.map((ad) => (
+              {ads.map((ad, idx) => (
                 <Card
                   key={ad._id}
                   className="group relative min-h-[28rem] sm:min-h-[30rem] p-5 sm:p-7 transition-shadow hover:shadow-lg"
@@ -146,6 +146,7 @@ async function CityContent({ slug }: { slug: string }) {
                           fill
                           className="object-contain transition-transform duration-300 group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, 360px"
+                          priority={idx === 0}
                         />
                       </div>
                     )}

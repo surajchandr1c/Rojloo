@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useVipContext } from "@/components/vip/use-vip-context";
 import { AdminStatSkeleton } from "@/components/skeletons/admin-skeletons";
-import { formatDisplayDate, formatDisplayDateTime } from "@/lib/date";
+import { formatDisplayDateTime } from "@/lib/date";
 
 type VipStats = {
   statesCount: number;
