@@ -55,14 +55,14 @@ export function createDateFromIST(
 
 export function normalizeShift(
   shift?: string
-): "morning" | "afternoon" | "evening" | "night" {
+): "morning" | "afternoon" | "evening" | "night" | "all" {
   const norm = (shift || "morning").trim().toLowerCase();
   if (norm === "morning") return "morning";
   if (norm === "afternoon") return "afternoon";
   if (norm === "evening") return "evening";
   if (norm === "night") return "night";
-  if (norm === "day" || norm === "12h" || norm === "all" || norm === "24h") {
-    return "morning";
+  if (norm === "all" || norm === "24h" || norm === "all-shifts") {
+    return "all";
   }
   return "morning";
 }
@@ -129,6 +129,9 @@ export function getCurrentShiftInfo(date: Date = new Date()): ShiftInfo {
 
 export function getShiftLabel(shift?: string): string {
   const normalized = normalizeShift(shift);
+  if (normalized === "all") {
+    return "All 4 Shifts (24 Hours Full Day • Morning, Afternoon, Evening & Night)";
+  }
   if (normalized === "morning") {
     return "Morning Shift (06:00 AM – 12:00 PM • 6h)";
   }
@@ -143,6 +146,7 @@ export function getShiftLabel(shift?: string): string {
 
 export function getShiftShortLabel(shift?: string): string {
   const normalized = normalizeShift(shift);
+  if (normalized === "all") return "⚡ All 4 Shifts (24h)";
   if (normalized === "morning") return "🌅 Morning (6h)";
   if (normalized === "afternoon") return "☀️ Afternoon (6h)";
   if (normalized === "evening") return "🌇 Evening (6h)";
@@ -150,11 +154,9 @@ export function getShiftShortLabel(shift?: string): string {
 }
 
 /**
- * Calculates start (promotedFrom) and end (promotedUntil) times for a 6-hour shift:
- * - If current time is inside the shift: active immediately until the shift ends (6-hour window).
- * - If current time is before the shift today: scheduled for today's shift window.
- * - If current time is after the shift today (e.g. morning chosen during evening/afternoon):
- *   automatically schedules for TOMORROW'S shift window.
+ * Calculates start (promotedFrom) and end (promotedUntil) times for a shift:
+ * - "all": 24 hours full day covering all 4 shifts.
+ * - 6-hour shift: active immediately until the shift ends (if inside shift), or scheduled.
  */
 export function calculateShiftTiming(
   rawShift?: string,
@@ -176,6 +178,14 @@ export function calculateShiftTiming(
   let isNextDay = false;
 
   switch (shift) {
+    case "all": {
+      promotedFrom = now;
+      promotedUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      isCurrentShift = true;
+      isNextDay = false;
+      break;
+    }
+
     case "morning": {
       // 06:00 AM (360) to 12:00 PM (720)
       if (currentMinutes < 360) {
@@ -256,7 +266,9 @@ export function calculateShiftTiming(
 
   const shiftLabel = getShiftLabel(shift);
   let scheduleDescription = "";
-  if (isCurrentShift) {
+  if (shift === "all") {
+    scheduleDescription = `Active now: 24/7 coverage across all 4 shifts (Morning, Afternoon, Evening, Night) until ${formatDateTime(promotedUntil)}`;
+  } else if (isCurrentShift) {
     scheduleDescription = `Active now: Runs until ${formatDateTime(promotedUntil)} (6-hour shift)`;
   } else if (isNextDay) {
     scheduleDescription = `Shift passed today: Scheduled for Tomorrow (${formatDateTime(promotedFrom)} – ${formatDateTime(promotedUntil)})`;
@@ -464,6 +476,10 @@ export function getNextShiftStart(
         return createDateFromIST(istYear, istMonth, istDay, 0, 0);
       }
       return createDateFromIST(istYear, istMonth, istDay + 1, 0, 0);
+    }
+    case "all":
+    default: {
+      return now;
     }
   }
 }

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
-import { getCoinPackages, saveCoinPackages } from "@/lib/models/coin-package";
+import {
+  getCoinPackages,
+  saveCoinPackages,
+  getAllPackagesCoins,
+  saveAllPackagesCoins,
+} from "@/lib/models/coin-package";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,8 +19,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const packages = await getCoinPackages();
+    const allPackagesCoins = await getAllPackagesCoins();
     return NextResponse.json(
-      { packages, success: true },
+      { packages, allPackagesCoins, success: true },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -52,8 +58,13 @@ export async function POST(req: NextRequest) {
     }
 
     const saved = await saveCoinPackages(packages);
+    let allPackagesCoins = await getAllPackagesCoins();
+    if (body?.allPackagesCoins !== undefined && !isNaN(Number(body.allPackagesCoins))) {
+      allPackagesCoins = await saveAllPackagesCoins(Number(body.allPackagesCoins));
+    }
+
     return NextResponse.json(
-      { packages: saved, success: true },
+      { packages: saved, allPackagesCoins, success: true },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",

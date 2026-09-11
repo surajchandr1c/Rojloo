@@ -3,8 +3,8 @@ import { getAuthenticatedUserId } from "@/lib/auth-user";
 import { getAdById, updateAd } from "@/lib/models/ad";
 import { findUserById, updateUserCoins } from "@/lib/models/user";
 import { getPromotionPackages } from "@/lib/models/promotion-package";
+import { getAllPackagesCoins } from "@/lib/models/coin-package";
 import {
-  calculatePromoExpiration,
   calculateShiftTiming,
   normalizeShift,
   formatDateTime,
@@ -26,39 +26,52 @@ export async function POST(
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
 
-  const packages = await getPromotionPackages();
-  const matchedPkg = packages.find(
-    (p) =>
-      (body?.packageId && p.id === body.packageId) ||
-      (body?.title && p.title === body.title)
-  );
-
-  // Selected promotion days (minimum 1 day)
-  const durationDays = Math.max(1, Math.floor(Number(body?.durationDays ?? 1)));
-
-  // Base 1-day package price
-  let baseCoinsPerDay = 5;
-  if (matchedPkg) {
-    baseCoinsPerDay = Math.max(1, Math.round(Number(matchedPkg.coinsCost || 5)));
-  } else if (body?.coinsCost) {
-    baseCoinsPerDay = Math.max(1, Math.round(Number(body.coinsCost) / durationDays));
-  }
-
-  // Total coins = 1-day rate * number of days
-  const totalCoinsCost = baseCoinsPerDay * durationDays;
-  const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
-
-  // Determine shift: "morning" | "afternoon" | "evening" | "night"
-  const rawShift = String(body?.shift || "morning").toLowerCase();
-  const promoShift: PromoShift = normalizeShift(rawShift);
-
-  // Determine tier: "platinum" | "gold" | "silver" | "bronze"
-  const promoTier = normalizeTier(body?.tier || matchedPkg?.tier, packageName);
-  const tierInfo = getTierRankInfo(promoTier);
-
   if (!id) {
     return NextResponse.json({ error: "Ad ID is required." }, { status: 400 });
   }
+
+  // 1. Determine shift mode (Single 6-hour slot OR All 4 slots / 24 Hours)
+  const isAllShifts = Boolean(
+    body?.allShifts ||
+    String(body?.shift).toLowerCase() === "all" ||
+    String(body?.shift).toLowerCase() === "24h"
+  );
+  const promoShift: PromoShift = isAllShifts
+    ? "all"
+    : normalizeShift(String(body?.shift || "morning").toLowerCase());
+  const slotsMultiplier = isAllShifts ? 4 : 1;
+
+  // 2. Determine package mode (All Packages Combo OR Single Package)
+  const isAllPackages = Boolean(
+    body?.allPackages ||
+    body?.packageId === "all-packages" ||
+    body?.packageId === "all"
+  );
+
+  let basePackageCoins = 5;
+  let packageName = "Bronze VIP";
+  let promoTier: "platinum" | "gold" | "silver" | "bronze" = "bronze";
+
+  if (isAllPackages) {
+    basePackageCoins = await getAllPackagesCoins();
+    packageName = "👑 All Packages VIP Combo";
+    promoTier = "platinum";
+  } else {
+    const packages = await getPromotionPackages();
+    const matchedPkg = packages.find(
+      (p) =>
+        (body?.packageId && p.id === body.packageId) ||
+        (body?.title && p.title === body.title)
+    );
+
+    basePackageCoins = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
+    packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
+    promoTier = normalizeTier(body?.tier || matchedPkg?.tier, packageName);
+  }
+
+  // Total required coins = basePackageCoins * slotsMultiplier
+  const totalCoinsCost = basePackageCoins * slotsMultiplier;
+  const tierInfo = getTierRankInfo(promoTier);
 
   // Find ad and verify ownership
   const ad = await getAdById(id, userId);
@@ -74,9 +87,10 @@ export async function POST(
   const currentCoins = Number(user?.coins ?? 0);
 
   if (currentCoins < totalCoinsCost) {
+    const slotDesc = isAllShifts ? "All 4 Slots (24 Hours)" : getShiftLabel(promoShift);
     return NextResponse.json(
       {
-        error: `Insufficient coins. You have ${currentCoins} coins, but promoting for ${durationDays} day(s) requires ${totalCoinsCost} coins (${baseCoinsPerDay} coins/day).`,
+        error: `Insufficient coins. You have ${currentCoins} coins, but promoting with ${packageName} during ${slotDesc} requires ${totalCoinsCost} coins.`,
         currentCoins,
         requiredCoins: totalCoinsCost,
       },
@@ -93,22 +107,15 @@ export async function POST(
     );
   }
 
-  // Calculate promotion shift timing (6-hour window in IST)
+  // Calculate promotion shift timing
   const now = new Date();
   const shiftTiming = calculateShiftTiming(promoShift, now);
-
-  // Multi-day duration expiration (runs through chosen shift each day)
-  const finalPromotedUntil = calculatePromoExpiration(
-    { durationDays },
-    promoShift,
-    now
-  );
 
   const updatedAd = await updateAd(id, userId, {
     promoted: true,
     isPromoted: true,
     promotedFrom: shiftTiming.promotedFrom,
-    promotedUntil: finalPromotedUntil,
+    promotedUntil: shiftTiming.promotedUntil,
     promoPackage: packageName,
     promoTier,
     promoShift,
@@ -125,7 +132,7 @@ export async function POST(
 
   const shiftText = getShiftLabel(promoShift);
   const startFormatted = formatDateTime(shiftTiming.promotedFrom);
-  const expiryFormatted = formatDateTime(finalPromotedUntil);
+  const expiryFormatted = formatDateTime(shiftTiming.promotedUntil);
 
   const statusPrefix = shiftTiming.isCurrentShift
     ? `Active now until ${expiryFormatted}`
@@ -133,13 +140,14 @@ export async function POST(
 
   return NextResponse.json({
     success: true,
-    message: `🎉 Ad promoted successfully with ${packageName} for ${durationDays} day(s)! Position: ${tierInfo.rankRange} during ${shiftText}. ${statusPrefix}.`,
+    message: `🎉 Ad promoted successfully with ${packageName}! Position: ${tierInfo.rankRange} during ${shiftText}. ${statusPrefix}.`,
     ad: updatedAd,
     remainingCoins: currentCoins - totalCoinsCost,
-    durationDays,
     coinsCost: totalCoinsCost,
+    isAllShifts,
+    isAllPackages,
     promotedFrom: shiftTiming.promotedFrom.toISOString(),
-    promotedUntil: finalPromotedUntil.toISOString(),
+    promotedUntil: shiftTiming.promotedUntil.toISOString(),
     startTimeFormatted: startFormatted,
     expireTimeFormatted: expiryFormatted,
     isCurrentShift: shiftTiming.isCurrentShift,

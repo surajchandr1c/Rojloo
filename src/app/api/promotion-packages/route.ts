@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPromotionPackages } from "@/lib/models/promotion-package";
+import { getAllPackagesCoins } from "@/lib/models/coin-package";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -7,8 +8,9 @@ export const revalidate = 0;
 export async function GET() {
   try {
     const packages = await getPromotionPackages();
+    const allPackagesCoins = await getAllPackagesCoins();
     return NextResponse.json(
-      { packages, success: true },
+      { packages, allPackagesCoins, success: true },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate",

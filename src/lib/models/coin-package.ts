@@ -81,3 +81,19 @@ export async function saveCoinPackages(
 
   return [...cleaned].sort((a, b) => Number(a.coins) - Number(b.coins));
 }
+
+export async function getAllPackagesCoins(): Promise<number> {
+  const store = await readStore();
+  const raw = Number((store as Record<string, unknown>).allPackagesCoins);
+  return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 55;
+}
+
+export async function saveAllPackagesCoins(coins: number): Promise<number> {
+  const val = Math.max(1, Math.round(Number(coins) || 55));
+  const store = await readStore();
+  (store as Record<string, unknown>).allPackagesCoins = val;
+  await writeStore(store);
+  invalidateStoreCache();
+  return val;
+}
+

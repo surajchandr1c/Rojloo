@@ -19,6 +19,7 @@ export default function SetCoinsPage() {
   const router = useRouter();
   const me = useAdminContext();
   const [packages, setPackages] = useState<CoinPackage[]>([]);
+  const [allPackagesCoins, setAllPackagesCoins] = useState<number>(55);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -54,6 +55,10 @@ export default function SetCoinsPage() {
         );
       } else {
         setPackages([]);
+      }
+
+      if (data.allPackagesCoins && !isNaN(Number(data.allPackagesCoins))) {
+        setAllPackagesCoins(Math.round(Number(data.allPackagesCoins)));
       }
     } catch (err) {
       console.error(err);
@@ -197,7 +202,10 @@ export default function SetCoinsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ packages: payload }),
+        body: JSON.stringify({
+          packages: payload,
+          allPackagesCoins,
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -206,9 +214,12 @@ export default function SetCoinsPage() {
         return;
       }
 
-      setSuccess(`Successfully saved ${payload.length} coin packages.`);
+      setSuccess(`Successfully saved ${payload.length} coin packages and settings.`);
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
+      }
+      if (data.allPackagesCoins) {
+        setAllPackagesCoins(Number(data.allPackagesCoins));
       }
     } catch (err) {
       console.error(err);
@@ -321,6 +332,41 @@ export default function SetCoinsPage() {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        {/* All Packages Combo Configuration Box */}
+        <div className="mt-4 rounded-2xl border border-red-200 bg-white p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">👑</span>
+              <h3 className="text-sm font-black text-red-950">
+                All Packages Combo Coin Price
+              </h3>
+              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-900 uppercase">
+                Ad Promotion Setting
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-gray-600">
+              When an advertiser toggles <strong>&quot;Select All Packages Once&quot;</strong> on the ad promotion page, charge this amount of coins per shift slot.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="relative">
+              <input
+                type="number"
+                min="1"
+                max="10000"
+                value={allPackagesCoins}
+                onChange={(e) => setAllPackagesCoins(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                className="w-32 rounded-xl border border-red-300 bg-pink-50/40 px-3 py-2 text-center text-sm font-black text-red-950 outline-none focus:border-red-500"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 pointer-events-none">
+                coins
+              </span>
+            </div>
+            <span className="text-xs text-gray-500 font-semibold">(Default: 55 coins)</span>
+          </div>
         </div>
 
         {error && (

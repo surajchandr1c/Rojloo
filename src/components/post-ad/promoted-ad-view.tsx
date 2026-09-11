@@ -17,14 +17,59 @@ import {
 } from "@/lib/promotion-packages";
 
 import {
+  getCurrentShift,
+  getShiftLabel,
   getShiftShortLabel,
   getTierRankInfo,
-  calculatePromoExpiration,
   calculateShiftTiming,
   formatDateTime,
   formatDetailedTimeRemaining,
   type PromoShift,
 } from "@/lib/promo-shifts";
+
+interface ShiftBoxItem {
+  id: PromoShift;
+  name: string;
+  timeRange: string;
+  hours: string;
+  icon: string;
+  desc: string;
+}
+
+const SHIFT_BOXES: ShiftBoxItem[] = [
+  {
+    id: "morning",
+    name: "Morning Shift",
+    timeRange: "06:00 AM – 12:00 PM",
+    hours: "6 Hours",
+    icon: "🌅",
+    desc: "Peak morning browsing & active callers",
+  },
+  {
+    id: "afternoon",
+    name: "Afternoon Shift",
+    timeRange: "12:00 PM – 06:00 PM",
+    hours: "6 Hours",
+    icon: "☀️",
+    desc: "Lunch breaks & afternoon inquiries",
+  },
+  {
+    id: "evening",
+    name: "Evening Shift",
+    timeRange: "06:00 PM – 12:00 AM Midnight",
+    hours: "6 Hours",
+    icon: "🌇",
+    desc: "Prime evening rush & highest traffic",
+  },
+  {
+    id: "night",
+    name: "Night Shift",
+    timeRange: "12:00 AM Midnight – 06:00 AM",
+    hours: "6 Hours",
+    icon: "🌙",
+    desc: "Late night seekers & nocturnal inquiries",
+  },
+];
 
 interface PromoModalData {
   adTitle: string;
@@ -34,7 +79,8 @@ interface PromoModalData {
   promotedUntil: Date;
   isCurrentShift: boolean;
   isNextDay: boolean;
-  days?: number;
+  isAllShifts?: boolean;
+  isAllPackages?: boolean;
   totalCoins?: number;
 }
 
@@ -48,16 +94,34 @@ export default function PromotedAdView() {
 
   const [ads, setAds] = useState<Ad[]>([]);
   const [promoPackages, setPromoPackages] = useState<PromotionPackage[]>(DEFAULT_PROMO_PACKAGES);
+  const [allPackagesCoins, setAllPackagesCoins] = useState<number>(55);
   const [selectedAdId, setSelectedAdId] = useState<string>(adIdParam);
-  const [selectedShift, setSelectedShift] = useState<PromoShift>("morning");
-  const [selectedDays, setSelectedDays] = useState<number>(1);
+
+  // Shift selection states
+  const [selectedShift, setSelectedShift] = useState<PromoShift | null>(null);
+  const [allShifts, setAllShifts] = useState<boolean>(false);
+
+  // Package selection states
+  const [allPackages, setAllPackages] = useState<boolean>(false);
   const [selectedPackageId, setSelectedPackageId] = useState<string>("platinum-vip");
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [modalData, setModalData] = useState<PromoModalData | null>(null);
   const [countdown, setCountdown] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Active current IST shift
+  const [activeISTShift, setActiveISTShift] = useState<string>("morning");
+
+  useEffect(() => {
+    try {
+      setActiveISTShift(getCurrentShift());
+    } catch {
+      setActiveISTShift("morning");
+    }
+  }, []);
 
   useEffect(() => {
     if (!modalData) return;
@@ -104,6 +168,9 @@ export default function PromotedAdView() {
             return defaultPick ? defaultPick.id : prevId;
           });
         }
+        if (typeof data?.allPackagesCoins === "number" && data.allPackagesCoins > 0) {
+          setAllPackagesCoins(data.allPackagesCoins);
+        }
       })
       .catch((err) => {
         console.error("Failed to load promotion packages:", err);
@@ -148,22 +215,55 @@ export default function PromotedAdView() {
 
   const selectedTierInfo = getTierRankInfo(selectedPkg.tier, `${selectedPkg.id} ${selectedPkg.title}`);
   const selectedRankRange = selectedPkg.rankRange || selectedTierInfo.rankRange;
+
   const userCoins = Number(user?.coins ?? 0);
 
-  const baseCoinsPerDay = Math.max(1, Math.round(Number(selectedPkg.coinsCost || 5)));
-  const totalCoinsCost = baseCoinsPerDay * selectedDays;
+  // Determine whether shift selection has been made (either a single shift or all shifts)
+  const isShiftSelected = Boolean(allShifts || selectedShift);
+
+  // Shift multiplier: 4 for all 4 slots, 1 for single slot
+  const slotMultiplier = allShifts ? 4 : 1;
+
+  // Base coins: all-packages combo vs individual package
+  const baseCoins = allPackages
+    ? allPackagesCoins
+    : Math.max(1, Math.round(Number(selectedPkg.coinsCost || 5)));
+
+  // Total coins cost: baseCoins * slotMultiplier
+  const totalCoinsCost = baseCoins * slotMultiplier;
   const hasEnoughCoins = userCoins >= totalCoinsCost;
 
-  // Real-time projected shift timing and multi-day expiration calculation
-  const currentShiftTiming = calculateShiftTiming(selectedShift);
-  const projectedExpiration = calculatePromoExpiration(
-    { durationDays: selectedDays },
-    selectedShift
-  );
+  // Shift timing calculation
+  const previewShift = allShifts ? "all" : (selectedShift || "morning");
+  const currentShiftTiming = calculateShiftTiming(previewShift);
 
   const isAdPromoted = (ad: Ad) => {
     const raw = ad as unknown as Record<string, unknown>;
     return Boolean(raw.promoted || raw.isPromoted || raw.promotedUntil || raw.isVip);
+  };
+
+  const handleSelectSingleShift = (shiftId: PromoShift) => {
+    setSelectedShift(shiftId);
+    setAllShifts(false);
+    setErrorMessage(null);
+  };
+
+  const handleToggleAllShifts = () => {
+    setAllShifts((prev) => {
+      const next = !prev;
+      if (next) {
+        setSelectedShift(null);
+      } else {
+        setSelectedShift("morning");
+      }
+      return next;
+    });
+    setErrorMessage(null);
+  };
+
+  const handleToggleAllPackages = () => {
+    setAllPackages((prev) => !prev);
+    setErrorMessage(null);
   };
 
   const handlePromote = async () => {
@@ -172,9 +272,14 @@ export default function PromotedAdView() {
       return;
     }
 
+    if (!isShiftSelected) {
+      setErrorMessage("Please select a time slot or turn ON all slots.");
+      return;
+    }
+
     if (!hasEnoughCoins) {
       setErrorMessage(
-        `You need ${totalCoinsCost} coins (${baseCoinsPerDay} coins/day × ${selectedDays} days) for this package, but you only have ${userCoins} coins.`
+        `You need ${totalCoinsCost} coins for this promotion, but you only have ${userCoins} coins.`
       );
       return;
     }
@@ -182,17 +287,22 @@ export default function PromotedAdView() {
     setSubmitting(true);
     setErrorMessage(null);
 
+    const shiftPayload = allShifts ? "all" : (selectedShift || "morning");
+    const packageIdPayload = allPackages ? "all-packages" : selectedPkg.id;
+    const titlePayload = allPackages ? "👑 All Packages VIP Combo" : selectedPkg.title;
+
     try {
       const res = await authenticatedFetch(`/api/ads/${selectedAd._id}/promote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          packageId: selectedPkg.id,
-          title: selectedPkg.title,
-          durationDays: selectedDays,
+          packageId: packageIdPayload,
+          title: titlePayload,
           coinsCost: totalCoinsCost,
-          shift: selectedShift,
-          tier: selectedTierInfo.tier,
+          shift: shiftPayload,
+          allShifts,
+          allPackages,
+          tier: allPackages ? "platinum" : selectedTierInfo.tier,
         }),
       });
 
@@ -201,20 +311,19 @@ export default function PromotedAdView() {
         throw new Error(data.error || "Failed to promote ad.");
       }
 
-      const expiry = new Date(
-        data.promotedUntil || projectedExpiration
-      );
+      const expiry = new Date(data.promotedUntil || currentShiftTiming.promotedUntil);
       const start = new Date(data.promotedFrom || currentShiftTiming.promotedFrom);
 
       setModalData({
         adTitle: selectedAd.name || selectedAd.title || "Your Ad",
-        rankRange: data.rankRange || selectedRankRange,
-        shiftName: getShiftShortLabel(selectedShift),
+        rankRange: allPackages ? "Top Rank #1" : (data.rankRange || selectedRankRange),
+        shiftName: allShifts ? "All 4 Shifts (24h Full Day)" : getShiftShortLabel(selectedShift || "morning"),
         promotedFrom: start,
         promotedUntil: expiry,
         isCurrentShift: Boolean(data.isCurrentShift ?? currentShiftTiming.isCurrentShift),
         isNextDay: Boolean(data.isNextDay ?? currentShiftTiming.isNextDay),
-        days: selectedDays,
+        isAllShifts: allShifts,
+        isAllPackages: allPackages,
         totalCoins: totalCoinsCost,
       });
 
@@ -234,7 +343,7 @@ export default function PromotedAdView() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-red-100 pb-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-red-950">
                 Promote The Ad
               </h1>
@@ -242,6 +351,9 @@ export default function PromotedAdView() {
                 6-Hour Shift Rotation
               </span>
             </div>
+            <p className="mt-1 text-xs text-gray-500 font-medium">
+              Boost your ad with guaranteed top position ranking during your chosen shift or 24/7 full day.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -264,7 +376,7 @@ export default function PromotedAdView() {
                 Promotion Required to Publish on City Page
               </p>
               <p className="text-xs sm:text-sm text-amber-900 mt-0.5 leading-relaxed font-medium">
-                You have already used your account&apos;s 1 free ad allowance. To make this ad visible to clients in city search listings, select a promotion package below and activate it.
+                You have already used your account&apos;s 1 free ad allowance. To make this ad visible to clients in city search listings, select a time slot and promotion package below and activate it.
               </p>
             </div>
           </div>
@@ -293,7 +405,7 @@ export default function PromotedAdView() {
 
         {/* 1. Ad Selector Section */}
         <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
-          <h2 className="text-sm sm:text-base font-black text-red-950">
+          <h2 className="text-sm sm:text-base font-black text-red-950 uppercase tracking-wide">
             1. Select the Ad to Promote
           </h2>
 
@@ -388,302 +500,446 @@ export default function PromotedAdView() {
           )}
         </div>
 
-        {/* Shift Selection & Promotion Duration Section */}
+        {/* 2. Select Your Shift Section (4 Interactive Boxes + All Slots ON/OFF Button) */}
         <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-red-100 pb-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-red-100 pb-3">
             <div>
-              <h2 className="text-sm sm:text-base font-black text-red-950 uppercase tracking-wide">
-                2. Select Your Shift & Number of Days
-              </h2>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
-                Choose the 6-hour daily time slot and how many days you want your ad featured.
-              </p>
-            </div>
-            <span className="self-start sm:self-auto rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-900 border border-red-200">
-              📅 {selectedDays} {selectedDays === 1 ? "Day" : "Days"} Selected
-            </span>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Shift dropdown */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                Select Your Shift (6-Hour Daily Slot):
-              </label>
-              <select
-                value={selectedShift}
-                onChange={(e) => setSelectedShift(e.target.value as PromoShift)}
-                className="w-full rounded-xl border border-red-200 bg-pink-50/30 p-2.5 text-xs sm:text-sm font-bold text-red-950 focus:border-red-600 focus:outline-none"
-              >
-                <option value="morning">🌅 Morning Shift (06:00 AM – 12:00 PM • 6 Hours)</option>
-                <option value="afternoon">☀️ Afternoon Shift (12:00 PM – 06:00 PM • 6 Hours)</option>
-                <option value="evening">🌇 Evening Shift (06:00 PM – 12:00 AM Midnight • 6 Hours)</option>
-                <option value="night">🌙 Night Shift (12:00 AM Midnight – 06:00 AM • 6 Hours)</option>
-              </select>
-              <p className="text-[11px] text-gray-500 mt-1">
-                Your ad will stay on top during this shift every day.
-              </p>
-            </div>
-
-            {/* Days input */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                How Many Days to Show Your Ad on This Time Slot?
-              </label>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedDays((prev) => Math.max(1, prev - 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-pink-50/60 font-black text-red-950 hover:bg-pink-100 transition active:scale-95 cursor-pointer text-lg select-none"
-                  aria-label="Decrease days"
-                >
-                  &minus;
-                </button>
-                <div className="relative flex-1">
-                  <input
-                    type="number"
-                    min={1}
-                    max={90}
-                    value={selectedDays}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (isNaN(val) || val < 1) {
-                        setSelectedDays(1);
-                      } else {
-                        setSelectedDays(Math.min(90, val));
-                      }
-                    }}
-                    className="w-full rounded-xl border border-red-200 bg-pink-50/30 py-2 px-3 text-center text-sm font-black text-red-950 focus:border-red-600 focus:outline-none"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">
-                    {selectedDays === 1 ? "day" : "days"}
+                <h2 className="text-sm sm:text-base font-black text-red-950 uppercase tracking-wide">
+                  2. Select Your Shift (6-Hour Daily Slot)
+                </h2>
+                {allShifts && (
+                  <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-black text-emerald-900 uppercase tracking-wider">
+                    ⚡ 24h Full Day (4× Slots)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
+                Pick one of the 4 shifts below, or turn ON all slots for round-the-clock 24-hour top ranking.
+              </p>
+            </div>
+
+            {/* ON/OFF Switch for All Slots */}
+            <div className="flex items-center gap-3 self-start md:self-auto bg-pink-50/80 border border-red-200/80 rounded-2xl px-3.5 py-2">
+              <div className="text-left">
+                <div className="text-xs font-black text-red-950 flex items-center gap-1.5">
+                  <span>⚡ All Time Slots</span>
+                  <span className="rounded-md bg-red-100 px-1.5 py-0.2 text-[9px] font-bold text-red-800 uppercase">
+                    24 Hours
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDays((prev) => Math.min(90, prev + 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-pink-50/60 font-black text-red-950 hover:bg-pink-100 transition active:scale-95 cursor-pointer text-lg select-none"
-                  aria-label="Increase days"
-                >
-                  &#43;
-                </button>
+                <div className="text-[10px] text-gray-600 font-semibold">
+                  {allShifts ? "Active in all 4 shifts (4× rate)" : "Turn ON for 24h continuous coverage"}
+                </div>
               </div>
 
-              {/* Quick Select Preset Buttons */}
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] font-bold text-gray-500 mr-0.5">Quick select:</span>
-                {[1, 2, 3, 5, 7, 15, 30].map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setSelectedDays(d)}
-                    className={`rounded-lg px-2 py-0.5 text-xs font-bold transition cursor-pointer ${
-                      selectedDays === d
-                        ? "bg-[#450a0a] text-white shadow-xs"
-                        : "bg-pink-50 text-red-900 border border-red-200/80 hover:bg-pink-100"
-                    }`}
-                  >
-                    {d} {d === 1 ? "day" : "days"}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={allShifts}
+                onClick={handleToggleAllShifts}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  allShifts ? "bg-[#450a0a]" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    allShifts ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
           </div>
 
-          {/* Real-time Shift Schedule Note */}
-          <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/40 p-3 text-xs font-semibold">
-            {currentShiftTiming.isCurrentShift ? (
-              <p className="text-emerald-800 flex items-start gap-1.5 leading-relaxed">
-                <span className="text-sm shrink-0">🟢</span>
-                <span>
-                  <strong>Active Now:</strong> Your ad will post immediately and run during the{" "}
-                  <strong>{getShiftShortLabel(selectedShift)}</strong> shift every day for{" "}
-                  <strong className="underline">{selectedDays} {selectedDays === 1 ? "day" : "days"}</strong> until{" "}
-                  <strong className="underline">{formatDateTime(projectedExpiration)}</strong>.
-                </span>
-              </p>
-            ) : currentShiftTiming.isNextDay ? (
-              <p className="text-indigo-900 flex items-start gap-1.5 leading-relaxed">
-                <span className="text-sm shrink-0">📅</span>
-                <span>
-                  <strong>Shift has passed today:</strong> Scheduled to start tomorrow (
-                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedFrom)}</strong>) and run during the{" "}
-                  <strong>{getShiftShortLabel(selectedShift)}</strong> shift for{" "}
-                  <strong className="underline">{selectedDays} {selectedDays === 1 ? "day" : "days"}</strong> until{" "}
-                  <strong className="underline">{formatDateTime(projectedExpiration)}</strong>.
-                </span>
-              </p>
-            ) : (
-              <p className="text-amber-900 flex items-start gap-1.5 leading-relaxed">
-                <span className="text-sm shrink-0">🕒</span>
-                <span>
-                  <strong>Scheduled for Today:</strong> Starts today at{" "}
-                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and runs during the{" "}
-                  <strong>{getShiftShortLabel(selectedShift)}</strong> shift for{" "}
-                  <strong className="underline">{selectedDays} {selectedDays === 1 ? "day" : "days"}</strong> until{" "}
-                  <strong className="underline">{formatDateTime(projectedExpiration)}</strong>.
-                </span>
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Promotion Packages Grid */}
-        <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
-          <div className="border-b border-red-100 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <h2 className="text-sm sm:text-base font-black text-red-950 uppercase tracking-wide">
-                3. Choose a Promotion Package
-              </h2>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
-                Packages show 1-day rate. Total cost multiplies by your {selectedDays} selected {selectedDays === 1 ? "day" : "days"}.
-              </p>
-            </div>
-          </div>
-
+          {/* 4 Shift Slot Boxes */}
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {promoPackages.map((pkg) => {
-              const isSelected = selectedPackageId === pkg.id;
-              const tierInfo = getTierRankInfo(pkg.tier, `${pkg.id} ${pkg.title}`);
-              const dailyRate = Math.max(1, Math.round(Number(pkg.coinsCost || 5)));
-              const pkgTotalCoins = dailyRate * selectedDays;
+            {SHIFT_BOXES.map((shift) => {
+              const isBoxActiveNow = activeISTShift === shift.id;
+              const isSelected = allShifts || selectedShift === shift.id;
 
               return (
                 <div
-                  key={pkg.id}
-                  onClick={() => setSelectedPackageId(pkg.id)}
-                  className={`relative cursor-pointer rounded-2xl p-4 transition-all flex flex-col justify-between border ${
-                    isSelected
-                      ? "border-red-600 bg-pink-50/90 shadow-md ring-2 ring-red-500/20 scale-[1.01]"
-                      : "border-red-100 bg-white hover:border-red-300 hover:bg-pink-50/30"
+                  key={shift.id}
+                  onClick={() => handleSelectSingleShift(shift.id)}
+                  className={`relative cursor-pointer rounded-2xl p-4 transition-all flex flex-col justify-between border select-none ${
+                    allShifts
+                      ? "border-emerald-500 bg-emerald-50/50 shadow-xs ring-2 ring-emerald-500/20"
+                      : isSelected
+                      ? "border-red-600 bg-pink-50/90 shadow-md ring-2 ring-red-500/30 scale-[1.01]"
+                      : "border-red-100 bg-white hover:border-red-300 hover:bg-pink-50/30 hover:shadow-xs"
                   }`}
                 >
-                  {/* Badge */}
-                  {pkg.tag && (
-                    <span
-                      className={`absolute -top-2.5 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                        pkg.highlight
-                          ? "bg-red-700 text-white shadow-xs"
-                          : "bg-red-100 text-red-900 border border-red-200"
-                      }`}
-                    >
-                      {pkg.tag}
-                    </span>
-                  )}
-
-                  <div>
-                    {/* Tier badge */}
-                    <div className="mb-2">
-                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-2xs ${tierInfo.badgeClass}`}>
-                        {tierInfo.badge}
+                  {/* Top Badges */}
+                  <div className="flex items-center justify-between gap-1.5 mb-2">
+                    <span className="text-2xl">{shift.icon}</span>
+                    <div className="flex items-center gap-1">
+                      {isBoxActiveNow && (
+                        <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[9px] font-black text-emerald-800 uppercase tracking-wider animate-pulse">
+                          🟢 LIVE NOW
+                        </span>
+                      )}
+                      <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">
+                        {shift.hours}
                       </span>
                     </div>
-
-                    <h3 className="text-xs sm:text-sm font-black text-red-950 pr-4">
-                      {pkg.title}
-                    </h3>
-
-                    {/* Guaranteed Position Pill */}
-                    <div className="mt-2 inline-flex items-center gap-1 rounded-lg bg-red-100/80 px-2 py-0.5 text-[11px] font-extrabold text-red-950">
-                      <span>🎯 Position:</span>
-                      <span className="text-red-700 underline">{pkg.rankRange || tierInfo.rankRange}</span>
-                    </div>
-
-                    {/* 1-Day Amount Rate */}
-                    <div className="mt-3">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-black text-red-600">
-                          {dailyRate}
-                        </span>
-                        <span className="text-xs font-bold text-gray-600">Coins</span>
-                        <span className="rounded-md bg-pink-100 px-1.5 py-0.5 text-[10px] font-black text-red-900 uppercase">
-                          / 1 Day
-                        </span>
-                      </div>
-
-                      {/* Multiplied Total for Selected Days */}
-                      <div className="mt-2 rounded-xl bg-pink-100/60 border border-red-200/60 p-2 text-xs">
-                        <div className="flex items-center justify-between font-bold">
-                          <span className="text-gray-700">Total ({selectedDays} {selectedDays === 1 ? "day" : "days"}):</span>
-                          <span className="text-red-700 font-black text-sm">
-                            {pkgTotalCoins} Coins
-                          </span>
-                        </div>
-                        {selectedDays > 1 && (
-                          <p className="text-[10px] text-gray-500 mt-0.5 text-right font-semibold">
-                            ({dailyRate} coins &times; {selectedDays} days)
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <ul className="mt-3 space-y-1.5 text-[11px] text-gray-600">
-                      {(pkg.features || []).map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5">
-                          <span className="text-emerald-600 font-bold">✓</span>
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-red-100/60">
-                    <button
-                      type="button"
-                      className={`w-full rounded-xl py-1.5 text-xs font-bold transition ${
-                        isSelected
-                          ? "bg-[#450a0a] text-white shadow-xs"
-                          : "bg-pink-100/80 text-red-900 hover:bg-pink-200/80"
+                  {/* Shift Title & Hours */}
+                  <div>
+                    <h3 className="text-sm font-black text-red-950">
+                      {shift.name}
+                    </h3>
+                    <p className="mt-1 text-xs font-extrabold text-red-700">
+                      {shift.timeRange}
+                    </p>
+                    <p className="mt-1 text-[11px] text-gray-500 font-medium leading-snug">
+                      {shift.desc}
+                    </p>
+                  </div>
+
+                  {/* Selection Indicator Button */}
+                  <div className="mt-3 pt-2.5 border-t border-red-100/60 flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-bold text-gray-500">
+                      {allShifts
+                        ? "24h Pass"
+                        : isSelected
+                        ? "Selected"
+                        : "Click to select"}
+                    </span>
+                    <span
+                      className={`rounded-lg px-2 py-0.5 text-[11px] font-black transition ${
+                        allShifts
+                          ? "bg-emerald-600 text-white"
+                          : isSelected
+                          ? "bg-[#450a0a] text-white"
+                          : "bg-pink-100 text-red-900"
                       }`}
                     >
-                      {isSelected ? "Selected ✓" : "Select Package"}
-                    </button>
+                      {allShifts ? "✓ In 24h Pass" : isSelected ? "✓ Active" : "Select"}
+                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Action CTA */}
-          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-pink-50/40 border border-red-100 p-4">
-            <div>
-              <p className="text-xs text-gray-600 font-medium">Selected Package &amp; Total</p>
-              <p className="text-sm font-black text-red-950">
-                {selectedPkg.title} &bull; <span className="text-red-700 font-black">{totalCoinsCost} Coins</span>
-                <span className="text-xs text-gray-600 ml-1.5 font-bold">
-                  ({baseCoinsPerDay} coins/day &times; {selectedDays} {selectedDays === 1 ? "day" : "days"})
-                </span>
-              </p>
+          {/* Schedule Timing Banner */}
+          {isShiftSelected && (
+            <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/40 p-3 text-xs font-semibold">
+              {allShifts ? (
+                <p className="text-emerald-900 flex items-start gap-2 leading-relaxed">
+                  <span className="text-base shrink-0">⚡</span>
+                  <span>
+                    <strong>24-Hour Full Day Active:</strong> Your ad will run continuously across all 4 shifts (Morning, Afternoon, Evening, and Night) starting immediately until{" "}
+                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong> (24 hours full coverage).
+                  </span>
+                </p>
+              ) : currentShiftTiming.isCurrentShift ? (
+                <p className="text-emerald-800 flex items-start gap-1.5 leading-relaxed">
+                  <span className="text-sm shrink-0">🟢</span>
+                  <span>
+                    <strong>Active Now:</strong> Your ad will post immediately and run during the{" "}
+                    <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
+                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
+                  </span>
+                </p>
+              ) : currentShiftTiming.isNextDay ? (
+                <p className="text-indigo-900 flex items-start gap-1.5 leading-relaxed">
+                  <span className="text-sm shrink-0">📅</span>
+                  <span>
+                    <strong>Shift has passed today:</strong> Scheduled to start tomorrow at{" "}
+                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and run during the{" "}
+                    <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
+                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
+                  </span>
+                </p>
+              ) : (
+                <p className="text-amber-900 flex items-start gap-1.5 leading-relaxed">
+                  <span className="text-sm shrink-0">🕒</span>
+                  <span>
+                    <strong>Scheduled for Today:</strong> Starts today at{" "}
+                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and runs during the{" "}
+                    <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
+                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 3. Promotion Packages Section (Revealed when a time slot is chosen or All Slots is ON) */}
+        {!isShiftSelected ? (
+          <div className="mt-6 rounded-2xl border-2 border-dashed border-red-200 bg-pink-50/20 p-8 text-center animate-in fade-in duration-200">
+            <div className="text-3xl">⏰</div>
+            <h3 className="mt-2 text-sm sm:text-base font-black text-red-950">
+              Select a Time Slot Above to Reveal Promotion Packages
+            </h3>
+            <p className="mt-1 text-xs text-gray-600 max-w-md mx-auto font-medium">
+              Click one of the 4 shifts (Morning, Afternoon, Evening, Night) or toggle &ldquo;All Time Slots&rdquo; above to see promotion packages and activate your ad.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="border-b border-red-100 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <h2 className="text-sm sm:text-base font-black text-red-950 uppercase tracking-wide flex items-center gap-2">
+                  <span>3. Choose a Promotion Package</span>
+                  {allPackages && (
+                    <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-black text-amber-900 uppercase">
+                      👑 All-in-One Combo
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-gray-500 font-medium mt-0.5">
+                  {allShifts
+                    ? "Prices calculated for all 4 slots (24-Hour Full Day • 4× shift multiplier)."
+                    : "Prices calculated for your selected 6-hour shift."}
+                </p>
+              </div>
+
+              {/* ON/OFF Switch for All Packages Once */}
+              <div className="flex items-center gap-3 self-start md:self-auto bg-amber-50/80 border border-amber-200 rounded-2xl px-3.5 py-2">
+                <div className="text-left">
+                  <div className="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                    <span>👑 Select All Packages Once</span>
+                  </div>
+                  <div className="text-[10px] text-amber-800 font-semibold">
+                    {allPackages
+                      ? "All VIP tiers combined (Rank #1 Guaranteed)"
+                      : "Turn ON for All-in-One VIP Combo"}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={allPackages}
+                  onClick={handleToggleAllPackages}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    allPackages ? "bg-amber-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      allPackages ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
 
-            {hasEnoughCoins ? (
-              <button
-                type="button"
-                disabled={submitting || !selectedAd}
-                onClick={handlePromote}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] disabled:opacity-50 text-white px-6 py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-md cursor-pointer"
-              >
-                <span>🚀</span>
-                <span>{submitting ? "Promoting..." : `Promote for ${selectedDays} ${selectedDays === 1 ? "Day" : "Days"} (${totalCoinsCost} Coins)`}</span>
-              </button>
+            {/* If All Packages Toggle is ON */}
+            {allPackages ? (
+              <div className="mt-5 rounded-2xl border-2 border-amber-400 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-pink-50/80 p-5 sm:p-6 shadow-md relative overflow-hidden">
+                <div className="absolute -right-6 -top-6 w-28 h-28 bg-amber-300/20 rounded-full blur-xl pointer-events-none" />
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-400 px-3 py-0.5 text-xs font-black text-amber-950 uppercase tracking-wider">
+                      <span>👑 ALL-IN-ONE VIP COMBO</span>
+                    </div>
+                    <h3 className="mt-2 text-lg sm:text-xl font-black text-red-950">
+                      Maximum Visibility &bull; Guaranteed Rank #1
+                    </h3>
+                    <p className="mt-1 text-xs text-gray-700 font-medium max-w-xl">
+                      Includes all benefits of Platinum, Gold, Silver &amp; Bronze VIP tiers. Your ad gets absolute highest placement across city listings and search results.
+                    </p>
+                  </div>
+
+                  {/* Price display with calculation */}
+                  <div className="shrink-0 bg-white/90 border border-amber-300 rounded-2xl p-3.5 sm:text-right shadow-xs">
+                    <span className="text-[10px] font-black uppercase text-gray-500 tracking-wider block">
+                      Calculated Coin Price:
+                    </span>
+                    <div className="flex items-baseline sm:justify-end gap-1.5 mt-0.5">
+                      <span className="text-3xl font-black text-red-600">
+                        {totalCoinsCost}
+                      </span>
+                      <span className="text-xs font-bold text-gray-600">Coins</span>
+                    </div>
+                    {allShifts ? (
+                      <p className="text-[11px] font-extrabold text-red-700 mt-1">
+                        ({allPackagesCoins} coins &times; 4 shifts = {totalCoinsCost} coins)
+                      </p>
+                    ) : (
+                      <p className="text-[11px] font-extrabold text-red-700 mt-1">
+                        ({allPackagesCoins} coins for 1 shift)
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-amber-200/80 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs font-bold text-gray-800">
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl p-2.5 border border-amber-200/60">
+                    <span className="text-amber-600 text-base">🎯</span>
+                    <span>Guaranteed #1 Top Position</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl p-2.5 border border-amber-200/60">
+                    <span className="text-amber-600 text-base">⭐</span>
+                    <span>All VIP Badges Combined</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl p-2.5 border border-amber-200/60">
+                    <span className="text-amber-600 text-base">⚡</span>
+                    <span>Highest Call &amp; Chat Leads</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/70 rounded-xl p-2.5 border border-amber-200/60">
+                    <span className="text-amber-600 text-base">✨</span>
+                    <span>Glowing Featured Card Border</span>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-rose-700">
-                  Need {totalCoinsCost - userCoins} more coins
-                </span>
-                <Link
-                  href="/post-ad/buy-coin"
-                  className="rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] text-white px-4 py-2 text-xs font-bold transition"
-                >
-                  Buy Coins &rarr;
-                </Link>
+              /* Regular 4 Package Cards Grid */
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                {promoPackages.map((pkg) => {
+                  const isSelected = selectedPackageId === pkg.id;
+                  const tierInfo = getTierRankInfo(pkg.tier, `${pkg.id} ${pkg.title}`);
+                  const baseRate = Math.max(1, Math.round(Number(pkg.coinsCost || 5)));
+                  const pkgTotalCoins = baseRate * slotMultiplier;
+
+                  return (
+                    <div
+                      key={pkg.id}
+                      onClick={() => setSelectedPackageId(pkg.id)}
+                      className={`relative cursor-pointer rounded-2xl p-4 transition-all flex flex-col justify-between border ${
+                        isSelected
+                          ? "border-red-600 bg-pink-50/90 shadow-md ring-2 ring-red-500/20 scale-[1.01]"
+                          : "border-red-100 bg-white hover:border-red-300 hover:bg-pink-50/30"
+                      }`}
+                    >
+                      {/* Badge */}
+                      {pkg.tag && (
+                        <span
+                          className={`absolute -top-2.5 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                            pkg.highlight
+                              ? "bg-red-700 text-white shadow-xs"
+                              : "bg-red-100 text-red-900 border border-red-200"
+                          }`}
+                        >
+                          {pkg.tag}
+                        </span>
+                      )}
+
+                      <div>
+                        {/* Tier badge */}
+                        <div className="mb-2">
+                          <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-2xs ${tierInfo.badgeClass}`}>
+                            {tierInfo.badge}
+                          </span>
+                        </div>
+
+                        <h3 className="text-xs sm:text-sm font-black text-red-950 pr-4">
+                          {pkg.title}
+                        </h3>
+
+                        {/* Guaranteed Position Pill */}
+                        <div className="mt-2 inline-flex items-center gap-1 rounded-lg bg-red-100/80 px-2 py-0.5 text-[11px] font-extrabold text-red-950">
+                          <span>🎯 Position:</span>
+                          <span className="text-red-700 underline">{pkg.rankRange || tierInfo.rankRange}</span>
+                        </div>
+
+                        {/* Price Calculation */}
+                        <div className="mt-3">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl font-black text-red-600">
+                              {pkgTotalCoins}
+                            </span>
+                            <span className="text-xs font-bold text-gray-600">Coins</span>
+                            <span className="rounded-md bg-pink-100 px-1.5 py-0.5 text-[10px] font-black text-red-900 uppercase">
+                              {allShifts ? "24h Pass" : "1 Shift"}
+                            </span>
+                          </div>
+
+                          {allShifts ? (
+                            <p className="text-[10px] text-gray-500 mt-1 font-bold">
+                              ({baseRate} coins &times; 4 shifts = {pkgTotalCoins} coins)
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-gray-500 mt-1 font-semibold">
+                              ({baseRate} coins / 6-hour shift)
+                            </p>
+                          )}
+                        </div>
+
+                        <ul className="mt-3 space-y-1.5 text-[11px] text-gray-600">
+                          {(pkg.features || []).map((feat, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5">
+                              <span className="text-emerald-600 font-bold">✓</span>
+                              <span>{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-red-100/60">
+                        <button
+                          type="button"
+                          className={`w-full rounded-xl py-1.5 text-xs font-bold transition ${
+                            isSelected
+                              ? "bg-[#450a0a] text-white shadow-xs"
+                              : "bg-pink-100/80 text-red-900 hover:bg-pink-200/80"
+                          }`}
+                        >
+                          {isSelected ? "Selected ✓" : "Select Package"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
+
+            {/* Action CTA & Calculated Amount Summary Bar */}
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-pink-50/50 border border-red-200/80 p-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-gray-500 font-black">
+                  Promotion Summary &bull; Calculated Total
+                </p>
+                <div className="text-sm font-black text-red-950 mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <span>{allPackages ? "👑 All Packages VIP Combo" : selectedPkg.title}</span>
+                  <span className="text-gray-400">&bull;</span>
+                  <span className="text-red-700 font-black text-base">{totalCoinsCost} Coins</span>
+                  <span className="text-xs text-gray-600 font-bold">
+                    ({allShifts ? `${baseCoins} coins × 4 shifts (24h)` : `${totalCoinsCost} coins / 1 shift`})
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 font-medium mt-0.5">
+                  Slot: <strong className="text-red-950">{allShifts ? "All 4 Shifts (24 Hours Full Day)" : getShiftLabel(selectedShift || "morning")}</strong>
+                </p>
+              </div>
+
+              {hasEnoughCoins ? (
+                <button
+                  type="button"
+                  disabled={submitting || !selectedAd}
+                  onClick={handlePromote}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] disabled:opacity-50 text-white px-6 py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-md cursor-pointer"
+                >
+                  <span>🚀</span>
+                  <span>{submitting ? "Promoting..." : `Promote Ad Now (${totalCoinsCost} Coins)`}</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-rose-700">
+                    Need {totalCoinsCost - userCoins} more coins
+                  </span>
+                  <Link
+                    href="/post-ad/buy-coin"
+                    className="rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] text-white px-4 py-2 text-xs font-bold transition"
+                  >
+                    Buy Coins &rarr;
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </SectionPanel>
 
-      {/* Simple Promotion Expiration Popup Modal */}
+      {/* Promotion Success Modal */}
       {modalData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-red-200 text-center relative">
@@ -712,10 +968,11 @@ export default function PromotedAdView() {
             <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/50 p-4 space-y-2.5 text-left">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">
-                  Promotion Duration &amp; Cost:
+                  Promotion Cost Paid:
                 </p>
                 <p className="text-xs font-bold text-red-950 mt-0.5">
-                  {modalData.days || selectedDays} {((modalData.days || selectedDays) === 1) ? "Day" : "Days"} &bull; <span className="text-red-700 font-extrabold">{modalData.totalCoins || totalCoinsCost} Coins Paid</span>
+                  <span className="text-red-700 font-extrabold text-sm">{modalData.totalCoins || totalCoinsCost} Coins Paid</span>
+                  {modalData.isAllShifts ? " (All 4 Shifts • 24 Hours)" : " (6-Hour Shift)"}
                 </p>
               </div>
 
@@ -724,7 +981,7 @@ export default function PromotedAdView() {
                   Shift Timing:
                 </p>
                 <p className="text-xs font-bold text-red-950 mt-0.5">
-                  {modalData.shiftName} (6h daily) {modalData.isCurrentShift ? "• 🟢 Live Now" : modalData.isNextDay ? "• 📅 Tomorrow" : "• 🕒 Scheduled"}
+                  {modalData.shiftName} {modalData.isCurrentShift ? "• 🟢 Live Now" : modalData.isNextDay ? "• 📅 Tomorrow" : "• 🕒 Scheduled"}
                 </p>
               </div>
 
@@ -747,7 +1004,7 @@ export default function PromotedAdView() {
                   {modalData.isCurrentShift ? "Time Left in Shift:" : "Shift Length:"}
                 </span>
                 <span className="text-sm font-black text-emerald-700 font-mono">
-                  {modalData.isCurrentShift ? (countdown || "Calculating...") : "6 Hours"}
+                  {modalData.isCurrentShift ? (countdown || "Calculating...") : modalData.isAllShifts ? "24 Hours" : "6 Hours"}
                 </span>
               </div>
             </div>
