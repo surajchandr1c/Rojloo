@@ -59,7 +59,6 @@ const TABS: TabItem[] = [
 
 export default function YourAdsSection({
   ads,
-  userEmail,
   freeAdAllowance = 1,
   freeAdsUsed,
   hiddenAdsCount,
@@ -166,9 +165,6 @@ export default function YourAdsSection({
                   {actualFreeUsed > 0 ? "1 Free Ad Active" : "1 Available"}
                 </span>
               </div>
-              <p className="text-xs text-red-900/80 mt-1 leading-relaxed max-w-xl">
-                Each account can have <strong>1 free ad</strong> visible on the city page. Any additional ads you post must be promoted to be visible in city listings.
-              </p>
             </div>
           </div>
 
@@ -266,15 +262,6 @@ export default function YourAdsSection({
                       Ad Expire Date:{" "}
                       <strong className="text-red-950 font-bold">{expireShort}</strong>
                     </p>
-                    <p className="text-gray-600 font-medium truncate max-w-[220px] sm:max-w-sm">
-                      Published:{" "}
-                      <strong className="text-red-950 font-bold">{userEmail || "You"}</strong>
-                    </p>
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700">
-                        🛒 {isPromoted ? "Promotion active" : "Promotion to pay"}
-                      </span>
-                    </div>
                     <div className="pt-1 flex flex-wrap items-center gap-1.5">
                       <span
                         className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${
@@ -367,7 +354,7 @@ export default function YourAdsSection({
                               <p className="text-indigo-700 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
                                 <span>🔄</span>
                                 <span>
-                                  Returns to Top: {nextShiftFormatted} &bull; Expires: {promoExpiryFormatted}
+                                  Returns to Top: {nextShiftFormatted} &bull; {formatTimeRemaining(ad.promotedUntil)}
                                 </span>
                               </p>
                             </>
@@ -380,9 +367,6 @@ export default function YourAdsSection({
                               <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${tierInfo.badgeClass}`}>
                                 {tierInfo.badge}
                               </span>
-                              <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                                🟢 Live on Top
-                              </span>
                             </div>
                             <p className="font-bold text-red-950 text-xs">
                               Position: <span className="text-red-700 underline">{tierInfo.rankRange}</span>
@@ -391,10 +375,8 @@ export default function YourAdsSection({
                               Shift: {shiftLabel} &bull; <span className="text-emerald-700 font-bold">Active Now</span>
                             </p>
                             <p className="text-emerald-700 font-semibold text-[11px] flex flex-wrap items-center sm:justify-end gap-1 pt-0.5 leading-tight break-words">
-                              <span>🟢</span>
-                              <span>
-                                Live on Top &bull; Expires: {promoExpiryFormatted} ({formatTimeRemaining(ad.promotedUntil)})
-                              </span>
+                              <span>🕒</span>
+                              <span>{formatTimeRemaining(ad.promotedUntil)}</span>
                             </p>
                           </>
                         );
