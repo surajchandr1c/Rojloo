@@ -49,7 +49,15 @@ export async function generateMetadata({
       .filter(Boolean)
       .join(", ") || undefined;
 
-  const canonical = seo?.canonicalUrl?.trim() || `${siteConfig.url}/places/${slug}`;
+  let canonical = `${siteConfig.url}/places/${slug}`;
+  if (seo?.canonicalUrl?.trim()) {
+    try {
+      const parsed = new URL(seo.canonicalUrl.trim(), siteConfig.url);
+      canonical = `${siteConfig.url}${parsed.pathname}`;
+    } catch {
+      canonical = `${siteConfig.url}/places/${slug}`;
+    }
+  }
   const ogImage = seo?.featuredImage?.trim() || `${siteConfig.url}/rojlo.png`;
 
   return {

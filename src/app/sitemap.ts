@@ -1,21 +1,21 @@
 import type { MetadataRoute } from "next";
+
 import { siteConfig } from "@/lib/config/site";
 import { listAllCities } from "@/lib/models/city";
-import { listAllAds } from "@/lib/models/ad";
+import { listAllAds, filterVisibleCityAds } from "@/lib/models/ad";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = siteConfig.url;
+  const base = siteConfig.url.replace(/\/+$/, "");
   const now = new Date();
 
-  // 1. All public static informational & policy pages
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${base}/`,
+      url: base,
       lastModified: now,
       changeFrequency: "daily",
-      priority: 1.0,
+      priority: 1,
     },
     {
       url: `${base}/places`,
@@ -73,63 +73,114 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 2. City Directory Routes
-  let cityRoutes: MetadataRoute.Sitemap = [];
   const citySlugMap = new Map<string, string>();
+  const cityRoutes: MetadataRoute.Sitemap = [];
+  const seenCitySlugs = new Set<string>();
 
   try {
     const cities = await listAllCities();
+
     for (const city of cities) {
-      const slug = (city.slug ?? "").trim().toLowerCase();
-      if (!slug) continue;
+      if (!city) continue;
+      const rawSlug = String(city.slug ?? "").trim().toLowerCase();
+      const slug = rawSlug
+        .replace(/[^a-z0-9-]+/g, "")
+        .replace(/^-+|-+$/g, "");
+
+      if (!slug || seenCitySlugs.has(slug)) continue;
+      seenCitySlugs.add(slug);
 
       if (city.name) {
-        citySlugMap.set(city.name.trim().toLowerCase(), slug);
+        citySlugMap.set(
+          String(city.name).trim().toLowerCase(),
+          slug
+        );
       }
       citySlugMap.set(slug, slug);
 
       cityRoutes.push({
-        url: `${base}/places/${encodeURIComponent(slug)}`,
-        lastModified: city.createdAt ? new Date(city.createdAt) : now,
+        url: `${base}/places/${slug}`,
+        lastModified: getValidDate(city.createdAt, now),
         changeFrequency: "daily",
         priority: 0.8,
       });
     }
-  } catch (err) {
-    console.error("[sitemap] Failed to load cities:", err);
-    cityRoutes = [];
+  } catch (error) {
+    console.error("[sitemap] Failed to load cities:", error);
   }
 
-  // 3. Active Public Ad Routes
-  let adRoutes: MetadataRoute.Sitemap = [];
-  try {
-    const ads = await listAllAds(1000);
-    for (const ad of ads) {
-      if (!ad._id || (ad.status ?? "active") === "deleted") continue;
+  const adRoutes: MetadataRoute.Sitemap = [];
+  const seenAdUrls = new Set<string>();
 
-      const rawCity = (ad.city ?? "").trim().toLowerCase();
-      const citySlug =
-        citySlugMap.get(rawCity) ||
-        rawCity.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  try {
+    const allAds = await listAllAds(1000);
+    const activeAds = allAds.filter(
+      (ad) => String(ad.status ?? "active").toLowerCase() === "active"
+    );
+    const visibleAds = await filterVisibleCityAds(activeAds);
+
+    for (const ad of visibleAds) {
+      const id = String(ad._id ?? "").trim();
+      if (!id) continue;
+
+      const rawCity = String(ad.city ?? "")
+        .trim()
+        .toLowerCase();
+      if (!rawCity) continue;
+
+      // Only include ads where the city is recognized in the official city list
+      const citySlug = citySlugMap.get(rawCity);
       if (!citySlug) continue;
 
-      const lastMod = ad.updatedAt
-        ? new Date(ad.updatedAt)
-        : ad.createdAt
-        ? new Date(ad.createdAt)
-        : now;
+      const adUrl = `${base}/places/${citySlug}/${encodeURIComponent(id)}`;
+      if (seenAdUrls.has(adUrl.toLowerCase())) continue;
+      seenAdUrls.add(adUrl.toLowerCase());
 
       adRoutes.push({
-        url: `${base}/places/${encodeURIComponent(citySlug)}/${encodeURIComponent(ad._id)}`,
-        lastModified: lastMod,
+        url: adUrl,
+        lastModified: getValidDate(
+          ad.updatedAt ?? ad.createdAt,
+          now
+        ),
         changeFrequency: "weekly",
         priority: 0.6,
       });
     }
-  } catch (err) {
-    console.error("[sitemap] Failed to load ads:", err);
-    adRoutes = [];
+  } catch (error) {
+    console.error("[sitemap] Failed to load ads:", error);
   }
 
-  return [...staticRoutes, ...cityRoutes, ...adRoutes];
+  // Combine and deduplicate all routes by normalized lowercase URL
+  const allRoutes = [
+    ...staticRoutes,
+    ...cityRoutes,
+    ...adRoutes,
+  ];
+
+  const uniqueRoutesMap = new Map<string, MetadataRoute.Sitemap[number]>();
+  for (const route of allRoutes) {
+    const key = route.url.trim().toLowerCase();
+    if (!uniqueRoutesMap.has(key)) {
+      uniqueRoutesMap.set(key, route);
+    }
+  }
+
+  return Array.from(uniqueRoutesMap.values());
+}
+
+function getValidDate(
+  value: unknown,
+  fallback: Date
+): Date {
+  if (!value) return fallback;
+
+  const date = new Date(String(value));
+  const time = date.getTime();
+
+  // Reject invalid timestamps and Unix epoch dates (1970-01-01)
+  if (Number.isNaN(time) || time <= 86400000) {
+    return fallback;
+  }
+
+  return date;
 }

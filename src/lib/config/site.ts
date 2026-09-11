@@ -1,12 +1,21 @@
-const rawUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "https://rojlo.in");
+// Canonical domain for this project is strictly https://rojloo.vercel.app
+const CANONICAL_SITE_URL = "https://rojloo.vercel.app";
 
-const siteUrl = rawUrl.trim().replace(/\/+$/, "");
+function resolveSiteUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (
+    envUrl &&
+    envUrl.startsWith("https://") &&
+    !envUrl.includes("localhost") &&
+    !envUrl.includes("rojlo.in") &&
+    !envUrl.includes("://rojlo.vercel.app")
+  ) {
+    return envUrl.replace(/\/+$/, "");
+  }
+  return CANONICAL_SITE_URL;
+}
+
+const siteUrl = resolveSiteUrl();
 
 export const siteConfig = {
   name: "Rojlo",
