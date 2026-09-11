@@ -11,12 +11,19 @@ export async function getCoinPackages(): Promise<CoinPackage[]> {
   const store = await readStore();
   const packages = (store.coinPackages ?? []) as CoinPackage[];
   const isInitialized = Boolean((store as Record<string, unknown>).coinPackagesInitialized);
+  const version = Number((store as Record<string, unknown>).coinPackagesVersion || 0);
 
-  if (isInitialized || packages.length > 0) {
+  // If old 10 packages version or empty, migrate to new 5 standard packages
+  const isOldDefault =
+    version < 2 ||
+    packages.length === 10 ||
+    packages.some((p) => Number(p.coins) === 15 || Number(p.coins) === 1850);
+
+  if (!isOldDefault && isInitialized && packages.length > 0) {
     return [...packages].sort((a, b) => Number(a.coins) - Number(b.coins));
   }
 
-  // Initial seeding on fresh database
+  // Initial seeding or upgrade to standard 5 packages
   const seeded = DEFAULT_PACKAGES.map((pkg, index) => ({
     _id: `coin-package-${index + 1}`,
     ...pkg,
@@ -26,6 +33,7 @@ export async function getCoinPackages(): Promise<CoinPackage[]> {
 
   store.coinPackages = seeded;
   (store as Record<string, unknown>).coinPackagesInitialized = true;
+  (store as Record<string, unknown>).coinPackagesVersion = 2;
   await writeStore(store);
 
   return seeded;
@@ -66,6 +74,7 @@ export async function saveCoinPackages(
   const store = await readStore();
   store.coinPackages = cleaned;
   (store as Record<string, unknown>).coinPackagesInitialized = true;
+  (store as Record<string, unknown>).coinPackagesVersion = 2;
 
   await writeStore(store);
   invalidateStoreCache();

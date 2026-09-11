@@ -62,8 +62,8 @@ export default function BuyCoinSection() {
         </div>
       </div>
 
-      {/* Grid of Coin Packages: 1 col on phone, 2-3 cols on tab, 4-5 cols on desktop */}
-      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
+      {/* Grid of Coin Packages: 1 col on phone, 2-3 cols on tab, 5 cols on desktop */}
+      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
         {packages.map((pkg) => {
           const hasDiscount =
             pkg.originalPrice && Number(pkg.originalPrice) > Number(pkg.price);
@@ -93,7 +93,7 @@ export default function BuyCoinSection() {
                     )}
                   </div>
 
-                  {pkg.discount && (
+                  {pkg.discount && pkg.discount.trim() !== "—" && pkg.discount.trim() !== "-" && (
                     <span className="inline-block rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[9px] font-bold text-amber-900 shrink-0">
                       {pkg.discount}
                     </span>

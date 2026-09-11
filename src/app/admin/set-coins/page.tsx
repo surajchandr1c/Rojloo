@@ -141,7 +141,7 @@ export default function SetCoinsPage() {
   async function handleResetToDefaults() {
     if (
       !window.confirm(
-        "Reset coin packages to the default 10 packages from the PDF and save to the Buy Coins page?"
+        "Reset coin packages to the standard 5 packages and save to the Buy Coins page?"
       )
     ) {
       return;
@@ -167,7 +167,7 @@ export default function SetCoinsPage() {
         return;
       }
 
-      setSuccess("Reset to PDF 10 coin packages and saved successfully.");
+      setSuccess("Reset to standard 5 coin packages and saved successfully.");
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
       }
@@ -227,7 +227,7 @@ export default function SetCoinsPage() {
           <div>
             <h1 className="text-3xl font-black text-red-950">Set Coin Packages</h1>
             <p className="mt-1 text-sm text-red-900">
-              Manage the coin packages shown on the public Buy Coins page. Configured with the PDF coin amounts and discounts.
+              Manage the coin packages shown on the public Buy Coins page.
             </p>
           </div>
 
@@ -235,9 +235,9 @@ export default function SetCoinsPage() {
             <button
               type="button"
               onClick={handleResetToDefaults}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs"
+              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
             >
-              Reset to PDF 10 Packages
+              Reset to Default 5 Packages
             </button>
             <button
               type="button"
@@ -255,6 +255,72 @@ export default function SetCoinsPage() {
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
+        </div>
+
+        {/* Standard Packages Reference Table */}
+        <div className="mt-4 rounded-2xl border border-red-200 bg-white p-4 shadow-xs overflow-x-auto">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <h3 className="text-xs font-black uppercase tracking-wider text-red-950">
+              Standard Package Pricing Reference
+            </h3>
+            <span className="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+              Base: ₹8.00 / Coin
+            </span>
+          </div>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-red-100 text-gray-500 font-bold">
+                <th className="pb-1.5 pr-3">Package</th>
+                <th className="pb-1.5 pr-3">Coins</th>
+                <th className="pb-1.5 pr-3">Original Price</th>
+                <th className="pb-1.5 pr-3">Discount</th>
+                <th className="pb-1.5 pr-3">Final Price</th>
+                <th className="pb-1.5">Discount Tag</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-red-50 font-medium text-red-950">
+              <tr>
+                <td className="py-1.5 pr-3 font-black text-red-900">#1</td>
+                <td className="py-1.5 pr-3 font-bold">99</td>
+                <td className="py-1.5 pr-3">₹792</td>
+                <td className="py-1.5 pr-3">0%</td>
+                <td className="py-1.5 pr-3 font-black text-emerald-800">₹792</td>
+                <td className="py-1.5 text-gray-400">—</td>
+              </tr>
+              <tr>
+                <td className="py-1.5 pr-3 font-black text-red-900">#2</td>
+                <td className="py-1.5 pr-3 font-bold">145</td>
+                <td className="py-1.5 pr-3">₹1,160</td>
+                <td className="py-1.5 pr-3">3%</td>
+                <td className="py-1.5 pr-3 font-black text-emerald-800">₹1,125</td>
+                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">3% DISCOUNT</span></td>
+              </tr>
+              <tr>
+                <td className="py-1.5 pr-3 font-black text-red-900">#3</td>
+                <td className="py-1.5 pr-3 font-bold">200</td>
+                <td className="py-1.5 pr-3">₹1,600</td>
+                <td className="py-1.5 pr-3">6%</td>
+                <td className="py-1.5 pr-3 font-black text-emerald-800">₹1,504</td>
+                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">6% DISCOUNT</span></td>
+              </tr>
+              <tr>
+                <td className="py-1.5 pr-3 font-black text-red-900">#4</td>
+                <td className="py-1.5 pr-3 font-bold">350</td>
+                <td className="py-1.5 pr-3">₹2,800</td>
+                <td className="py-1.5 pr-3">9%</td>
+                <td className="py-1.5 pr-3 font-black text-emerald-800">₹2,548</td>
+                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">9% DISCOUNT</span></td>
+              </tr>
+              <tr>
+                <td className="py-1.5 pr-3 font-black text-red-900">#5</td>
+                <td className="py-1.5 pr-3 font-bold">870</td>
+                <td className="py-1.5 pr-3">₹6,960</td>
+                <td className="py-1.5 pr-3">12%</td>
+                <td className="py-1.5 pr-3 font-black text-emerald-800">₹6,125</td>
+                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">12% DISCOUNT</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         {error && (
@@ -299,7 +365,7 @@ export default function SetCoinsPage() {
                         min="1"
                         value={pkg.coins || ""}
                         onChange={(e) => updatePackage(index, "coins", e.target.value)}
-                        placeholder="e.g. 30"
+                        placeholder="e.g. 99"
                         className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 font-bold outline-none focus:border-red-400"
                         required
                       />
@@ -313,7 +379,7 @@ export default function SetCoinsPage() {
                         step="0.01"
                         value={pkg.price || ""}
                         onChange={(e) => updatePackage(index, "price", e.target.value)}
-                        placeholder="e.g. 1316"
+                        placeholder="e.g. 792"
                         className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 font-bold outline-none focus:border-red-400"
                         required
                       />
@@ -329,18 +395,7 @@ export default function SetCoinsPage() {
                         step="0.01"
                         value={pkg.originalPrice || ""}
                         onChange={(e) => updatePackage(index, "originalPrice", e.target.value)}
-                        placeholder="e.g. 1410"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-red-800">Breakdown / Bonus</label>
-                      <input
-                        type="text"
-                        value={pkg.breakdown || ""}
-                        onChange={(e) => updatePackage(index, "breakdown", e.target.value)}
-                        placeholder="e.g. 28 + 2 Free"
+                        placeholder="e.g. 792"
                         className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
                       />
                     </div>
@@ -351,18 +406,18 @@ export default function SetCoinsPage() {
                         type="text"
                         value={pkg.discount || ""}
                         onChange={(e) => updatePackage(index, "discount", e.target.value)}
-                        placeholder="e.g. 7% DISCOUNT"
+                        placeholder="e.g. 3% DISCOUNT"
                         className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-red-800">Label</label>
+                      <label className="block font-semibold text-red-800">Breakdown / Bonus</label>
                       <input
                         type="text"
-                        value={pkg.label || ""}
-                        onChange={(e) => updatePackage(index, "label", e.target.value)}
-                        placeholder="e.g. Popular"
+                        value={pkg.breakdown || ""}
+                        onChange={(e) => updatePackage(index, "breakdown", e.target.value)}
+                        placeholder="e.g. Optional note"
                         className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
                       />
                     </div>
