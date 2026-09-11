@@ -7,7 +7,7 @@ import AdGallery from "@/components/ads/AdGallery";
 import ContactActions from "@/components/ads/ContactActions";
 import { Card, SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { getPublicAdById, listAdsByCity } from "@/lib/models/ad";
+import { getPublicAdById, listAdsByCity, isAdVisiblePublicly, type Ad } from "@/lib/models/ad";
 import { getCityBySlug } from "@/lib/models/city";
 import { DEFAULT_SERVICE_RATES } from "@/components/post-ad/types";
 import { AdDetailSkeleton } from "@/components/skeletons/places-skeletons";
@@ -93,6 +93,7 @@ async function AdContent({ location, id }: { location: string; id: string }) {
 
   const cityName = cityInfo?.name ?? location;
   const isDeleted = (ad.status ?? "active") === "deleted";
+  const isPubliclyVisible = await isAdVisiblePublicly(ad as unknown as Ad);
   const serviceRates =
     ad.serviceRates && ad.serviceRates.length > 0
       ? ad.serviceRates
@@ -163,6 +164,18 @@ async function AdContent({ location, id }: { location: string; id: string }) {
             <p className="mt-4 rounded-[1rem] bg-pink-100 p-4 text-red-900">
               This ad has been deleted. The information below is archived.
             </p>
+          )}
+
+          {!isPubliclyVisible && !isDeleted && (
+            <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs sm:text-sm text-amber-950 font-medium flex items-start gap-2.5">
+              <span className="text-base shrink-0">⚠️</span>
+              <div>
+                <p className="font-bold">Listing Hidden from City Search Results</p>
+                <p className="text-amber-900 text-xs mt-0.5">
+                  This ad is currently not visible on the {cityName} city page because only 1 free ad is active per account. The owner must promote this ad to display it publicly.
+                </p>
+              </div>
+            </div>
           )}
 
           <Eyebrow>{ad.category}</Eyebrow>

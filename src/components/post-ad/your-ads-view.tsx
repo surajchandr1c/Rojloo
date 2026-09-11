@@ -16,12 +16,31 @@ export default function YourAdsView() {
   const { user } = useAuth();
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState<{
+    freeAdsUsed: number;
+    freeAdAllowance: number;
+    freeAdId: string | null;
+    hiddenAdsCount: number;
+  }>({
+    freeAdsUsed: 0,
+    freeAdAllowance: 1,
+    freeAdId: null,
+    hiddenAdsCount: 0,
+  });
 
   const loadAds = useCallback(() => {
     setLoading(true);
     authenticatedFetch("/api/ads")
       .then((r) => r.json())
-      .then((data) => setAds(data.ads ?? []))
+      .then((data) => {
+        setAds(data.ads ?? []);
+        setMeta({
+          freeAdsUsed: data.freeAdsUsed ?? 0,
+          freeAdAllowance: data.freeAdAllowance ?? 1,
+          freeAdId: data.freeAdId ?? null,
+          hiddenAdsCount: data.hiddenAdsCount ?? 0,
+        });
+      })
       .catch(() => setAds([]))
       .finally(() => setLoading(false));
   }, []);
@@ -32,7 +51,15 @@ export default function YourAdsView() {
     authenticatedFetch("/api/ads")
       .then((r) => r.json())
       .then((data) => {
-        if (active) setAds(data.ads ?? []);
+        if (active) {
+          setAds(data.ads ?? []);
+          setMeta({
+            freeAdsUsed: data.freeAdsUsed ?? 0,
+            freeAdAllowance: data.freeAdAllowance ?? 1,
+            freeAdId: data.freeAdId ?? null,
+            hiddenAdsCount: data.hiddenAdsCount ?? 0,
+          });
+        }
       })
       .catch(() => {
         if (active) setAds([]);
@@ -106,6 +133,9 @@ export default function YourAdsView() {
           <YourAdsSection
             ads={validAds}
             userEmail={user?.email}
+            freeAdAllowance={meta.freeAdAllowance}
+            freeAdsUsed={meta.freeAdsUsed}
+            hiddenAdsCount={meta.hiddenAdsCount}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onToggleStatus={handleToggleStatus}

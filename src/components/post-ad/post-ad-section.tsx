@@ -21,6 +21,8 @@ export default function PostAdSection({
   uploadProgress = 0,
   uploadingCount = 0,
   editingId,
+  hasExistingFreeAd = false,
+  existingFreeAdTitle = "",
   onImageChange,
   onRemoveImage,
   onSubmit,
@@ -33,6 +35,8 @@ export default function PostAdSection({
   uploadProgress?: number;
   uploadingCount?: number;
   editingId: string | null;
+  hasExistingFreeAd?: boolean;
+  existingFreeAdTitle?: string;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: (index: number) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -199,6 +203,35 @@ export default function PostAdSection({
 
   return (
     <form onSubmit={onSubmit} className="space-y-8">
+      {/* Free Ad Policy Banner */}
+      {!editingId && (
+        <div
+          className={`rounded-2xl border p-4 sm:p-5 shadow-xs ${
+            hasExistingFreeAd
+              ? "border-amber-300 bg-amber-50 text-amber-950"
+              : "border-emerald-300 bg-emerald-50 text-emerald-950"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-xl sm:text-2xl mt-0.5 shrink-0">
+              {hasExistingFreeAd ? "⚠️" : "🎁"}
+            </span>
+            <div className="space-y-1">
+              <h4 className="font-bold text-sm sm:text-base text-red-950">
+                {hasExistingFreeAd
+                  ? "Free Ad Limit (1/1) Used"
+                  : "1 Free Ad Included"}
+              </h4>
+              <p className="text-xs sm:text-sm leading-relaxed text-red-900">
+                {hasExistingFreeAd
+                  ? `You already have an active free ad ${existingFreeAdTitle ? `("${existingFreeAdTitle}")` : ""} visible on the city page. You can post this additional ad, but you will need to promote it with a VIP package for it to be visible on the city page.`
+                  : "Every account can post 1 free ad! This ad will be published and immediately visible in city listings without requiring payment."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="space-y-4 rounded-2xl border-2 border-red-300 p-4 sm:p-5">
         <h3 className="text-lg font-bold text-red-950">Personal Information</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -683,7 +716,13 @@ export default function PostAdSection({
       </div>
 
       <Button type="submit" variant="solid" fullWidth disabled={formLoading} className="!text-white">
-        {formLoading ? "Saving..." : editingId ? "Update Ad" : "Post Ad"}
+        {formLoading
+          ? "Saving..."
+          : editingId
+          ? "Update Ad"
+          : hasExistingFreeAd
+          ? "Create Ad & Choose Promotion →"
+          : "Post Free Ad"}
       </Button>
     </form>
   );

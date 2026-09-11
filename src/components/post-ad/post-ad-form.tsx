@@ -38,33 +38,43 @@ export default function PostAdForm({ adId }: { adId?: string }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingCount, setUploadingCount] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(adId ?? null);
+  const [hasExistingFreeAd, setHasExistingFreeAd] = useState(false);
+  const [existingFreeAdTitle, setExistingFreeAdTitle] = useState("");
 
   useEffect(() => {
-    if (!adId) return;
     fetch("/api/ads")
       .then((r) => r.json())
       .then((data) => {
-        const ad = (data.ads ?? []).find((a: Ad) => a._id === adId);
-        if (ad) {
-          setForm({
-            name: ad.name,
-            title: ad.title ?? "",
-            age: ad.age ?? "",
-            category: ad.category,
-            toServe: ad.toServe ?? [],
-            placeOfService: ad.placeOfService ?? [],
-            state: ad.state ?? "",
-            city: ad.city,
-            pincode: ad.pincode ?? "",
-            phone: ad.phone,
-            whatsapp: ad.whatsapp ?? "",
-            telegram: ad.telegram ?? "",
-            about: ad.about ?? "",
-            images: ad.images ?? [],
-            serviceRates: ad.serviceRates ?? DEFAULT_SERVICE_RATES,
-            termsAccepted: false,
-          });
-          setEditingId(ad._id ?? null);
+        const adsList: Ad[] = data.ads ?? [];
+        const free = adsList.find((a: Ad) => a.isFreeAd);
+        if (free) {
+          setHasExistingFreeAd(true);
+          setExistingFreeAdTitle(free.title || free.name || "Ad");
+        }
+
+        if (adId) {
+          const ad = adsList.find((a: Ad) => a._id === adId);
+          if (ad) {
+            setForm({
+              name: ad.name,
+              title: ad.title ?? "",
+              age: ad.age ?? "",
+              category: ad.category,
+              toServe: ad.toServe ?? [],
+              placeOfService: ad.placeOfService ?? [],
+              state: ad.state ?? "",
+              city: ad.city,
+              pincode: ad.pincode ?? "",
+              phone: ad.phone,
+              whatsapp: ad.whatsapp ?? "",
+              telegram: ad.telegram ?? "",
+              about: ad.about ?? "",
+              images: ad.images ?? [],
+              serviceRates: ad.serviceRates ?? DEFAULT_SERVICE_RATES,
+              termsAccepted: false,
+            });
+            setEditingId(ad._id ?? null);
+          }
         }
       })
       .catch(() => {});
@@ -181,7 +191,11 @@ export default function PostAdForm({ adId }: { adId?: string }) {
         return;
       }
 
-      router.push("/post-ad/your-ads");
+      if (!editingId && data.requiresPromotion && data.ad?._id) {
+        router.push(`/post-ad/your-ads/promoted?adId=${data.ad._id}&required=1`);
+      } else {
+        router.push("/post-ad/your-ads");
+      }
     } catch {
       setFormError("Network error. Please try again.");
       setFormLoading(false);
@@ -216,6 +230,8 @@ export default function PostAdForm({ adId }: { adId?: string }) {
             uploadProgress={uploadProgress}
             uploadingCount={uploadingCount}
             editingId={editingId}
+            hasExistingFreeAd={hasExistingFreeAd}
+            existingFreeAdTitle={existingFreeAdTitle}
             onImageChange={handleImageChange}
             onRemoveImage={removeImage}
             onSubmit={handleSubmit}

@@ -78,6 +78,9 @@ export type Ad = {
   promoPackage?: string;
   promoTier?: string;
   promoShift?: string;
+  isFreeAd?: boolean;
+  isVisibleOnCityPage?: boolean;
+  requiresPromotion?: boolean;
 };
 
 export type AdForm = {

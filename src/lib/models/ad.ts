@@ -4,7 +4,7 @@ import { getDb } from "../db";
 import { readStore, writeStore } from "../persist";
 import type { ServiceRate } from "@/components/post-ad/types";
 import { getActiveVipPhoneOverride, VipPhoneOverride } from "./vip";
-import { sortAdsWithPromotions } from "../promo-shifts";
+import { sortAdsWithPromotions, isAdPromotionActive } from "../promo-shifts";
 
 export interface Ad {
   _id?: string;
@@ -32,6 +32,9 @@ export interface Ad {
   promoPackage?: string;
   promoTier?: string;
   promoShift?: string;
+  isFreeAd?: boolean;
+  isVisibleOnCityPage?: boolean;
+  requiresPromotion?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -99,7 +102,7 @@ async function collectionListByCity(city: string): Promise<Ad[]> {
   const docs = await collection
     .find({
       city: { $regex: new RegExp(`^${escaped}$`, "i") },
-      status: { $ne: "deleted" },
+      status: { $nin: ["deleted", "suspended"] },
     })
     .sort({ createdAt: -1 })
     .limit(200)
@@ -108,7 +111,8 @@ async function collectionListByCity(city: string): Promise<Ad[]> {
 }
 
 function isVisibleAd(ad: Ad): boolean {
-  return (ad.status ?? "active") !== "deleted";
+  const status = ad.status ?? "active";
+  return status !== "deleted" && status !== "suspended";
 }
 
 function mergeAds(...groups: Ad[][]): Ad[] {
@@ -172,15 +176,147 @@ async function getAdsCollection(): Promise<Collection<Document> | null> {
   return collection;
 }
 
+/**
+ * For a given list of user IDs, determine each user's single free ad ID.
+ * A user's free ad is their earliest created active (non-deleted, non-suspended) ad
+ * that is NOT actively promoted.
+ */
+export async function getFreeAdIdsForUsers(userIds: string[]): Promise<Set<string>> {
+  const cleanIds = Array.from(new Set(userIds.map((id) => String(id).trim()).filter(Boolean)));
+  if (cleanIds.length === 0) return new Set();
+
+  const freeAdIds = new Set<string>();
+  const [collection, store] = await Promise.all([getAdsCollection(), readStore()]);
+  const now = new Date();
+
+  // 1. Check MongoDB
+  let mongoDocs: Ad[] = [];
+  if (collection) {
+    try {
+      const results = await collection
+        .find({
+          userId: { $in: cleanIds },
+          status: { $nin: ["deleted", "suspended"] },
+        })
+        .sort({ createdAt: 1 })
+        .toArray();
+      mongoDocs = results.map((d) => d as unknown as Ad);
+    } catch (err) {
+      console.error("[ad] getFreeAdIdsForUsers find failed:", err);
+    }
+  }
+
+  // 2. Memory store ads
+  const memoryAds = (store.ads ?? [])
+    .filter(
+      (ad) =>
+        cleanIds.includes(String(ad.userId ?? "")) &&
+        (ad.status ?? "active") !== "deleted" &&
+        ad.status !== "suspended"
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt as string | Date).getTime() -
+        new Date(b.createdAt as string | Date).getTime()
+    ) as unknown as Ad[];
+
+  // Merge ads per user, preserving order by createdAt ascending
+  const mergedMap = new Map<string, Ad>();
+  for (const ad of [...mongoDocs, ...memoryAds]) {
+    if (ad._id && !mergedMap.has(String(ad._id))) {
+      mergedMap.set(String(ad._id), ad);
+    }
+  }
+
+  const allAds = Array.from(mergedMap.values()).sort(
+    (a, b) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+
+  const seenUsers = new Set<string>();
+  for (const ad of allAds) {
+    if (!ad._id || !ad.userId) continue;
+    const uid = String(ad.userId);
+    if (seenUsers.has(uid)) continue;
+
+    // Check if this ad has an active promotion
+    const hasActivePromotion = isAdPromotionActive(ad, now);
+    if (!hasActivePromotion) {
+      // The earliest active unpromoted ad gets the 1 free ad slot!
+      freeAdIds.add(String(ad._id));
+      seenUsers.add(uid);
+    }
+  }
+
+  return freeAdIds;
+}
+
+export async function getUserFreeAdId(userId: string): Promise<string | null> {
+  const freeSet = await getFreeAdIdsForUsers([userId]);
+  const first = Array.from(freeSet)[0];
+  return first ?? null;
+}
+
+export async function filterVisibleCityAds(ads: Ad[]): Promise<Ad[]> {
+  const unpromotedCandidates = ads.filter((ad) => !isAdPromotionActive(ad));
+  const userIds = Array.from(
+    new Set(unpromotedCandidates.map((a) => String(a.userId || "")).filter(Boolean))
+  );
+  const freeAdIds = await getFreeAdIdsForUsers(userIds);
+
+  return ads.filter((ad) => {
+    // If actively promoted, always visible in city listings
+    if (isAdPromotionActive(ad)) return true;
+    // For unpromoted ads: only the user's 1 designated free ad is visible
+    if (!ad._id) return false;
+    return freeAdIds.has(String(ad._id));
+  });
+}
+
+export async function isAdVisiblePublicly(ad: Ad): Promise<boolean> {
+  if (!ad._id) return false;
+  const status = ad.status ?? "active";
+  if (status === "deleted" || status === "suspended") {
+    return false;
+  }
+  if (isAdPromotionActive(ad)) {
+    return true;
+  }
+  const freeAdId = await getUserFreeAdId(ad.userId);
+  return Boolean(freeAdId && String(freeAdId) === String(ad._id));
+}
+
 export async function listAds(userId: string): Promise<PublicAd[]> {
   const collection = await getAdsCollection();
   const memoryAds = await memoryListByUser(userId);
+  let allUserAds: Ad[] = [];
   if (!collection) {
-    return memoryAds.map((a) => toPublicAd(a));
+    allUserAds = memoryAds;
+  } else {
+    const docs = await collectionListByUser(userId);
+    allUserAds = mergeAds(docs, memoryAds);
   }
 
-  const docs = await collectionListByUser(userId);
-  return mergeAds(docs, memoryAds).map((a) => toPublicAd(a));
+  // Determine user's single free ad ID
+  const freeAdId = await getUserFreeAdId(userId);
+
+  return allUserAds.map((a) => {
+    const isPromoted = isAdPromotionActive(a);
+    const isFreeAd = Boolean(a._id && freeAdId && String(a._id) === String(freeAdId));
+    const isDeletedOrSuspended =
+      (a.status ?? "active") === "deleted" || a.status === "suspended";
+    const isVisibleOnCityPage =
+      !isDeletedOrSuspended && (isPromoted || isFreeAd);
+    const requiresPromotion =
+      !isDeletedOrSuspended && !isPromoted && !isFreeAd;
+
+    return toPublicAd({
+      ...a,
+      isFreeAd,
+      isVisibleOnCityPage,
+      requiresPromotion,
+    });
+  });
 }
 
 export async function listAdsByCity(city: string): Promise<PublicAd[]> {
@@ -204,13 +340,15 @@ export async function listAdsByCity(city: string): Promise<PublicAd[]> {
     ) as unknown as Ad[];
 
   if (!collection) {
-    const sortedMemoryAds = sortAdsWithPromotions(memoryAds);
+    const visibleMemoryAds = await filterVisibleCityAds(memoryAds);
+    const sortedMemoryAds = sortAdsWithPromotions(visibleMemoryAds);
     return sortedMemoryAds.map((a) => toPublicAd(a, override));
   }
 
   const docs = await collectionListByCity(city);
   const merged = mergeAds(docs, memoryAds);
-  const sorted = sortAdsWithPromotions(merged);
+  const visibleAds = await filterVisibleCityAds(merged);
+  const sorted = sortAdsWithPromotions(visibleAds);
   return sorted.map((a) => toPublicAd(a, override));
 }
 
@@ -249,34 +387,30 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
   const collection = await getAdsCollection();
   const counts: Record<string, number> = {};
 
+  let allAds: Ad[] = [];
   if (collection) {
     try {
-      const results = await collection
-        .aggregate([
-          { $match: { status: { $ne: "deleted" } } },
-          { $group: { _id: { $toLower: "$city" }, count: { $sum: 1 } } },
-        ])
+      const docs = await collection
+        .find({ status: { $nin: ["deleted", "suspended"] } })
         .toArray();
-
-      for (const item of results) {
-        if (item._id && typeof item.count === "number") {
-          counts[String(item._id).trim().toLowerCase()] = item.count;
-        }
-      }
-      adCountsCache = { counts, expiresAt: now + AD_COUNTS_CACHE_TTL_MS };
-      return counts;
+      allAds = docs.map((d) => d as unknown as Ad);
     } catch (err) {
-      console.error("[ad] getAdCountsByCity aggregation failed:", err);
+      console.error("[ad] getAdCountsByCity find failed:", err);
     }
   }
 
   const store = await readStore();
-  for (const ad of store.ads) {
-    if (isVisibleAd(ad as unknown as Ad) && ad.city) {
+  const memoryAds = (store.ads ?? []).filter((ad) => isVisibleAd(ad as unknown as Ad)) as unknown as Ad[];
+  const merged = mergeAds(allAds, memoryAds);
+  const visible = await filterVisibleCityAds(merged);
+
+  for (const ad of visible) {
+    if (ad.city) {
       const key = String(ad.city).trim().toLowerCase();
       counts[key] = (counts[key] ?? 0) + 1;
     }
   }
+
   adCountsCache = { counts, expiresAt: now + AD_COUNTS_CACHE_TTL_MS };
   return counts;
 }
@@ -640,6 +774,9 @@ export function toPublicAd(ad: Ad, override?: VipPhoneOverride | null): PublicAd
     promoPackage: ad.promoPackage,
     promoTier: ad.promoTier,
     promoShift: ad.promoShift,
+    isFreeAd: ad.isFreeAd,
+    isVisibleOnCityPage: ad.isVisibleOnCityPage,
+    requiresPromotion: ad.requiresPromotion,
     createdAt: ad.createdAt,
     updatedAt: ad.updatedAt,
   };

@@ -10,7 +10,16 @@ export async function GET(request: NextRequest) {
   }
 
   const ads = await listAds(userId);
-  return NextResponse.json({ ads });
+  const freeAd = ads.find((a) => a.isFreeAd);
+  const hiddenAds = ads.filter((a) => a.requiresPromotion);
+
+  return NextResponse.json({
+    ads,
+    freeAdAllowance: 1,
+    freeAdsUsed: freeAd ? 1 : 0,
+    freeAdId: freeAd?._id ?? null,
+    hiddenAdsCount: hiddenAds.length,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -112,6 +121,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ad: updated });
   }
 
+  // Check if user already has an active free ad
+  const existingAds = await listAds(userId);
+  const hasActiveFreeAd = existingAds.some((a) => a.isFreeAd);
+  const requiresPromotion = hasActiveFreeAd;
+
   const ad = await createAd({
     userId,
     name: String(name).trim(),
@@ -136,5 +150,15 @@ export async function POST(request: NextRequest) {
     serviceRates: rateList,
   });
 
-  return NextResponse.json({ ad }, { status: 201 });
+  return NextResponse.json(
+    {
+      ad,
+      isFreeAd: !requiresPromotion,
+      requiresPromotion,
+      message: requiresPromotion
+        ? "Ad created successfully. Because you already have 1 free ad, you must promote this ad for it to appear on the city page."
+        : "Ad created and published as your free ad!",
+    },
+    { status: 201 }
+  );
 }

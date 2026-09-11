@@ -60,6 +60,9 @@ const TABS: TabItem[] = [
 export default function YourAdsSection({
   ads,
   userEmail,
+  freeAdAllowance = 1,
+  freeAdsUsed,
+  hiddenAdsCount,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -67,6 +70,9 @@ export default function YourAdsSection({
 }: {
   ads: Ad[];
   userEmail?: string;
+  freeAdAllowance?: number;
+  freeAdsUsed?: number;
+  hiddenAdsCount?: number;
   onEdit: (ad: Ad) => void;
   onDelete: (ad: Ad) => void;
   onToggleStatus?: (ad: Ad) => void;
@@ -101,6 +107,24 @@ export default function YourAdsSection({
   // All ads: all non-deleted ads
   const allAds = ads.filter((ad) => (ad.status ?? "active") !== "deleted");
 
+  const actualFreeUsed =
+    freeAdsUsed !== undefined
+      ? freeAdsUsed
+      : ads.some((a) => a.isFreeAd)
+      ? 1
+      : 0;
+
+  const actualHiddenCount =
+    hiddenAdsCount !== undefined
+      ? hiddenAdsCount
+      : ads.filter(
+          (a) =>
+            (a.status ?? "active") !== "deleted" &&
+            a.status !== "suspended" &&
+            !isAdPromotionActive(a) &&
+            !a.isFreeAd
+        ).length;
+
   let currentList: Ad[] = [];
   let countLabel = "active ads";
 
@@ -120,6 +144,55 @@ export default function YourAdsSection({
 
   return (
     <section className="rounded-2xl bg-white p-3 sm:p-6 md:p-7 shadow-xs w-full max-w-full overflow-hidden box-border">
+      {/* Free Ad Policy & Allowance Summary Banner */}
+      <div className="mb-6 rounded-2xl border border-red-200/90 bg-pink-50/50 p-4 sm:p-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl mt-0.5 shrink-0">
+              {actualFreeUsed > 0 ? "✅" : "🎁"}
+            </span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-bold text-red-950 text-sm sm:text-base">
+                  Free Ad Allowance: {actualFreeUsed} / {freeAdAllowance} Used
+                </h3>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                    actualFreeUsed > 0
+                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                      : "bg-pink-200 text-red-900 border border-red-300"
+                  }`}
+                >
+                  {actualFreeUsed > 0 ? "1 Free Ad Active" : "1 Available"}
+                </span>
+              </div>
+              <p className="text-xs text-red-900/80 mt-1 leading-relaxed max-w-xl">
+                Each account can have <strong>1 free ad</strong> visible on the city page. Any additional ads you post must be promoted to be visible in city listings.
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 sm:self-center">
+            <Link
+              href="/post-ad/your-ads/promoted"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-red-950 px-4 py-2 text-xs font-bold !text-white hover:bg-red-900 transition shadow-xs"
+            >
+              <span>🚀</span>
+              <span>Promote Ads</span>
+            </Link>
+          </div>
+        </div>
+
+        {actualHiddenCount > 0 && (
+          <div className="mt-3.5 flex items-center gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
+            <span className="text-base shrink-0">⚠️</span>
+            <p className="font-medium">
+              <strong>{actualHiddenCount} ad(s) currently hidden from the city page:</strong> Because you already have 1 free ad, you must promote additional ads to display them to customers in city search results.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Navigation Tabs */}
       <div className="flex items-center gap-4 sm:gap-8 border-b border-red-100 pb-2 text-sm sm:text-base overflow-x-auto no-scrollbar scroll-smooth w-full">
         {TABS.map((tab) => {
@@ -202,16 +275,32 @@ export default function YourAdsSection({
                         🛒 {isPromoted ? "Promotion active" : "Promotion to pay"}
                       </span>
                     </div>
-                    <div className="pt-1">
+                    <div className="pt-1 flex flex-wrap items-center gap-1.5">
                       <span
-                        className={`inline-block rounded-full px-3 py-0.5 text-xs font-bold ${
+                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${
                           ad.status === "suspended"
                             ? "border border-amber-300 bg-amber-50 text-amber-800"
                             : "border border-emerald-300 bg-emerald-50 text-emerald-800"
                         }`}
                       >
-                        {ad.status === "suspended" ? "Suspended" : "Actives"}
+                        {ad.status === "suspended" ? "Suspended" : "Active"}
                       </span>
+
+                      {ad.status !== "suspended" && (
+                        isPromoted ? (
+                          <span className="inline-block rounded-full border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-900">
+                            🟢 Visible (Promoted)
+                          </span>
+                        ) : ad.isFreeAd ? (
+                          <span className="inline-block rounded-full border border-blue-300 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-900">
+                            🆓 1 Free Ad (Visible on City Page)
+                          </span>
+                        ) : (
+                          <span className="inline-block rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-800">
+                            🔴 Hidden (Promotion Required)
+                          </span>
+                        )
+                      )}
                     </div>
                   </div>
 
@@ -395,19 +484,33 @@ export default function YourAdsSection({
                   </div>
                 </div>
 
-                {/* Free Ad Banner (shown for non-promoted ads) */}
+                {/* Free Ad Banner / Hidden Warning */}
                 {!isPromoted && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-pink-50/50 p-2.5 sm:p-3 text-xs text-red-950 w-full min-w-0 box-border">
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-900 text-[11px] font-bold text-white">
-                      i
+                  ad.isFreeAd ? (
+                    <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/70 p-2.5 sm:p-3 text-xs text-blue-950 w-full min-w-0 box-border">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-800 text-[11px] font-bold text-white">
+                        ✓
+                      </div>
+                      <div className="min-w-0 break-words">
+                        <p className="font-bold text-blue-950">Active Free Ad (Visible on City Page)</p>
+                        <p className="text-blue-900/80 text-[11px] mt-0.5">
+                          This is your 1 free ad visible to visitors in {ad.city}. Promote to unlock VIP ranking and display all photos!
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 break-words">
-                      <p className="font-bold text-red-950">Free ad</p>
-                      <p className="text-red-900/80 text-[11px] mt-0.5">
-                        Only 1 image will be visible unless you activate a promo &amp; unlock other images
-                      </p>
+                  ) : (
+                    <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-2.5 sm:p-3 text-xs text-rose-950 w-full min-w-0 box-border">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-700 text-[11px] font-bold text-white">
+                        !
+                      </div>
+                      <div className="min-w-0 break-words">
+                        <p className="font-bold text-rose-950">Hidden from City Page • Promotion Required</p>
+                        <p className="text-rose-900/90 text-[11px] mt-0.5 font-medium">
+                          Only 1 free ad is allowed per account. This ad is <strong>NOT visible in {ad.city} search listings</strong> until you promote it with a VIP package.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )
                 )}
 
                 {/* Bottom Actions Bar */}
@@ -417,7 +520,7 @@ export default function YourAdsSection({
                     className="flex items-center justify-center gap-1 text-red-700 hover:text-red-950 transition py-1.5 px-1 sm:px-2.5 rounded-lg hover:bg-pink-100/60 text-[11px] sm:text-xs font-bold"
                   >
                     <span>👁</span>
-                    <span>VIEW</span>
+                    <span>VIEW {!isPromoted && !ad.isFreeAd ? "(HIDDEN)" : ""}</span>
                   </Link>
 
                   <button
@@ -449,37 +552,39 @@ export default function YourAdsSection({
                 </div>
 
                 {/* Promote The Ad Action Button */}
-                <Link
-                  href={ad._id ? `/post-ad/your-ads/promoted?adId=${ad._id}` : "/post-ad/your-ads/promoted"}
-                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition shadow-xs w-full text-center ${
-                    activeTab === "free" || activeTab === "not_published" || !isPromoted
-                      ? "bg-[#450a0a] hover:bg-[#7f1d1d] !text-white text-white shadow-md border border-transparent"
-                      : "border border-red-200 bg-pink-50/70 hover:bg-pink-100 text-red-900"
-                  }`}
-                  style={
-                    activeTab === "free" || activeTab === "not_published" || !isPromoted
-                      ? { color: "#ffffff" }
-                      : undefined
-                  }
-                >
-                  <span>{isPromoted && activeTab === "promoted" ? "⭐" : "🚀"}</span>
-                  <span
-                    className={
-                      activeTab === "free" || activeTab === "not_published" || !isPromoted
-                        ? "!text-white text-white font-bold"
-                        : "text-red-900 font-bold"
-                    }
-                    style={
-                      activeTab === "free" || activeTab === "not_published" || !isPromoted
-                        ? { color: "#ffffff" }
-                        : undefined
-                    }
+                {!isPromoted && !ad.isFreeAd ? (
+                  <Link
+                    href={ad._id ? `/post-ad/your-ads/promoted?adId=${ad._id}&required=1` : "/post-ad/your-ads/promoted"}
+                    className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition shadow-md w-full text-center bg-rose-800 hover:bg-rose-900 !text-white text-white border border-rose-900"
+                    style={{ color: "#ffffff" }}
                   >
-                    {isPromoted && activeTab === "promoted"
-                      ? "Promoted Ad (Manage / Re-promote)"
-                      : "Promote the ad"}
-                  </span>
-                </Link>
+                    <span>🚀</span>
+                    <span className="!text-white text-white font-bold">
+                      Promote Now to Make Visible on City Page
+                    </span>
+                  </Link>
+                ) : !isPromoted ? (
+                  <Link
+                    href={ad._id ? `/post-ad/your-ads/promoted?adId=${ad._id}` : "/post-ad/your-ads/promoted"}
+                    className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition shadow-xs w-full text-center bg-[#450a0a] hover:bg-[#7f1d1d] !text-white text-white shadow-md border border-transparent"
+                    style={{ color: "#ffffff" }}
+                  >
+                    <span>⭐</span>
+                    <span className="!text-white text-white font-bold">
+                      Boost with VIP Promotion (Top Ranking)
+                    </span>
+                  </Link>
+                ) : (
+                  <Link
+                    href={ad._id ? `/post-ad/your-ads/promoted?adId=${ad._id}` : "/post-ad/your-ads/promoted"}
+                    className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition shadow-xs w-full text-center border border-red-200 bg-pink-50/70 hover:bg-pink-100 text-red-900"
+                  >
+                    <span>⭐</span>
+                    <span className="text-red-900 font-bold">
+                      Promoted Ad (Manage / Re-promote)
+                    </span>
+                  </Link>
+                )}
               </article>
             );
           })}

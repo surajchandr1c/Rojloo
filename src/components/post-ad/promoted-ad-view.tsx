@@ -246,6 +246,21 @@ export default function PromotedAdView() {
           </div>
         </div>
 
+        {/* Promotion Required Notice */}
+        {searchParams.get("required") === "1" && (
+          <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs sm:text-sm font-semibold text-amber-950 flex items-start gap-3 shadow-xs">
+            <span className="text-xl shrink-0 mt-0.5">⚠️</span>
+            <div>
+              <p className="font-bold text-sm sm:text-base text-red-950">
+                Promotion Required to Publish on City Page
+              </p>
+              <p className="text-xs sm:text-sm text-amber-900 mt-0.5 leading-relaxed font-medium">
+                You have already used your account&apos;s 1 free ad allowance. To make this ad visible to clients in city search listings, select a promotion package below and activate it.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Notifications */}
         {successMessage && (
           <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 p-3.5 text-xs sm:text-sm font-semibold text-emerald-900">
