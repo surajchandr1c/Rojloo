@@ -31,6 +31,7 @@ type StoreData = {
   coinPackagesVersion?: number;
   allPackagesCoins?: number;
   deletedCities: string[];
+  deletedStates?: string[];
   admins: StoreRecord[];
   upiRotation: {
     index: number;
@@ -72,6 +73,7 @@ function defaults(): StoreData {
     coinPackagesVersion: 2,
     allPackagesCoins: 55,
     deletedCities: [],
+    deletedStates: [],
     admins: [],
     upiRotation: {
       index: 0,
@@ -104,6 +106,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
     coinPackagesVersion: raw.coinPackagesVersion !== undefined ? Number(raw.coinPackagesVersion) : 2,
     allPackagesCoins: raw.allPackagesCoins !== undefined && Number(raw.allPackagesCoins) > 0 ? Number(raw.allPackagesCoins) : 55,
     deletedCities: raw.deletedCities ?? [],
+    deletedStates: raw.deletedStates ?? [],
     admins: raw.admins ?? [],
     upiRotation: raw.upiRotation ?? {
       index: 0,

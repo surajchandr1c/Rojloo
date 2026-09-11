@@ -127,9 +127,27 @@ export async function createLocalArea(data: {
 }
 
 export async function deleteLocalArea(id: string): Promise<boolean> {
+  const trimmed = id.trim();
+  if (!trimmed) return false;
+
   const store = await readStore();
   store.localAreas = (store.localAreas ?? []) as unknown as typeof store.localAreas;
-  const index = store.localAreas.findIndex((a) => (a as LocalAreaRecord)._id === id);
+  const trimmedLower = trimmed.toLowerCase();
+  const slugified = slugify(trimmed);
+
+  const index = store.localAreas.findIndex((a) => {
+    const area = a as LocalAreaRecord;
+    const aId = String(area._id ?? "");
+    const aSlug = String(area.slug ?? "").toLowerCase();
+    const aName = String(area.name ?? "").trim().toLowerCase();
+    return (
+      aId === trimmed ||
+      aSlug === trimmedLower ||
+      aSlug === slugified ||
+      aName === trimmedLower
+    );
+  });
+
   if (index < 0) return false;
 
   store.localAreas.splice(index, 1);

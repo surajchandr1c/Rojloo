@@ -38,8 +38,8 @@ function fuzzyMatch(target: string, query: string): boolean {
   if (t.includes(q)) return true;
 
   // 2. Token / word-level match (all words in query must be in target)
-  const tokens = q.split(/\s+/).filter(Boolean);
-  if (tokens.length > 1 && tokens.every((token) => t.includes(token))) {
+  const tokens = q.split(/[\s\-_,]+/).filter(Boolean);
+  if (tokens.length > 0 && tokens.every((token) => t.includes(token))) {
     return true;
   }
 
@@ -73,7 +73,7 @@ function fuzzyMatch(target: string, query: string): boolean {
   const maxDistance = q.length <= 3 ? 0 : q.length <= 5 ? 1 : 2;
   if (lev(t.slice(0, q.length), q) <= maxDistance) return true;
 
-  const targetWords = t.split(/\s+/).filter(Boolean);
+  const targetWords = t.split(/[\s\-_,]+/).filter(Boolean);
   for (const word of targetWords) {
     if (lev(word.slice(0, q.length), q) <= maxDistance) return true;
     if (lev(word, q) <= maxDistance) return true;
@@ -100,17 +100,24 @@ export default function AdminCities() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Debounced Fuzzy Filtered Cities
+  // Debounced Fuzzy Filtered Cities (checks name, state, slug, region, country)
   const filteredCities = useMemo(() => {
     const q = debouncedSearch.trim();
     if (!q) return allCities;
-    return allCities.filter((c) => fuzzyMatch(c.name, q));
+    return allCities.filter(
+      (c) =>
+        fuzzyMatch(c.name, q) ||
+        (c.state && fuzzyMatch(c.state, q)) ||
+        (c.slug && fuzzyMatch(c.slug, q)) ||
+        (c.region && fuzzyMatch(c.region, q)) ||
+        (c.country && fuzzyMatch(c.country, q))
+    );
   }, [allCities, debouncedSearch]);
 
   const selectableIds = useMemo(
     () =>
       filteredCities
-        .map((city) => city._id)
+        .map((city) => city._id || city.slug)
         .filter((id): id is string => Boolean(id)),
     [filteredCities]
   );
@@ -138,7 +145,7 @@ export default function AdminCities() {
         const cities = citiesData.cities ?? [];
         const seen = new Set<string>();
         const deduped = cities.filter((c: DynamicCity) => {
-          const key = c.slug;
+          const key = `${c.source}-${c._id || c.slug}-${c.state || ""}`;
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
@@ -171,7 +178,7 @@ export default function AdminCities() {
   async function remove(id?: string) {
     if (!id) return;
     if (!confirm("Delete this city?")) return;
-    setAllCities((prev) => prev.filter((c) => c._id !== id));
+    setAllCities((prev) => prev.filter((c) => (c._id || c.slug) !== id));
     setSelectedIds((prev) => {
       const next = new Set(prev);
       next.delete(id);
@@ -222,7 +229,7 @@ export default function AdminCities() {
       return;
     }
     const idSet = new Set(ids);
-    setAllCities((prev) => prev.filter((c) => !c._id || !idSet.has(c._id)));
+    setAllCities((prev) => prev.filter((c) => !idSet.has(c._id || c.slug)));
     setSelectedIds(new Set());
     try {
       const res = await fetch("/api/admin/cities", {
@@ -243,7 +250,7 @@ export default function AdminCities() {
 
   async function deleteAll() {
     const ids = allCities
-      .map((c) => c._id)
+      .map((c) => c._id || c.slug)
       .filter((id): id is string => Boolean(id));
     if (ids.length === 0) return;
     if (!confirm(`Delete ALL ${ids.length} cities? This cannot be undone.`)) {
@@ -347,18 +354,19 @@ export default function AdminCities() {
             </thead>
             <tbody>
               {filteredCities.map((city) => {
+                const cityIdentifier = city._id || city.slug;
                 const seo = seoMap[city.slug];
                 return (
                   <tr
-                    key={`${city.source}-${city._id}`}
+                    key={`${city.source}-${cityIdentifier}`}
                     className="border-t border-red-50"
                   >
                     <td className="px-4 py-3">
-                      {city._id && (
+                      {cityIdentifier && (
                         <input
                           type="checkbox"
-                          checked={selectedIds.has(city._id)}
-                          onChange={() => toggleCity(city._id!)}
+                          checked={selectedIds.has(cityIdentifier)}
+                          onChange={() => toggleCity(cityIdentifier)}
                           aria-label={`Select ${city.name}`}
                         />
                       )}
@@ -409,7 +417,7 @@ export default function AdminCities() {
                         </Link>
                         <button
                           type="button"
-                          onClick={() => remove(city._id)}
+                          onClick={() => remove(cityIdentifier)}
                           className="rounded-full bg-[#450a0a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#7f1d1d]"
                         >
                           Delete City

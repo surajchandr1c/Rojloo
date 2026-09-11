@@ -24,22 +24,43 @@ function slugify(value: string): string {
 
 export async function listCities(): Promise<CityRecord[]> {
   const store = await readStore();
-  const deleted = new Set(store.deletedCities ?? []);
+  const deleted = new Set(
+    (store.deletedCities ?? []).map((s: string) => s.trim().toLowerCase())
+  );
+  const deletedStates = new Set(
+    (store.deletedStates ?? []).map((s: string) => s.trim().toLowerCase())
+  );
   const cities = (store.cities ?? []) as unknown as CityRecord[];
 
-  const bySlug = new Map<string, CityRecord>();
+  const result: CityRecord[] = [];
+  const seen = new Set<string>();
+
   for (const c of cities) {
-    if (!c.slug || deleted.has(c.slug)) continue;
-    const prev = bySlug.get(c.slug);
-    if (
-      !prev ||
-      new Date(c.createdAt).getTime() > new Date(prev.createdAt).getTime()
-    ) {
-      bySlug.set(c.slug, c);
+    if (!c.name) continue;
+    const slug = c.slug || slugify(c.name);
+    const stateName = (c.state ?? "").trim().toLowerCase();
+    const stateSlug = slugify(c.state ?? "");
+
+    // Skip if city slug is deleted
+    if (deleted.has(slug.toLowerCase())) continue;
+    // Skip if state is deleted
+    if (stateName && (deletedStates.has(stateName) || deletedStates.has(stateSlug))) {
+      continue;
     }
+
+    // Deduplicate by composite key: state + slug
+    const uniqueKey = `${stateSlug}:${slug.toLowerCase()}`;
+    if (seen.has(uniqueKey)) continue;
+    seen.add(uniqueKey);
+
+    result.push({
+      ...c,
+      _id: c._id || `mem_city_${slug}`,
+      slug,
+    });
   }
 
-  return Array.from(bySlug.values()).sort((a, b) => {
+  return result.sort((a, b) => {
     const ta = new Date(a.createdAt).getTime();
     const tb = new Date(b.createdAt).getTime();
     return tb - ta;
@@ -48,15 +69,33 @@ export async function listCities(): Promise<CityRecord[]> {
 
 export async function isCityDeleted(slug: string): Promise<boolean> {
   const store = await readStore();
-  return (store.deletedCities ?? []).includes(slug);
+  const sLower = slug.trim().toLowerCase();
+  return (store.deletedCities ?? []).some(
+    (del: string) => del.trim().toLowerCase() === sLower
+  );
 }
 
 export const getCityBySlug = cache(async function (
   slug: string
 ): Promise<CityRecord | null> {
-  const staticCity = cityPlaces.find((c) => c.slug === slug);
+  const store = await readStore();
+  const deletedStates = new Set(
+    (store.deletedStates ?? []).map((s: string) => s.trim().toLowerCase())
+  );
+
+  if (await isCityDeleted(slug)) return null;
+
+  const staticCity = cityPlaces.find(
+    (c) => c.slug === slug || c.slug.toLowerCase() === slug.toLowerCase()
+  );
   if (staticCity) {
-    if (await isCityDeleted(slug)) return null;
+    if (
+      staticCity.state &&
+      (deletedStates.has(staticCity.state.trim().toLowerCase()) ||
+        deletedStates.has(slugify(staticCity.state)))
+    ) {
+      return null;
+    }
     return {
       _id: staticCity.slug,
       name: staticCity.name,
@@ -69,30 +108,59 @@ export const getCityBySlug = cache(async function (
     };
   }
 
-  const custom = (await listCities()).find((c) => c.slug === slug);
+  const custom = (await listCities()).find(
+    (c) => c.slug.toLowerCase() === slug.toLowerCase()
+  );
   return custom ?? null;
 });
 
 export async function getCustomCityBySlug(
   slug: string
 ): Promise<CityRecord | null> {
-  return (await listCities()).find((c) => c.slug === slug) ?? null;
+  return (
+    (await listCities()).find(
+      (c) => c.slug.toLowerCase() === slug.toLowerCase()
+    ) ?? null
+  );
 }
 
 export type CombinedCity = CityRecord & { source: "Static" | "Custom" };
 
 export async function listAllCities(): Promise<CombinedCity[]> {
   const store = await readStore();
-  const deleted = new Set(store.deletedCities ?? []);
+  const deleted = new Set(
+    (store.deletedCities ?? []).map((s: string) => s.trim().toLowerCase())
+  );
+  const deletedStates = new Set(
+    (store.deletedStates ?? []).map((s: string) => s.trim().toLowerCase())
+  );
 
   const customCities: CombinedCity[] = (await listCities()).map((c) => ({
     ...c,
     source: "Custom" as const,
   }));
-  const customSlugs = new Set(customCities.map((c) => c.slug));
+  const customCityKeys = new Set(
+    customCities.map(
+      (c) => `${slugify(c.state ?? "")}:${c.slug.toLowerCase()}`
+    )
+  );
 
   const staticCities: CombinedCity[] = cityPlaces
-    .filter((c) => !deleted.has(c.slug) && !customSlugs.has(c.slug))
+    .filter((c) => {
+      const slug = c.slug.toLowerCase();
+      const stateName = (c.state ?? "").trim().toLowerCase();
+      const stateSlug = slugify(c.state ?? "");
+      if (deleted.has(slug)) return false;
+      if (
+        stateName &&
+        (deletedStates.has(stateName) || deletedStates.has(stateSlug))
+      ) {
+        return false;
+      }
+      const key = `${stateSlug}:${slug}`;
+      if (customCityKeys.has(key)) return false;
+      return true;
+    })
     .map((c) => ({
       _id: c.slug,
       name: c.name,
@@ -121,18 +189,57 @@ export async function createCity(data: {
   const trimmedState = data.state?.trim() ?? "";
   const baseSlug = slugify(trimmedName) || `city-${Date.now()}`;
 
+  // If city in another state already took baseSlug, disambiguate with state slug
+  const slugTakenByOtherState =
+    (store.cities as unknown as CityRecord[]).some(
+      (c) =>
+        c.slug === baseSlug &&
+        c.state?.trim().toLowerCase() !== trimmedState.toLowerCase()
+    ) ||
+    cityPlaces.some(
+      (c) =>
+        c.slug === baseSlug &&
+        c.state?.trim().toLowerCase() !== trimmedState.toLowerCase()
+    );
+
+  const slug =
+    slugTakenByOtherState && trimmedState
+      ? `${baseSlug}-${slugify(trimmedState)}`
+      : baseSlug;
+
+  // Un-delete city from deletedCities if it was deleted
+  const slugLower = slug.toLowerCase();
+  const baseLower = baseSlug.toLowerCase();
+  store.deletedCities = (store.deletedCities ?? []).filter((s: string) => {
+    const val = s.trim().toLowerCase();
+    return val !== slugLower && val !== baseLower;
+  });
+
+  // Un-delete state if it was deleted
+  if (trimmedState) {
+    const sNameLower = trimmedState.toLowerCase();
+    const sSlugLower = slugify(trimmedState);
+    store.deletedStates = (store.deletedStates ?? []).filter((s: string) => {
+      const val = s.trim().toLowerCase();
+      return val !== sNameLower && val !== sSlugLower;
+    });
+  }
+
   const cities = store.cities as unknown as CityRecord[];
-  
-  // Check if same city already exists under the same state
+
+  // Check if same city already exists under the same state -> update in place
   const existingSameStateIndex = cities.findIndex(
     (c) =>
       c.state?.trim().toLowerCase() === trimmedState.toLowerCase() &&
-      (c.slug === baseSlug || c.name.trim().toLowerCase() === trimmedName.toLowerCase())
+      (c.slug === slug ||
+        c.slug === baseSlug ||
+        c.name.trim().toLowerCase() === trimmedName.toLowerCase())
   );
 
   if (existingSameStateIndex >= 0) {
     const existing = cities[existingSameStateIndex];
     existing.name = trimmedName;
+    existing.slug = slug;
     existing.state = trimmedState;
     existing.region = data.region.trim() || trimmedState || "India";
     existing.country = data.country?.trim() ?? "India";
@@ -142,12 +249,6 @@ export async function createCity(data: {
     await writeStore(store);
     return existing;
   }
-
-  // If a city in another state has the same baseSlug, make slug unique with state suffix
-  const slugTakenByOtherState = cities.some((c) => c.slug === baseSlug);
-  const slug = slugTakenByOtherState && trimmedState
-    ? `${baseSlug}-${slugify(trimmedState)}`
-    : baseSlug;
 
   const city: CityRecord = {
     _id: `mem_city_${store.cities.length + 1}_${Date.now()}`,
@@ -161,40 +262,92 @@ export async function createCity(data: {
     createdAt: new Date(),
   };
   store.cities.push(city as unknown as (typeof store.cities)[number]);
-  store.deletedCities = (store.deletedCities ?? []).filter(
-    (s) => s !== city.slug
-  );
   await writeStore(store);
 
-  const storeAfterWrite = await readStore();
-  const persisted = storeAfterWrite.cities.find(
-    (c) => String(c.slug) === city.slug
-  );
-  if (!persisted) {
-    throw new Error("City was not persisted to the store.");
-  }
   return city;
 }
 
 export async function deleteCity(id: string): Promise<boolean> {
+  const trimmed = id.trim();
+  if (!trimmed) return false;
+
   const store = await readStore();
-  const index = store.cities.findIndex((c) => c._id === id);
-  if (index >= 0) {
-    store.cities.splice(index, 1);
-    await writeStore(store);
-    return true;
+  store.deletedCities = store.deletedCities ?? [];
+
+  const trimmedLower = trimmed.toLowerCase();
+  const slugified = slugify(trimmed);
+
+  // 1. Check in custom cities
+  const customIndex = store.cities.findIndex((c) => {
+    const cId = String(c._id ?? "");
+    const cSlug = String(c.slug ?? "").toLowerCase();
+    const cName = String(c.name ?? "").trim().toLowerCase();
+    return (
+      cId === trimmed ||
+      cSlug === trimmedLower ||
+      cSlug === slugified ||
+      cName === trimmedLower
+    );
+  });
+
+  let deletedSlug = "";
+  let deletedName = "";
+
+  if (customIndex >= 0) {
+    const found = store.cities[customIndex] as CityRecord;
+    deletedSlug = found.slug;
+    deletedName = found.name;
+    store.cities.splice(customIndex, 1);
   }
 
-  const slug = id;
-  const staticCity = (await import("../places")).cityPlaces.find(
-    (c) => c.slug === slug
-  );
-  if (!staticCity) return false;
-  store.deletedCities = store.deletedCities ?? [];
-  if (!store.deletedCities.includes(slug)) {
-    store.deletedCities.push(slug);
-    await writeStore(store);
+  // 2. Check in static cities
+  const staticCity = cityPlaces.find((c) => {
+    const sSlug = c.slug.toLowerCase();
+    const sName = c.name.trim().toLowerCase();
+    return (
+      sSlug === trimmedLower ||
+      sSlug === slugified ||
+      sName === trimmedLower ||
+      c.slug === trimmed
+    );
+  });
+
+  if (staticCity) {
+    deletedSlug = deletedSlug || staticCity.slug;
+    deletedName = deletedName || staticCity.name;
   }
+
+  if (!deletedSlug && !deletedName && customIndex < 0 && !staticCity) {
+    return false;
+  }
+
+  // Record deleted slug in deletedCities
+  const slugToRecord = (deletedSlug || slugified).toLowerCase();
+  if (
+    slugToRecord &&
+    !store.deletedCities.some((s) => s.toLowerCase() === slugToRecord)
+  ) {
+    store.deletedCities.push(slugToRecord);
+  }
+
+  // Clean up local areas for this city
+  if (deletedName || deletedSlug) {
+    const localAreas = (store.localAreas ?? []) as Array<{
+      _id?: string;
+      cityName?: string;
+      citySlug?: string;
+    }>;
+    store.localAreas = localAreas.filter((a) => {
+      const aSlug = String(a.citySlug ?? "").toLowerCase();
+      const aName = String(a.cityName ?? "").trim().toLowerCase();
+      return (
+        (!deletedSlug || aSlug !== deletedSlug.toLowerCase()) &&
+        (!deletedName || aName !== deletedName.toLowerCase())
+      );
+    }) as unknown as typeof store.localAreas;
+  }
+
+  await writeStore(store);
   return true;
 }
 
@@ -202,29 +355,10 @@ export async function deleteCities(ids: string[]): Promise<number> {
   const uniqueIds = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
   if (uniqueIds.length === 0) return 0;
 
-  const store = await readStore();
-  const customIds = new Set(
-    store.cities
-      .filter((city) => uniqueIds.includes(String(city._id)))
-      .map((city) => String(city._id))
-  );
-  const remainingCities = store.cities.filter(
-    (city) => !customIds.has(String(city._id))
-  );
-  const deletedCustomCount = store.cities.length - remainingCities.length;
-
-  const staticSlugs = new Set(
-    cityPlaces
-      .filter((city) => uniqueIds.includes(city.slug))
-      .map((city) => city.slug)
-  );
-  const deletedCities = new Set(store.deletedCities ?? []);
-  staticSlugs.forEach((slug) => deletedCities.add(slug));
-
-  if (deletedCustomCount === 0 && staticSlugs.size === 0) return 0;
-
-  store.cities = remainingCities;
-  store.deletedCities = [...deletedCities];
-  await writeStore(store);
-  return deletedCustomCount + staticSlugs.size;
+  let count = 0;
+  for (const id of uniqueIds) {
+    const ok = await deleteCity(id);
+    if (ok) count++;
+  }
+  return count;
 }

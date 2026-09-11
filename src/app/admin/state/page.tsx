@@ -41,6 +41,14 @@ const COUNTRY_OPTIONS = ["India"];
 const ADD_CITY_VALUE = "__ADD_CITY__";
 const ADD_LOCAL_AREA_VALUE = "__ADD_LOCAL_AREA__";
 
+function normalizeState(s?: string): string {
+  return (s ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 /**
  * Dependency-free fuzzy matching:
  * Matches direct substring, token words, and character sequence.
@@ -55,8 +63,8 @@ function fuzzyMatch(target: string, query: string): boolean {
   if (t.includes(q)) return true;
 
   // 2. Token / word-level match (all words in query must be in target)
-  const tokens = q.split(/\s+/).filter(Boolean);
-  if (tokens.length > 1 && tokens.every((token) => t.includes(token))) {
+  const tokens = q.split(/[\s\-_,]+/).filter(Boolean);
+  if (tokens.length > 0 && tokens.every((token) => t.includes(token))) {
     return true;
   }
 
@@ -198,7 +206,15 @@ export default function AdminStates() {
         const stateKey = state._id ?? state.slug ?? state.name;
         const stateMatches = fuzzyMatch(state.name, q);
 
-        const stateCities = cities.filter((c) => c.state === state.name);
+        const stateCities = cities.filter((c) => {
+          if (!c.state) return false;
+          const cState = c.state.trim().toLowerCase();
+          const sName = state.name.trim().toLowerCase();
+          return (
+            cState === sName ||
+            normalizeState(c.state) === normalizeState(state.name)
+          );
+        });
 
         const matchingCities = stateCities
           .map((city) => {
@@ -572,17 +588,27 @@ export default function AdminStates() {
   // Available Cities for currently selected State
   const citiesForSelectedState = useMemo(() => {
     if (!selectedState) return [];
-    return cities.filter((c) => c.state === selectedState);
+    const sLower = selectedState.trim().toLowerCase();
+    const sNorm = normalizeState(selectedState);
+    return cities.filter((c) => {
+      if (!c.state) return false;
+      const cLower = c.state.trim().toLowerCase();
+      return cLower === sLower || normalizeState(c.state) === sNorm;
+    });
   }, [cities, selectedState]);
 
   // Available Local Areas for currently selected City & State
   const areasForSelectedCity = useMemo(() => {
     if (!selectedCity || selectedCity === ADD_CITY_VALUE) return [];
+    const cLower = selectedCity.toLowerCase();
+    const sLower = selectedState.toLowerCase();
+    const sNorm = normalizeState(selectedState);
     return allLocalAreas.filter(
       (a) =>
-        a.cityName.toLowerCase() === selectedCity.toLowerCase() &&
+        a.cityName.toLowerCase() === cLower &&
         (!a.stateName ||
-          a.stateName.toLowerCase() === selectedState.toLowerCase())
+          a.stateName.toLowerCase() === sLower ||
+          normalizeState(a.stateName) === sNorm)
     );
   }, [allLocalAreas, selectedCity, selectedState]);
 
@@ -1234,7 +1260,7 @@ function StateHierarchyCard({
 
         <button
           type="button"
-          onClick={() => onRemoveState(state._id)}
+          onClick={() => onRemoveState(state._id || state.slug || state.name)}
           className="rounded-full bg-[#450a0a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#7f1d1d]"
         >
           Delete State
@@ -1308,13 +1334,13 @@ function StateHierarchyCard({
 
                   return (
                     <CityHierarchyItem
-                      key={`${city.source}-${city._id}`}
+                      key={`${city.source}-${city._id || city.name}`}
                       city={city}
                       stateName={state.name}
                       cityAreas={cityAreas}
                       isExpanded={isCityExpanded}
                       onToggleCity={() => onToggleCity(cityKey)}
-                      onDeleteCity={() => removeCity(city._id)}
+                      onDeleteCity={() => removeCity(city._id || city.name)}
                       onDeleteLocalArea={onDeleteLocalArea}
                       onChanged={onChanged}
                     />

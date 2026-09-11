@@ -5,6 +5,7 @@ import {
   deleteCity,
   deleteCities,
 } from "@/lib/models/city";
+import { listStates, createState } from "@/lib/models/state";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { readStore } from "@/lib/persist";
 
@@ -47,33 +48,16 @@ export async function POST(request: NextRequest) {
   const trimmedName = name.trim();
   const trimmedState = state.trim();
 
-  // Validate state exists in store
-  const store = await readStore();
-  const stateExists = (store.states ?? []).some(
+  // Validate state exists (check all default Indian states & custom states)
+  const allStates = await listStates();
+  const stateExists = allStates.some(
     (s) =>
-      String(s.name ?? "").trim().toLowerCase() === trimmedState.toLowerCase() ||
-      String(s.slug ?? "").toLowerCase() === trimmedState.toLowerCase()
+      s.name.trim().toLowerCase() === trimmedState.toLowerCase() ||
+      s.slug.toLowerCase() === trimmedState.toLowerCase()
   );
 
   if (!stateExists) {
-    return NextResponse.json(
-      { error: `State "${trimmedState}" does not exist. Please select a valid state.` },
-      { status: 400 }
-    );
-  }
-
-  // Duplicate check under the same state
-  const isDuplicate = (store.cities ?? []).some(
-    (c) =>
-      String(c.state ?? "").trim().toLowerCase() === trimmedState.toLowerCase() &&
-      String(c.name ?? "").trim().toLowerCase() === trimmedName.toLowerCase()
-  );
-
-  if (isDuplicate) {
-    return NextResponse.json(
-      { error: `City "${trimmedName}" already exists in ${trimmedState}.` },
-      { status: 400 }
-    );
+    await createState({ name: trimmedState });
   }
 
   try {
