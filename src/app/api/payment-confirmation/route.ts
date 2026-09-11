@@ -10,6 +10,7 @@ import {
   createPaymentRequest,
   findPaymentRequestByTransactionId,
   listPaymentRequestsByUser,
+  checkCoinPurchaseEligibility,
 } from "@/lib/models/payment-request";
 import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 
@@ -139,6 +140,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "This transaction has already been recorded." },
         { status: 409 }
+      );
+    }
+
+    // 24-Hour Purchase Limit: Each email can only purchase coins once every 24 hours
+    const eligibility = await checkCoinPurchaseEligibility(user.email);
+    if (!eligibility.allowed) {
+      return NextResponse.json(
+        {
+          error: `You can only purchase coins once every 24 hours on this email. Please wait ${eligibility.remainingFormatted} before purchasing again.`,
+          remainingMs: eligibility.remainingMs,
+          remainingFormatted: eligibility.remainingFormatted,
+          nextAllowedAt: eligibility.nextAllowedAt,
+        },
+        { status: 403 }
       );
     }
 

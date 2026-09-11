@@ -450,3 +450,172 @@ export async function getPaymentRequestById(id: string): Promise<PaymentRequest 
   return requests.find((r) => r._id === id || r.transactionId === id) ?? null;
 }
 
+export interface CoinPurchaseEligibility {
+  allowed: boolean;
+  remainingMs: number;
+  remainingFormatted: string;
+  lastPurchaseAt: string | null;
+  nextAllowedAt: string | null;
+  reason?: string;
+}
+
+const COOLDOWN_24H_MS = 24 * 60 * 60 * 1000;
+
+export function formatRemainingTime(ms: number): string {
+  if (ms <= 0) return "0s";
+  const totalSeconds = Math.ceil(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+
+  return parts.join(" ");
+}
+
+export async function checkCoinPurchaseEligibility(
+  email: string
+): Promise<CoinPurchaseEligibility> {
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  if (!cleanEmail) {
+    return {
+      allowed: true,
+      remainingMs: 0,
+      remainingFormatted: "",
+      lastPurchaseAt: null,
+      nextAllowedAt: null,
+    };
+  }
+
+  let latestPurchaseMs = 0;
+
+  // 1. Direct MongoDB Query
+  const db = await getDb();
+  if (db) {
+    try {
+      // Look up payment_history (confirmed purchases)
+      const historyDoc = await db
+        .collection("payment_history")
+        .findOne(
+          { userEmail: cleanEmail },
+          { sort: { createdAt: -1 } }
+        );
+
+      if (historyDoc?.createdAt) {
+        const d = new Date(historyDoc.createdAt);
+        const t = d.getTime();
+        if (!isNaN(t) && t > latestPurchaseMs) {
+          latestPurchaseMs = t;
+        }
+      }
+
+      // Look up payment_requests (pending or confirmed)
+      const requestDoc = await db
+        .collection("payment_requests")
+        .findOne(
+          {
+            userEmail: cleanEmail,
+            status: { $in: ["confirmed", "pending"] },
+          },
+          { sort: { createdAt: -1 } }
+        );
+
+      if (requestDoc) {
+        const d = new Date(requestDoc.confirmedAt || requestDoc.createdAt);
+        const t = d.getTime();
+        if (!isNaN(t) && t > latestPurchaseMs) {
+          latestPurchaseMs = t;
+        }
+      }
+    } catch (err) {
+      console.error("[payment-request] MongoDB checkCoinPurchaseEligibility failed:", err);
+    }
+  }
+
+  // 2. Store fallback
+  try {
+    const store = await readStore();
+
+    // Store payment history
+    const historyList = (store.paymentHistory ?? []) as unknown as {
+      userEmail?: string;
+      createdAt?: string | Date;
+    }[];
+    for (const h of historyList) {
+      if (
+        String(h.userEmail || "").trim().toLowerCase() === cleanEmail &&
+        h.createdAt
+      ) {
+        const d = new Date(h.createdAt);
+        const t = d.getTime();
+        if (!isNaN(t) && t > latestPurchaseMs) {
+          latestPurchaseMs = t;
+        }
+      }
+    }
+
+    // Store payment requests
+    const requestList = (store.paymentRequests ?? []) as unknown as {
+      userEmail?: string;
+      status?: string;
+      createdAt?: string | Date;
+      confirmedAt?: string | Date;
+    }[];
+    for (const r of requestList) {
+      if (
+        String(r.userEmail || "").trim().toLowerCase() === cleanEmail &&
+        (r.status === "confirmed" || r.status === "pending") &&
+        (r.confirmedAt || r.createdAt)
+      ) {
+        const d = new Date(r.confirmedAt || r.createdAt!);
+        const t = d.getTime();
+        if (!isNaN(t) && t > latestPurchaseMs) {
+          latestPurchaseMs = t;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[payment-request] store checkCoinPurchaseEligibility failed:", err);
+  }
+
+  if (latestPurchaseMs <= 0) {
+    return {
+      allowed: true,
+      remainingMs: 0,
+      remainingFormatted: "",
+      lastPurchaseAt: null,
+      nextAllowedAt: null,
+    };
+  }
+
+  const latestPurchaseDate = new Date(latestPurchaseMs);
+  const now = Date.now();
+  const elapsed = now - latestPurchaseMs;
+
+  if (elapsed >= COOLDOWN_24H_MS) {
+    return {
+      allowed: true,
+      remainingMs: 0,
+      remainingFormatted: "",
+      lastPurchaseAt: latestPurchaseDate.toISOString(),
+      nextAllowedAt: null,
+    };
+  }
+
+  const remainingMs = COOLDOWN_24H_MS - elapsed;
+  const nextAllowedAt = new Date(latestPurchaseMs + COOLDOWN_24H_MS).toISOString();
+  const remainingFormatted = formatRemainingTime(remainingMs);
+
+  return {
+    allowed: false,
+    remainingMs,
+    remainingFormatted,
+    lastPurchaseAt: latestPurchaseDate.toISOString(),
+    nextAllowedAt,
+    reason: `Each email address can only purchase coins once every 24 hours. Please wait ${remainingFormatted} before purchasing again.`,
+  };
+}
+

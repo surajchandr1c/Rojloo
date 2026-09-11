@@ -12,11 +12,22 @@ const FALLBACK_PACKAGES: CoinPackage[] = DEFAULT_PACKAGES.map((pkg, idx) => ({
   ...pkg,
 }));
 
+interface EligibilityState {
+  allowed: boolean;
+  remainingMs: number;
+  remainingFormatted: string;
+  lastPurchaseAt: string | null;
+  nextAllowedAt: string | null;
+  reason?: string;
+}
+
 export default function BuyCoinSection() {
   const router = useRouter();
   const { user } = useAuth();
   const [packages, setPackages] = useState<CoinPackage[]>(FALLBACK_PACKAGES);
   const [navigatingPkgId, setNavigatingPkgId] = useState<string | null>(null);
+  const [eligibility, setEligibility] = useState<EligibilityState | null>(null);
+  const [liveCountdown, setLiveCountdown] = useState<string>("");
 
   const loadPackages = useCallback(async () => {
     try {
@@ -33,6 +44,33 @@ export default function BuyCoinSection() {
       console.error("Failed to load coin packages:", err);
     }
   }, []);
+
+  const checkEligibility = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(
+        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(user.email)}&_t=${Date.now()}`,
+        {
+          cache: "no-store",
+          credentials: "include",
+        }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success) {
+        setEligibility({
+          allowed: Boolean(data.allowed),
+          remainingMs: Number(data.remainingMs || 0),
+          remainingFormatted: String(data.remainingFormatted || ""),
+          lastPurchaseAt: data.lastPurchaseAt || null,
+          nextAllowedAt: data.nextAllowedAt || null,
+          reason: data.reason || "",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to check coin purchase eligibility:", err);
+    }
+  }, [user?.email]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -58,6 +96,73 @@ export default function BuyCoinSection() {
     };
   }, [loadPackages]);
 
+  useEffect(() => {
+    if (user?.email) {
+      void checkEligibility();
+    }
+
+    const handleCoinUpdate = () => {
+      void checkEligibility();
+    };
+    window.addEventListener("coins:updated", handleCoinUpdate);
+    window.addEventListener("focus", handleCoinUpdate);
+
+    return () => {
+      window.removeEventListener("coins:updated", handleCoinUpdate);
+      window.removeEventListener("focus", handleCoinUpdate);
+    };
+  }, [user?.email, checkEligibility]);
+
+  useEffect(() => {
+    if (!eligibility || eligibility.allowed || !eligibility.nextAllowedAt) {
+      setLiveCountdown("");
+      return;
+    }
+
+    const targetMs = new Date(eligibility.nextAllowedAt).getTime();
+    if (isNaN(targetMs)) return;
+
+    const updateTimer = () => {
+      const remaining = targetMs - Date.now();
+      if (remaining <= 0) {
+        setLiveCountdown("");
+        setEligibility((prev) => (prev ? { ...prev, allowed: true, remainingMs: 0, remainingFormatted: "" } : null));
+        void checkEligibility();
+        return;
+      }
+      const totalSecs = Math.floor(remaining / 1000);
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = totalSecs % 60;
+      const parts: string[] = [];
+      if (h > 0) parts.push(`${h}h`);
+      if (m > 0 || h > 0) parts.push(`${m}m`);
+      parts.push(`${s}s`);
+      setLiveCountdown(parts.join(" "));
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [eligibility?.allowed, eligibility?.nextAllowedAt, checkEligibility]);
+
+  const handleBuyClick = (pkg: CoinPackage) => {
+    if (eligibility && !eligibility.allowed) {
+      const timeLeft = liveCountdown || eligibility.remainingFormatted || "some time";
+      alert(
+        `24-Hour Purchase Limit Active!\n\nYou can only purchase coins once every 24 hours on this email address.\n\nPlease wait ${timeLeft} before making another purchase.`
+      );
+      return;
+    }
+
+    setNavigatingPkgId(pkg._id || String(pkg.coins));
+    router.push(
+      `/post-ad/payment?coins=${pkg.coins}&price=${encodeURIComponent(
+        `₹${Number(pkg.price).toFixed(2)}`
+      )}`
+    );
+  };
+
   return (
     <section className="rounded-2xl bg-white p-4 sm:p-6 w-full max-w-full overflow-hidden box-border">
       {/* Header */}
@@ -82,6 +187,47 @@ export default function BuyCoinSection() {
           </Link>
         </div>
       </div>
+
+      {/* 24h Cooldown Alert Banner */}
+      {eligibility && !eligibility.allowed && (
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 shadow-xs">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 rounded-full bg-amber-200 p-2 text-amber-800">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                  24-Hour Coin Purchase Limit Active
+                </h3>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 text-xs font-black text-amber-950 w-fit">
+                  <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                  Next purchase in: {liveCountdown || eligibility.remainingFormatted}
+                </span>
+              </div>
+              <p className="mt-1 text-xs sm:text-sm text-amber-900 leading-relaxed">
+                You can only buy coins once in 24 hours per email address. Your last purchase was recorded on{" "}
+                <strong className="font-semibold text-amber-950">
+                  {eligibility.lastPurchaseAt
+                    ? new Date(eligibility.lastPurchaseAt).toLocaleString("en-IN", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "recently"}
+                </strong>
+                . You will be able to buy coins again automatically once the countdown finishes.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Grid of Coin Packages: 1 col on phone, 2-3 cols on tab, 5 cols on desktop */}
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
@@ -152,21 +298,20 @@ export default function BuyCoinSection() {
               {/* Buy Button */}
               <Button
                 type="button"
-                variant="solid"
+                variant={eligibility && !eligibility.allowed ? "outline" : "solid"}
                 size="sm"
-                className="!text-white w-full py-1.5 text-xs font-bold mt-auto shrink-0 shadow-xs"
+                className={`w-full py-1.5 text-xs font-bold mt-auto shrink-0 shadow-xs ${
+                  eligibility && !eligibility.allowed
+                    ? "!border-amber-400 !text-amber-900 bg-amber-50/80 hover:bg-amber-100"
+                    : "!text-white"
+                }`}
                 loading={navigatingPkgId === (pkg._id || String(pkg.coins))}
                 loadingText="Redirecting..."
-                onClick={() => {
-                  setNavigatingPkgId(pkg._id || String(pkg.coins));
-                  router.push(
-                    `/post-ad/payment?coins=${pkg.coins}&price=${encodeURIComponent(
-                      `₹${Number(pkg.price).toFixed(2)}`
-                    )}`
-                  );
-                }}
+                onClick={() => handleBuyClick(pkg)}
               >
-                Buy
+                {eligibility && !eligibility.allowed
+                  ? `Cooldown: ${liveCountdown || eligibility.remainingFormatted}`
+                  : "Buy"}
               </Button>
             </div>
           );

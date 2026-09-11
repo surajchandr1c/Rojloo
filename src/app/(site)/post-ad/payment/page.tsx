@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/button";
 import { SectionPanel } from "@/components/ui/card";
 import { useAuthGuard } from "@/components/post-ad/use-auth-guard";
+import { useAuth } from "@/lib/auth-context";
 import { paymentInfo, siteInfo } from "@/lib/site";
 import { PaymentOptionsSkeleton } from "@/components/skeletons/post-ad-skeletons";
 import { PaymentSkeleton } from "@/components/ui/skeleton";
@@ -16,10 +17,20 @@ type UPI = {
   qrCode: string;
 };
 
+interface EligibilityState {
+  allowed: boolean;
+  remainingMs: number;
+  remainingFormatted: string;
+  lastPurchaseAt: string | null;
+  nextAllowedAt: string | null;
+  reason?: string;
+}
+
 function PaymentView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const ready = useAuthGuard();
+  const { user } = useAuth();
   const [upis, setUpis] = useState<UPI[]>([]);
   const [loading, setLoading] = useState(true);
   const [couponCode, setCouponCode] = useState("");
@@ -33,6 +44,8 @@ function PaymentView() {
   const [submittedTxId, setSubmittedTxId] = useState("");
   const [submittedStatus, setSubmittedStatus] = useState<"pending" | "confirmed" | "declined">("pending");
   const [declineReason, setDeclineReason] = useState("");
+  const [eligibility, setEligibility] = useState<EligibilityState | null>(null);
+  const [liveCountdown, setLiveCountdown] = useState<string>("");
 
   const coins = Number(searchParams.get("coins") ?? "0");
   const price = searchParams.get("price") ?? "";
@@ -74,6 +87,72 @@ function PaymentView() {
       clearInterval(interval);
     };
   }, [submitted, submittedTxId, submittedStatus]);
+
+  const checkEligibility = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(
+        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(user.email)}&_t=${Date.now()}`,
+        {
+          cache: "no-store",
+          credentials: "include",
+        }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success) {
+        setEligibility({
+          allowed: Boolean(data.allowed),
+          remainingMs: Number(data.remainingMs || 0),
+          remainingFormatted: String(data.remainingFormatted || ""),
+          lastPurchaseAt: data.lastPurchaseAt || null,
+          nextAllowedAt: data.nextAllowedAt || null,
+          reason: data.reason || "",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to check coin purchase eligibility:", err);
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (user?.email) {
+      void checkEligibility();
+    }
+  }, [user?.email, checkEligibility]);
+
+  useEffect(() => {
+    if (!eligibility || eligibility.allowed || !eligibility.nextAllowedAt) {
+      setLiveCountdown("");
+      return;
+    }
+
+    const targetMs = new Date(eligibility.nextAllowedAt).getTime();
+    if (isNaN(targetMs)) return;
+
+    const updateTimer = () => {
+      const remaining = targetMs - Date.now();
+      if (remaining <= 0) {
+        setLiveCountdown("");
+        setEligibility((prev) => (prev ? { ...prev, allowed: true, remainingMs: 0, remainingFormatted: "" } : null));
+        void checkEligibility();
+        return;
+      }
+      const totalSecs = Math.floor(remaining / 1000);
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = totalSecs % 60;
+      const parts: string[] = [];
+      if (h > 0) parts.push(`${h}h`);
+      if (m > 0 || h > 0) parts.push(`${m}m`);
+      parts.push(`${s}s`);
+      setLiveCountdown(parts.join(" "));
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [eligibility?.allowed, eligibility?.nextAllowedAt, checkEligibility]);
 
   useEffect(() => {
     if (!ready) return;
@@ -138,6 +217,14 @@ function PaymentView() {
   }
 
   async function handleSubmitTransaction() {
+    if (eligibility && !eligibility.allowed) {
+      const timeLeft = liveCountdown || eligibility.remainingFormatted || "some time";
+      const limitMsg = `Purchase Limit Active: You can only purchase coins once every 24 hours per email address. Please wait ${timeLeft} before purchasing again.`;
+      setSubmitError(limitMsg);
+      alert(limitMsg);
+      return;
+    }
+
     if (!transactionId.trim()) {
       setSubmitError("Please enter a transaction ID");
       return;
@@ -171,6 +258,7 @@ function PaymentView() {
       setSubmittedStatus("pending");
       setDeclineReason("");
       window.dispatchEvent(new CustomEvent("coins:updated"));
+      void checkEligibility();
       setTransactionId("");
       setCouponCode("");
       setDiscount(0);
@@ -212,6 +300,47 @@ function PaymentView() {
         <div className="mt-6 rounded-[1.75rem] bg-white p-6 text-center sm:p-8">
           {!submitted && (
             <>
+              {/* 24h Cooldown Alert Banner */}
+              {eligibility && !eligibility.allowed && (
+                <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-amber-950 shadow-xs">
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 rounded-full bg-amber-200 p-2 text-amber-800">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                        <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                          24-Hour Purchase Limit Active
+                        </h3>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 text-xs font-black text-amber-950 w-fit">
+                          <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                          Next purchase in: {liveCountdown || eligibility.remainingFormatted}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs sm:text-sm text-amber-900 leading-relaxed">
+                        An email can only purchase coins once in 24 hours. Your last coin purchase was recorded on{" "}
+                        <strong className="font-semibold text-amber-950">
+                          {eligibility.lastPurchaseAt
+                            ? new Date(eligibility.lastPurchaseAt).toLocaleString("en-IN", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })
+                            : "recently"}
+                        </strong>
+                        . New payment submissions are temporarily paused until the cooldown timer expires.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <p className="text-lg font-bold text-red-950">
                 Pay {price || "—"} &nbsp;·&nbsp; Get {coins} coins
               </p>
@@ -404,7 +533,7 @@ function PaymentView() {
                           <button
                             type="button"
                             onClick={handleSubmitTransaction}
-                            disabled={submitting}
+                            disabled={submitting || Boolean(eligibility && !eligibility.allowed)}
                             className="w-full sm:w-auto rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
                           >
                             {submitting && (
@@ -413,7 +542,11 @@ function PaymentView() {
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                               </svg>
                             )}
-                            {submitting ? "Submitting..." : "Submit"}
+                            {submitting
+                              ? "Submitting..."
+                              : eligibility && !eligibility.allowed
+                              ? `Cooldown (${liveCountdown || eligibility.remainingFormatted})`
+                              : "Submit"}
                           </button>
                         </div>
                         {submitError && (
@@ -477,7 +610,7 @@ function PaymentView() {
                       <button
                         type="button"
                         onClick={handleSubmitTransaction}
-                        disabled={submitting}
+                        disabled={submitting || Boolean(eligibility && !eligibility.allowed)}
                         className="w-full sm:w-auto rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
                       >
                         {submitting && (
@@ -486,7 +619,11 @@ function PaymentView() {
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
                         )}
-                        {submitting ? "Submitting..." : "Submit"}
+                        {submitting
+                          ? "Submitting..."
+                          : eligibility && !eligibility.allowed
+                          ? `Cooldown (${liveCountdown || eligibility.remainingFormatted})`
+                          : "Submit"}
                       </button>
                     </div>
                     {submitError && (
