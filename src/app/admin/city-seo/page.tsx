@@ -14,6 +14,12 @@ type ContentBlock = {
   text: string;
 };
 
+type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -141,6 +147,7 @@ function CitySeoContent() {
   const [featuredImage, setFeaturedImage] = useState("");
   const [imageAlt, setImageAlt] = useState("");
   const [content, setContent] = useState<ContentBlock[]>([]);
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [status, setStatus] = useState<"draft" | "published">("draft");
 
   const [loading, setLoading] = useState(false);
@@ -149,6 +156,7 @@ function CitySeoContent() {
   const [success, setSuccess] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [faqDragIndex, setFaqDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!editSlug) return;
@@ -189,6 +197,7 @@ function CitySeoContent() {
                   { id: uid(), type: "p", text: "" },
                 ]
           );
+          setFaqs(Array.isArray(seo.faqs) ? seo.faqs : []);
           setStatus(seo.status === "published" ? "published" : "draft");
         } else {
           setUrlSlug(editSlug);
@@ -196,6 +205,7 @@ function CitySeoContent() {
             { id: uid(), type: "h1", text: "" },
             { id: uid(), type: "p", text: "" },
           ]);
+          setFaqs([]);
         }
       } catch {
         setError("Failed to load city details.");
@@ -230,6 +240,29 @@ function CitySeoContent() {
 
   function reorder(from: number, to: number) {
     setContent((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  }
+
+  function addFaq() {
+    setFaqs((prev) => [...prev, { id: uid(), question: "", answer: "" }]);
+  }
+
+  function updateFaq(id: string, patch: Partial<FaqItem>) {
+    setFaqs((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, ...patch } : f))
+    );
+  }
+
+  function removeFaq(id: string) {
+    setFaqs((prev) => prev.filter((f) => f.id !== id));
+  }
+
+  function reorderFaq(from: number, to: number) {
+    setFaqs((prev) => {
       const next = [...prev];
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
@@ -296,6 +329,7 @@ function CitySeoContent() {
           featuredImage,
           imageAlt,
           content,
+          faqs,
           status: publish ? "published" : "draft",
         }),
       });
@@ -639,6 +673,108 @@ function CitySeoContent() {
                 <p className="text-sm text-red-700">
                   No content blocks yet. Use “Add Heading” or “Add Paragraph”.
                 </p>
+              )}
+            </div>
+          </section>
+
+          {/* FAQ Editor Section */}
+          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-bold text-red-950">
+                  FAQ Editor (Frequently Asked Questions)
+                </h2>
+                <p className="text-xs text-red-800">
+                  Add questions &amp; solutions for this city page. Users can click questions to expand solutions in an accordion.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addFaq}
+                className="rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition cursor-pointer"
+              >
+                + Add FAQ
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {faqs.map((faq, i) => (
+                <div
+                  key={faq.id}
+                  draggable
+                  onDragStart={() => setFaqDragIndex(i)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (faqDragIndex !== null && faqDragIndex !== i) {
+                      reorderFaq(faqDragIndex, i);
+                    }
+                    setFaqDragIndex(null);
+                  }}
+                  onDragEnd={() => setFaqDragIndex(null)}
+                  className={`flex flex-col gap-2.5 rounded-xl border border-pink-200 bg-pink-50/70 p-3 sm:p-4 ${
+                    faqDragIndex === i ? "opacity-50" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 border-b border-pink-200/70 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="flex cursor-grab items-center px-1 text-red-400 font-mono text-sm"
+                        title="Drag to reorder"
+                      >
+                        ⠿
+                      </span>
+                      <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-black text-red-900 border border-red-200">
+                        Q#{i + 1}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFaq(faq.id)}
+                      aria-label="Delete FAQ"
+                      className="rounded-lg bg-[#450a0a] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#7f1d1d] cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-red-900 mb-1">
+                      Question:
+                    </label>
+                    <input
+                      type="text"
+                      value={faq.question}
+                      onChange={(e) =>
+                        updateFaq(faq.id, { question: e.target.value })
+                      }
+                      placeholder="e.g. How do I contact service providers in this city?"
+                      className="w-full rounded-lg border border-pink-200 bg-white px-3 py-2 text-sm font-semibold text-red-950 outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-red-900 mb-1">
+                      Solution / Answer:
+                    </label>
+                    <textarea
+                      value={faq.answer}
+                      onChange={(e) =>
+                        updateFaq(faq.id, { answer: e.target.value })
+                      }
+                      placeholder="Write the detailed solution or answer here..."
+                      rows={3}
+                      className="w-full rounded-lg border border-pink-200 bg-white px-3 py-2 text-sm text-red-950 outline-none focus:border-red-500 leading-relaxed"
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {faqs.length === 0 && (
+                <div className="rounded-xl border border-dashed border-pink-300 bg-pink-50/30 p-6 text-center">
+                  <p className="text-sm font-medium text-red-800">
+                    No FAQs added yet. Click &ldquo;+ Add FAQ&rdquo; above to add questions and solutions.
+                  </p>
+                </div>
               )}
             </div>
           </section>

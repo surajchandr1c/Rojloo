@@ -14,6 +14,7 @@ import { CityPageSkeleton } from "@/components/skeletons/places-skeletons";
 import { isAdActiveInCurrentShift, getTierRankInfo } from "@/lib/promo-shifts";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
+import CityFaqSection from "@/components/places/city-faq-section";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -132,9 +133,27 @@ async function CityContent({ slug }: { slug: string }) {
     },
   };
 
+  const faqSchema =
+    seo?.faqs && seo.faqs.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: seo.faqs
+            .filter((f) => f.question && f.answer)
+            .map((f) => ({
+              "@type": "Question",
+              name: f.question,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: f.answer,
+              },
+            })),
+        }
+      : null;
+
   return (
     <main>
-      <JsonLd data={[breadcrumbSchema, collectionSchema]} />
+      <JsonLd data={[breadcrumbSchema, collectionSchema, ...(faqSchema ? [faqSchema] : [])]} />
       <section className="px-4 py-10 sm:px-6">
         <SectionPanel>
           <Eyebrow>Services in {city.name}</Eyebrow>
@@ -271,6 +290,10 @@ async function CityContent({ slug }: { slug: string }) {
             })}
           </SectionPanel>
         </section>
+      )}
+
+      {seo?.faqs && seo.faqs.length > 0 && (seo.status === "published" || !seo.status) && (
+        <CityFaqSection faqs={seo.faqs} cityName={city.name} />
       )}
     </main>
   );

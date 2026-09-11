@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     featuredImage,
     imageAlt,
     content,
+    faqs,
     status,
   } = body ?? {};
 
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
     featuredImage: featuredImage ? String(featuredImage) : "",
     imageAlt: imageAlt ? String(imageAlt) : "",
     content: Array.isArray(content) ? content : [],
+    faqs: Array.isArray(faqs) ? faqs : [],
     status: status === "published" || status === "draft" ? status : "draft",
   });
 

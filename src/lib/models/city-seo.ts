@@ -11,6 +11,12 @@ export type ContentBlock = {
 
 export type SeoStatus = "draft" | "published";
 
+export type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 export type CitySeo = {
   slug: string;
   name: string;
@@ -25,6 +31,7 @@ export type CitySeo = {
   featuredImage?: string;
   imageAlt?: string;
   content?: ContentBlock[];
+  faqs?: FaqItem[];
   status?: SeoStatus;
   updatedAt?: string;
 };
@@ -70,6 +77,15 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
     featuredImage: data.featuredImage ?? "",
     imageAlt: data.imageAlt?.trim() ?? "",
     content: Array.isArray(data.content) ? data.content : [],
+    faqs: Array.isArray(data.faqs)
+      ? data.faqs
+          .map((f, i) => ({
+            id: f.id || `faq_${Date.now()}_${i}`,
+            question: (f.question || "").trim(),
+            answer: (f.answer || "").trim(),
+          }))
+          .filter((f) => f.question || f.answer)
+      : [],
     status: data.status ?? prev?.status ?? "draft",
     updatedAt: new Date().toISOString(),
   };
