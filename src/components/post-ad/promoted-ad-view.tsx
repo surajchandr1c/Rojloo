@@ -696,17 +696,7 @@ export default function PromotedAdView() {
         </div>
 
         {/* 3. Promotion Packages Section (Revealed when a time slot is chosen or All Slots is ON) */}
-        {!isShiftSelected ? (
-          <div className="mt-6 rounded-2xl border-2 border-dashed border-red-200 bg-pink-50/20 p-8 text-center animate-in fade-in duration-200">
-            <div className="text-3xl">⏰</div>
-            <h3 className="mt-2 text-sm sm:text-base font-black text-red-950">
-              Select a Time Slot Above to Reveal Promotion Packages
-            </h3>
-            <p className="mt-1 text-xs text-gray-600 max-w-md mx-auto font-medium">
-              Click one of the 4 shifts (Morning, Afternoon, Evening, Night) or toggle &ldquo;All Time Slots&rdquo; above to see promotion packages and activate your ad.
-            </p>
-          </div>
-        ) : (
+        {isShiftSelected && (
           <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="border-b border-red-100 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>

@@ -1,5 +1,6 @@
 import { cache } from "react";
-import { readStore, writeStore } from "../persist";
+import { getDb } from "../db";
+import { readStore, writeStore, invalidateStoreCache } from "../persist";
 
 export type BlockType = "h1" | "h2" | "h3" | "p";
 
@@ -36,66 +37,166 @@ export type CitySeo = {
   updatedAt?: string;
 };
 
+function normalizeSeoDoc(raw: Record<string, unknown>): CitySeo {
+  return {
+    slug: String(raw.slug || ""),
+    name: String(raw.name || raw.slug || ""),
+    title: String(raw.title || ""),
+    description: String(raw.description || ""),
+    keywords: String(raw.keywords || raw.primaryKeyword || ""),
+    urlSlug: raw.urlSlug ? String(raw.urlSlug) : undefined,
+    primaryKeyword: String(raw.primaryKeyword || ""),
+    secondaryKeywords: Array.isArray(raw.secondaryKeywords)
+      ? (raw.secondaryKeywords as string[]).map(String)
+      : [],
+    longTailKeywords: Array.isArray(raw.longTailKeywords)
+      ? (raw.longTailKeywords as string[]).map(String)
+      : [],
+    canonicalUrl: String(raw.canonicalUrl || ""),
+    featuredImage: String(raw.featuredImage || ""),
+    imageAlt: String(raw.imageAlt || ""),
+    content: Array.isArray(raw.content)
+      ? (raw.content as ContentBlock[]).map((b, i) => ({
+          id: b.id || `b_${i}_${Date.now()}`,
+          type: (["h1", "h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
+          text: String(b.text || ""),
+        }))
+      : [],
+    faqs: Array.isArray(raw.faqs)
+      ? (raw.faqs as FaqItem[])
+          .map((f, i) => ({
+            id: f.id || `faq_${Date.now()}_${i}`,
+            question: String(f.question || "").trim(),
+            answer: String(f.answer || "").trim(),
+          }))
+          .filter((f) => f.question || f.answer)
+      : [],
+    status: raw.status === "published" ? "published" : "draft",
+    updatedAt: raw.updatedAt ? String(raw.updatedAt) : new Date().toISOString(),
+  };
+}
+
 export async function getAllCitySeo(): Promise<CitySeo[]> {
+  const db = await getDb();
+  if (db) {
+    try {
+      const docs = await db.collection("city_seo").find({}).toArray();
+      if (docs && docs.length > 0) {
+        return docs.map((d) => normalizeSeoDoc(d as unknown as Record<string, unknown>));
+      }
+    } catch (err) {
+      console.error("[city-seo] getAllCitySeo from mongo failed:", err);
+    }
+  }
+
   const store = await readStore();
-  return ((store.citySeo ?? []) as unknown as CitySeo[]).slice();
+  return ((store.citySeo ?? []) as unknown as Record<string, unknown>[]).map(normalizeSeoDoc);
 }
 
 export const getCitySeo = cache(async function (
   slug: string
 ): Promise<CitySeo | null> {
+  const target = String(slug || "").trim().toLowerCase();
+  if (!target) return null;
+
+  const db = await getDb();
+  if (db) {
+    try {
+      const doc = await db.collection("city_seo").findOne({
+        $or: [
+          { slug: target },
+          { urlSlug: target },
+          { slug: new RegExp(`^${target}$`, "i") },
+          { urlSlug: new RegExp(`^${target}$`, "i") },
+        ],
+      });
+      if (doc) {
+        return normalizeSeoDoc(doc as unknown as Record<string, unknown>);
+      }
+    } catch (err) {
+      console.error("[city-seo] getCitySeo from mongo failed:", err);
+    }
+  }
+
   const store = await readStore();
-  const found = ((store.citySeo ?? []) as unknown as CitySeo[]).find(
-    (c) => c.slug === slug
-  );
-  return found ?? null;
+  const list = (store.citySeo ?? []) as unknown as Record<string, unknown>[];
+  const found = list.find((c) => {
+    const s = String(c.slug || "").toLowerCase();
+    const u = String(c.urlSlug || "").toLowerCase();
+    return s === target || u === target;
+  });
+
+  return found ? normalizeSeoDoc(found) : null;
 });
 
 export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
-  const store = await readStore();
-  const list = (store.citySeo ?? []) as unknown as CitySeo[];
-  const index = list.findIndex((c) => c.slug === data.slug);
-  const prev = index >= 0 ? (list[index] as unknown as CitySeo) : undefined;
-
   const record: CitySeo = {
-    slug: data.slug,
-    name: data.name?.trim() || prev?.name || String(data.slug),
+    slug: String(data.slug || "").trim(),
+    name: data.name?.trim() || String(data.slug),
     title: data.title?.trim() ?? "",
     description: data.description?.trim() ?? "",
     keywords:
       data.keywords?.trim() ||
       (data.primaryKeyword ? data.primaryKeyword.trim() : ""),
-    urlSlug: data.urlSlug?.trim() || prev?.urlSlug || data.slug,
+    urlSlug: data.urlSlug?.trim() || data.slug,
     primaryKeyword: data.primaryKeyword?.trim() ?? "",
     secondaryKeywords: Array.isArray(data.secondaryKeywords)
-      ? data.secondaryKeywords
+      ? data.secondaryKeywords.map((s) => String(s).trim()).filter(Boolean)
       : [],
     longTailKeywords: Array.isArray(data.longTailKeywords)
-      ? data.longTailKeywords
+      ? data.longTailKeywords.map((s) => String(s).trim()).filter(Boolean)
       : [],
     canonicalUrl: data.canonicalUrl?.trim() ?? "",
     featuredImage: data.featuredImage ?? "",
     imageAlt: data.imageAlt?.trim() ?? "",
-    content: Array.isArray(data.content) ? data.content : [],
+    content: Array.isArray(data.content)
+      ? data.content.map((b, i) => ({
+          id: b.id || `b_${i}_${Date.now()}`,
+          type: (["h1", "h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
+          text: String(b.text || "").trim(),
+        }))
+      : [],
     faqs: Array.isArray(data.faqs)
       ? data.faqs
           .map((f, i) => ({
             id: f.id || `faq_${Date.now()}_${i}`,
-            question: (f.question || "").trim(),
-            answer: (f.answer || "").trim(),
+            question: String(f.question || "").trim(),
+            answer: String(f.answer || "").trim(),
           }))
           .filter((f) => f.question || f.answer)
       : [],
-    status: data.status ?? prev?.status ?? "draft",
+    status: data.status === "published" ? "published" : "draft",
     updatedAt: new Date().toISOString(),
   };
 
-  if (index >= 0) {
-    list[index] = record as unknown as (typeof list)[number];
-  } else {
-    list.push(record as unknown as (typeof list)[number]);
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.collection("city_seo").updateOne(
+        { slug: record.slug },
+        { $set: record },
+        { upsert: true }
+      );
+    } catch (err) {
+      console.error("[city-seo] upsertCitySeo mongo write failed:", err);
+    }
   }
 
-  await writeStore(store);
+  // Dual persist to store for local dev / memory fallback
+  try {
+    const store = await readStore();
+    const list = (store.citySeo ?? []) as unknown as CitySeo[];
+    const index = list.findIndex((c) => c.slug === record.slug);
+    if (index >= 0) {
+      list[index] = record;
+    } else {
+      list.push(record);
+    }
+    await writeStore(store);
+  } catch (err) {
+    console.warn("[city-seo] store fallback write failed:", err);
+  }
+
+  invalidateStoreCache();
   return record;
 }

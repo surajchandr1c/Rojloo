@@ -74,24 +74,49 @@ export async function generateMetadata({
 
 export default async function CityPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ location: string }>;
+  searchParams?: Promise<{ preview?: string }>;
 }) {
   const { location: slug } = await params;
+  const sParams = searchParams ? await searchParams : {};
+  const isPreview = sParams.preview === "true" || sParams.preview === "1";
   return (
     <Suspense fallback={<CityPageSkeleton />}>
-      <CityContent slug={slug} />
+      <CityContent slug={slug} isPreview={isPreview} />
     </Suspense>
   );
 }
 
-async function CityContent({ slug }: { slug: string }) {
-  const city = await getCityBySlug(slug);
+async function CityContent({
+  slug,
+  isPreview = false,
+}: {
+  slug: string;
+  isPreview?: boolean;
+}) {
+  let city = await getCityBySlug(slug);
+  const seo = await getCitySeo(slug);
+
+  // Fallback: If city not yet indexed in static/custom list but SEO exists, synthesize city record
+  if (!city && seo) {
+    city = {
+      _id: seo.slug,
+      name: seo.name || seo.slug,
+      slug: seo.slug,
+      state: "",
+      region: "",
+      famousFood: "",
+      seoDescription: seo.description,
+      createdAt: new Date(),
+    };
+  }
+
   if (!city) notFound();
 
-  const [ads, seo, localAreas] = await Promise.all([
+  const [ads, localAreas] = await Promise.all([
     listAdsByCity(city.name),
-    getCitySeo(slug),
     listLocalAreas({ cityName: city.name, citySlug: city.slug }),
   ]);
 
@@ -151,8 +176,27 @@ async function CityContent({ slug }: { slug: string }) {
         }
       : null;
 
+  const isPublished = seo?.status === "published";
+  const shouldShowSeo = Boolean(seo && (isPublished || isPreview));
+
   return (
     <main>
+      {isPreview && (
+        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-amber-300 bg-amber-500 px-4 py-2.5 text-white shadow-md">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
+            <span className="rounded-full bg-amber-800 px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-amber-100">
+              {seo?.status === "draft" ? "Draft Preview" : "Live Preview"}
+            </span>
+            <span>
+              Preview Mode — Viewing {seo?.status === "draft" ? "Draft" : "Published"} SEO Content for {city.name}
+            </span>
+          </div>
+          <span className="hidden sm:inline-block text-xs font-medium text-amber-100">
+            Draft content is visible only with preview link
+          </span>
+        </div>
+      )}
+
       <JsonLd data={[breadcrumbSchema, collectionSchema, ...(faqSchema ? [faqSchema] : [])]} />
       <section className="px-4 py-10 sm:px-6">
         <SectionPanel>
@@ -247,10 +291,21 @@ async function CityContent({ slug }: { slug: string }) {
         </SectionPanel>
       </section>
 
-      {seo?.status === "published" && seo.content && seo.content.length > 0 && (
+      {shouldShowSeo && seo?.content && seo.content.length > 0 && (
         <section className="px-4 py-10 sm:px-6">
           <SectionPanel>
             <Eyebrow>City Guide</Eyebrow>
+            {seo.featuredImage && (
+              <div className="relative mt-4 h-64 sm:h-80 w-full overflow-hidden rounded-2xl bg-pink-50 border border-pink-100">
+                <Image
+                  src={seo.featuredImage}
+                  alt={seo.imageAlt || `${city.name} guide`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 900px"
+                />
+              </div>
+            )}
             {seo.content.map((block) => {
               if (block.type === "h1")
                 return (
@@ -292,7 +347,7 @@ async function CityContent({ slug }: { slug: string }) {
         </section>
       )}
 
-      {seo?.faqs && seo.faqs.length > 0 && (seo.status === "published" || !seo.status) && (
+      {shouldShowSeo && seo?.faqs && seo.faqs.length > 0 && (
         <CityFaqSection faqs={seo.faqs} cityName={city.name} />
       )}
     </main>

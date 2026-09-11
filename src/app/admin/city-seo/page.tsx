@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
@@ -135,6 +135,14 @@ function CitySeoContent() {
   const editSlug = params.get("city");
   const isEdit = Boolean(editSlug);
 
+  const jsonInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [allCities, setAllCities] = useState<
+    { name: string; slug: string; state?: string }[]
+  >([]);
+  const [activeSlug, setActiveSlug] = useState(editSlug || "");
+  const [stateName, setStateName] = useState("");
+
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -159,48 +167,70 @@ function CitySeoContent() {
   const [faqDragIndex, setFaqDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!editSlug) return;
     let cancelled = false;
 
     (async () => {
       setLoading(true);
       try {
         const [citiesRes, seoRes] = await Promise.all([
-          fetch("/api/admin/cities").then((r) => r.json()),
-          fetch("/api/admin/city-seo").then((r) => r.json()),
+          fetch("/api/admin/cities", { credentials: "include" }).then((r) =>
+            r.json()
+          ),
+          fetch("/api/admin/city-seo", { credentials: "include" }).then((r) =>
+            r.json()
+          ),
         ]);
         if (cancelled) return;
 
-        const city = (citiesRes.cities ?? []).find(
-          (c: { slug: string; name: string }) => c.slug === editSlug
-        );
-        if (city) setName(city.name);
+        const fetchedCities = (citiesRes.cities ?? []) as {
+          name: string;
+          slug: string;
+          state?: string;
+        }[];
+        setAllCities(fetchedCities);
 
-        const seo = (seoRes.seo ?? []).find(
-          (s: { slug: string }) => s.slug === editSlug
-        );
-        if (seo) {
-          setTitle(seo.title ?? "");
-          setDescription(seo.description ?? "");
-          setUrlSlug(seo.urlSlug ?? editSlug);
-          setPrimaryKeyword(seo.primaryKeyword ?? "");
-          setSecondaryKeywords(seo.secondaryKeywords ?? []);
-          setLongTailKeywords(seo.longTailKeywords ?? []);
-          setCanonicalUrl(seo.canonicalUrl ?? "");
-          setFeaturedImage(seo.featuredImage ?? "");
-          setImageAlt(seo.imageAlt ?? "");
-          setContent(
-            Array.isArray(seo.content) && seo.content.length
-              ? seo.content
-              : [
-                  { id: uid(), type: "h1", text: "" },
-                  { id: uid(), type: "p", text: "" },
-                ]
+        const targetSlug = editSlug || activeSlug;
+        if (targetSlug) {
+          const city = fetchedCities.find((c) => c.slug === targetSlug);
+          if (city) {
+            setName(city.name);
+            if (city.state) setStateName(city.state);
+          }
+
+          const seo = (seoRes.seo ?? []).find(
+            (s: { slug: string; urlSlug?: string }) =>
+              s.slug === targetSlug || s.urlSlug === targetSlug
           );
-          setFaqs(Array.isArray(seo.faqs) ? seo.faqs : []);
-          setStatus(seo.status === "published" ? "published" : "draft");
+          if (seo) {
+            if (!name && seo.name) setName(seo.name);
+            setTitle(seo.title ?? "");
+            setDescription(seo.description ?? "");
+            setUrlSlug(seo.urlSlug ?? targetSlug);
+            setPrimaryKeyword(seo.primaryKeyword ?? "");
+            setSecondaryKeywords(seo.secondaryKeywords ?? []);
+            setLongTailKeywords(seo.longTailKeywords ?? []);
+            setCanonicalUrl(seo.canonicalUrl ?? "");
+            setFeaturedImage(seo.featuredImage ?? "");
+            setImageAlt(seo.imageAlt ?? "");
+            setContent(
+              Array.isArray(seo.content) && seo.content.length
+                ? seo.content
+                : [
+                    { id: uid(), type: "h1", text: "" },
+                    { id: uid(), type: "p", text: "" },
+                  ]
+            );
+            setFaqs(Array.isArray(seo.faqs) ? seo.faqs : []);
+            setStatus(seo.status === "published" ? "published" : "draft");
+          } else {
+            setUrlSlug(targetSlug);
+            setContent([
+              { id: uid(), type: "h1", text: "" },
+              { id: uid(), type: "p", text: "" },
+            ]);
+            setFaqs([]);
+          }
         } else {
-          setUrlSlug(editSlug);
           setContent([
             { id: uid(), type: "h1", text: "" },
             { id: uid(), type: "p", text: "" },
@@ -218,6 +248,21 @@ function CitySeoContent() {
       cancelled = true;
     };
   }, [editSlug]);
+
+  function handleCityNameChange(val: string) {
+    setName(val);
+    const trimmed = val.trim().toLowerCase();
+    const match = allCities.find(
+      (c) => c.name.toLowerCase() === trimmed || c.slug.toLowerCase() === trimmed
+    );
+    if (match) {
+      if (match.state) setStateName(match.state);
+      setActiveSlug(match.slug);
+      if (!slugManual) setUrlSlug(match.slug);
+    } else {
+      if (!slugManual && val.trim()) setUrlSlug(slugify(val));
+    }
+  }
 
   function handleTitleChange(value: string) {
     setTitle(value);
@@ -284,48 +329,392 @@ function CitySeoContent() {
     }
   }
 
-  async function save(publish: boolean) {
+  function downloadSampleJson() {
+    const cityName = name.trim() || "Mumbai";
+    const sample = {
+      name: cityName,
+      state: stateName.trim() || "Maharashtra",
+      title:
+        title ||
+        `Best Escort & Call Girl Services in ${cityName} | Rojlo`,
+      description:
+        description ||
+        `Find top verified escorts and independent call girls in ${cityName}. 100% genuine photos, safe booking, 24/7 service.`,
+      urlSlug: urlSlug || slugify(cityName),
+      primaryKeyword: primaryKeyword || `call girls in ${cityName.toLowerCase()}`,
+      secondaryKeywords: secondaryKeywords.length
+        ? secondaryKeywords
+        : [
+            `escorts in ${cityName.toLowerCase()}`,
+            `${cityName.toLowerCase()} call girls`,
+            `independent escorts ${cityName.toLowerCase()}`,
+          ],
+      longTailKeywords: longTailKeywords.length
+        ? longTailKeywords
+        : [
+            `vip escort service in ${cityName.toLowerCase()}`,
+            `hotel delivery call girl ${cityName.toLowerCase()}`,
+          ],
+      canonicalUrl:
+        canonicalUrl ||
+        `https://rojloo.vercel.app/places/${urlSlug || slugify(cityName)}`,
+      featuredImage: featuredImage || "",
+      imageAlt: imageAlt || `${cityName} city guide`,
+      status: "draft",
+      content: content.length
+        ? content.map((c) => ({ type: c.type, text: c.text }))
+        : [
+            {
+              type: "h1",
+              text: `Top Escort Services in ${cityName}`,
+            },
+            {
+              type: "p",
+              text: `${cityName} offers unmatched nightlife and top-tier services across all major localities with verified contacts.`,
+            },
+            {
+              type: "h2",
+              text: "Why Choose Verified Services on Rojlo",
+            },
+            {
+              type: "p",
+              text: "Safety, genuine photos, and direct WhatsApp contact make booking fast and secure.",
+            },
+          ],
+      faqs: faqs.length
+        ? faqs.map((f) => ({ question: f.question, answer: f.answer }))
+        : [
+            {
+              question: `How do I contact service providers in ${cityName}?`,
+              answer:
+                "You can browse verified advertiser profiles and connect directly via phone call, WhatsApp, or Telegram.",
+            },
+            {
+              question: "Are advertiser photos verified?",
+              answer:
+                "Yes, our team verifies advertiser profile photos to ensure authentic listings.",
+            },
+          ],
+    };
+
+    const blob = new Blob([JSON.stringify(sample, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${slugify(cityName)}-seo-sample.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleJsonFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setSuccess("");
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (!data || typeof data !== "object") {
+        setError("The uploaded JSON file is empty or not a valid JSON object.");
+        return;
+      }
+
+      // 1. City Name & State
+      const parsedName = String(
+        data.name || data.cityName || data.city || ""
+      ).trim();
+      if (parsedName) {
+        setName(parsedName);
+        const match = allCities.find(
+          (c) =>
+            c.name.toLowerCase() === parsedName.toLowerCase() ||
+            c.slug.toLowerCase() === slugify(parsedName)
+        );
+        if (match) {
+          setActiveSlug(match.slug);
+          if (match.state) setStateName(match.state);
+        }
+      }
+
+      const parsedState = String(data.state || data.stateName || "").trim();
+      if (parsedState) setStateName(parsedState);
+
+      // 2. Title & Description
+      const parsedTitle = String(
+        data.title || data.seoTitle || data.metaTitle || ""
+      ).trim();
+      if (parsedTitle) setTitle(parsedTitle);
+
+      const parsedDesc = String(
+        data.description ||
+          data.metaDescription ||
+          data.meta_description ||
+          ""
+      ).trim();
+      if (parsedDesc) setDescription(parsedDesc);
+
+      // 3. Slug
+      const parsedSlug = String(
+        data.urlSlug || data.url_slug || data.slug || ""
+      ).trim();
+      if (parsedSlug) {
+        setUrlSlug(slugify(parsedSlug));
+        setSlugManual(true);
+      } else if (parsedTitle && !urlSlug) {
+        setUrlSlug(slugify(parsedTitle));
+      } else if (parsedName && !urlSlug) {
+        setUrlSlug(slugify(parsedName));
+      }
+
+      // 4. Keywords
+      const parsedPrimary = String(
+        data.primaryKeyword ||
+          data.primary_keyword ||
+          data.keyword ||
+          data.keywords ||
+          ""
+      ).trim();
+      if (parsedPrimary) setPrimaryKeyword(parsedPrimary);
+
+      const rawSec = data.secondaryKeywords || data.secondary_keywords;
+      if (Array.isArray(rawSec)) {
+        setSecondaryKeywords(
+          rawSec.map(String).map((s) => s.trim()).filter(Boolean)
+        );
+      } else if (typeof rawSec === "string" && rawSec.trim()) {
+        setSecondaryKeywords(
+          rawSec.split(",").map((s) => s.trim()).filter(Boolean)
+        );
+      }
+
+      const rawLong = data.longTailKeywords || data.long_tail_keywords;
+      if (Array.isArray(rawLong)) {
+        setLongTailKeywords(
+          rawLong.map(String).map((s) => s.trim()).filter(Boolean)
+        );
+      } else if (typeof rawLong === "string" && rawLong.trim()) {
+        setLongTailKeywords(
+          rawLong.split(",").map((s) => s.trim()).filter(Boolean)
+        );
+      }
+
+      // 5. Canonical & Images
+      const parsedCanonical = String(
+        data.canonicalUrl || data.canonical_url || data.canonical || ""
+      ).trim();
+      if (parsedCanonical) setCanonicalUrl(parsedCanonical);
+
+      const parsedImage = String(
+        data.featuredImage || data.featured_image || data.image || ""
+      ).trim();
+      if (parsedImage) setFeaturedImage(parsedImage);
+
+      const parsedAlt = String(
+        data.imageAlt || data.image_alt || data.alt || ""
+      ).trim();
+      if (parsedAlt) setImageAlt(parsedAlt);
+
+      // 6. Content Blocks (support blocks array, strings array, markdown, sections)
+      const newBlocks: ContentBlock[] = [];
+      const rawContent =
+        data.content || data.blocks || data.body || data.sections;
+
+      if (Array.isArray(rawContent)) {
+        for (const item of rawContent) {
+          if (typeof item === "string") {
+            const str = item.trim();
+            if (!str) continue;
+            if (str.startsWith("### ")) {
+              newBlocks.push({ id: uid(), type: "h3", text: str.slice(4).trim() });
+            } else if (str.startsWith("## ")) {
+              newBlocks.push({ id: uid(), type: "h2", text: str.slice(3).trim() });
+            } else if (str.startsWith("# ")) {
+              newBlocks.push({ id: uid(), type: "h1", text: str.slice(2).trim() });
+            } else {
+              newBlocks.push({ id: uid(), type: "p", text: str });
+            }
+          } else if (typeof item === "object" && item !== null) {
+            const bType: BlockType = ["h1", "h2", "h3", "p"].includes(item.type)
+              ? item.type
+              : item.tag === "h1" || item.heading === 1
+              ? "h1"
+              : item.tag === "h2" || item.heading === 2
+              ? "h2"
+              : item.tag === "h3" || item.heading === 3
+              ? "h3"
+              : "p";
+            const bText = String(
+              item.text ||
+                item.content ||
+                item.value ||
+                item.body ||
+                item.title ||
+                ""
+            ).trim();
+            if (bText) {
+              newBlocks.push({
+                id: item.id || uid(),
+                type: bType,
+                text: bText,
+              });
+            }
+          }
+        }
+      } else if (typeof rawContent === "string" && rawContent.trim()) {
+        const paragraphs = rawContent.split(/\r?\n\r?\n/);
+        for (const p of paragraphs) {
+          const trimmed = p.trim();
+          if (!trimmed) continue;
+          if (trimmed.startsWith("### ")) {
+            newBlocks.push({ id: uid(), type: "h3", text: trimmed.slice(4).trim() });
+          } else if (trimmed.startsWith("## ")) {
+            newBlocks.push({ id: uid(), type: "h2", text: trimmed.slice(3).trim() });
+          } else if (trimmed.startsWith("# ")) {
+            newBlocks.push({ id: uid(), type: "h1", text: trimmed.slice(2).trim() });
+          } else {
+            newBlocks.push({ id: uid(), type: "p", text: trimmed });
+          }
+        }
+      }
+
+      if (newBlocks.length > 0) {
+        setContent(newBlocks);
+      }
+
+      // 7. FAQs
+      const newFaqs: FaqItem[] = [];
+      const rawFaqs = data.faqs || data.faq || data.questions;
+      if (Array.isArray(rawFaqs)) {
+        for (const f of rawFaqs) {
+          if (typeof f === "object" && f !== null) {
+            const question = String(
+              f.question || f.q || f.title || ""
+            ).trim();
+            const answer = String(
+              f.answer ||
+                f.a ||
+                f.solution ||
+                f.description ||
+                f.content ||
+                ""
+            ).trim();
+            if (question || answer) {
+              newFaqs.push({
+                id: f.id || uid(),
+                question,
+                answer,
+              });
+            }
+          }
+        }
+      }
+
+      if (newFaqs.length > 0) {
+        setFaqs(newFaqs);
+      }
+
+      if (data.status === "published" || data.status === "draft") {
+        setStatus(data.status);
+      }
+
+      setSuccess(
+        `JSON file loaded successfully! Populated SEO metadata, ${newBlocks.length} content block(s), and ${newFaqs.length} FAQ(s). You can edit any field below before saving as draft or publishing.`
+      );
+    } catch (err) {
+      setError(
+        `Failed to parse JSON file: ${
+          err instanceof Error ? err.message : "Invalid JSON syntax"
+        }`
+      );
+    } finally {
+      if (e.target) e.target.value = "";
+    }
+  }
+
+  async function save(publish: boolean): Promise<string | null> {
     setError("");
     setSuccess("");
     setSaving(true);
 
     try {
-      let slug = editSlug ?? "";
+      const targetName = name.trim();
+      if (!targetName) {
+        setError("City name is required.");
+        setSaving(false);
+        return null;
+      }
 
-      if (!isEdit) {
-        if (!name.trim()) {
-          setError("City name is required to create a new city.");
-          setSaving(false);
-          return;
+      // Check if city exists in loaded cities
+      let slug = activeSlug || editSlug || "";
+      if (!slug) {
+        const existing = allCities.find(
+          (c) =>
+            c.name.toLowerCase() === targetName.toLowerCase() ||
+            c.slug.toLowerCase() === slugify(targetName).toLowerCase()
+        );
+        if (existing) {
+          slug = existing.slug;
         }
+      }
+
+      // If brand new city, create via /api/admin/cities
+      if (!slug) {
+        const resolvedState = stateName.trim() || "India";
         const cRes = await fetch("/api/admin/cities", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name.trim() }),
+          credentials: "include",
+          body: JSON.stringify({
+            name: targetName,
+            state: resolvedState,
+            region: resolvedState,
+            country: "India",
+            famousFood: "",
+            seoDescription: description.trim(),
+          }),
         });
         const cData = await cRes.json();
-        if (!cRes.ok) {
+        if (
+          !cRes.ok &&
+          !cData.error?.toLowerCase().includes("already exists")
+        ) {
           setError(cData.error || "Failed to add city.");
           setSaving(false);
-          return;
+          return null;
         }
-        slug = cData.city?.slug || slugify(name);
+        slug = cData.city?.slug || slugify(targetName);
       }
+
+      const finalUrlSlug = (
+        urlSlug.trim() ||
+        slugify(title) ||
+        slugify(targetName) ||
+        slug
+      ).toLowerCase();
 
       const sRes = await fetch("/api/admin/city-seo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           slug,
-          name: name || slug,
+          name: targetName || slug,
           title,
           description,
           keywords: primaryKeyword,
-          urlSlug,
+          urlSlug: finalUrlSlug,
           primaryKeyword,
           secondaryKeywords,
           longTailKeywords,
-          canonicalUrl,
+          canonicalUrl:
+            canonicalUrl.trim() ||
+            `https://rojloo.vercel.app/places/${finalUrlSlug}`,
           featuredImage,
           imageAlt,
           content,
@@ -333,26 +722,53 @@ function CitySeoContent() {
           status: publish ? "published" : "draft",
         }),
       });
+
       const sData = await sRes.json();
       if (!sRes.ok) {
         setError(sData.error || "Failed to save SEO.");
         setSaving(false);
-        return;
+        return null;
       }
 
+      setActiveSlug(slug);
       setStatus(publish ? "published" : "draft");
-      setSuccess(publish ? "Published successfully." : "Draft saved.");
-      setTimeout(() => setSuccess(""), 2500);
+      setSuccess(
+        publish ? "Published successfully!" : "Draft saved successfully!"
+      );
+      if (typeof window !== "undefined") {
+        window.history.replaceState(
+          null,
+          "",
+          `/admin/city-seo?city=${encodeURIComponent(slug)}`
+        );
+      }
+
+      setTimeout(() => setSuccess(""), 4000);
+      return slug;
     } catch {
       setError("Something went wrong. Please try again.");
+      return null;
     } finally {
       setSaving(false);
     }
   }
 
-  function preview() {
-    const slug = editSlug || urlSlug || name;
-    if (slug) window.open(`/places/${slug}`, "_blank");
+  async function preview() {
+    setError("");
+    const targetName = name.trim();
+    const targetSlug =
+      activeSlug || editSlug || urlSlug.trim() || slugify(targetName);
+    if (!targetSlug && !targetName) {
+      setError("Please enter a city name before previewing.");
+      return;
+    }
+
+    // Auto-save draft before previewing so latest changes are immediately reflected
+    const savedSlug = await save(false);
+    const slugToOpen = savedSlug || targetSlug;
+    if (slugToOpen) {
+      window.open(`/places/${slugToOpen}?preview=true`, "_blank");
+    }
   }
 
   const titleLen = title.length;
@@ -411,20 +827,43 @@ function CitySeoContent() {
             {status === "published" ? "Published" : "Draft"}
           </span>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={jsonInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleJsonFileSelect}
+          />
+          <button
+            type="button"
+            onClick={() => jsonInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-full border border-pink-300 bg-pink-50 px-4 py-2 text-sm font-semibold text-red-800 hover:bg-pink-100 transition cursor-pointer"
+            title="Upload a .json file to automatically fill all SEO fields, content blocks, and FAQs"
+          >
+            <span>📁</span> Upload JSON
+          </button>
+          <button
+            type="button"
+            onClick={downloadSampleJson}
+            className="inline-flex items-center gap-1 rounded-full border border-pink-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-pink-50 transition cursor-pointer"
+            title="Download an example JSON format template"
+          >
+            <span>⬇</span> Sample JSON
+          </button>
           <button
             type="button"
             onClick={() => save(false)}
             disabled={saving}
-            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 transition cursor-pointer"
           >
-            Save Draft
+            {saving ? "Saving..." : "Save Draft"}
           </button>
           <button
             type="button"
             onClick={preview}
-            disabled={!editSlug && !urlSlug && !name}
-            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+            disabled={saving || (!activeSlug && !editSlug && !urlSlug && !name.trim())}
+            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 transition cursor-pointer"
           >
             Preview
           </button>
@@ -432,9 +871,9 @@ function CitySeoContent() {
             type="button"
             onClick={() => save(true)}
             disabled={saving}
-            className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+            className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition cursor-pointer"
           >
-            Publish
+            {saving ? "Publishing..." : "Publish"}
           </button>
         </div>
       </div>
@@ -462,19 +901,43 @@ function CitySeoContent() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
-          {!isEdit && (
-            <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-              <h2 className="mb-3 text-lg font-bold text-red-950">City</h2>
-              <Field label="City Name">
+          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-red-950">City Information</h2>
+              {allCities.some((c) => c.name.toLowerCase() === name.trim().toLowerCase()) && (
+                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                  ✓ Existing City Linked
+                </span>
+              )}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="City Name" hint="Select or type city name">
                 <input
+                  list="city-suggestions-list"
                   className={inputClass}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => handleCityNameChange(e.target.value)}
                   placeholder="e.g. Mumbai"
                 />
+                <datalist id="city-suggestions-list">
+                  {allCities.map((c) => (
+                    <option key={c.slug} value={c.name}>
+                      {c.state ? `${c.name} (${c.state})` : c.name}
+                    </option>
+                  ))}
+                </datalist>
               </Field>
-            </section>
-          )}
+
+              <Field label="State / Region" hint="State for this city">
+                <input
+                  className={inputClass}
+                  value={stateName}
+                  onChange={(e) => setStateName(e.target.value)}
+                  placeholder="e.g. Maharashtra"
+                />
+              </Field>
+            </div>
+          </section>
 
           <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
             <h2 className="mb-4 text-lg font-bold text-red-950">SEO Settings</h2>
