@@ -26,15 +26,28 @@ export async function generateMetadata({
   params: Promise<{ location: string }>;
 }): Promise<Metadata> {
   const { location: slug } = await params;
-  const city = await getCityBySlug(slug);
+  let city = await getCityBySlug(slug);
+  const seo = await getCitySeo(slug);
+
+  if (!city && seo) {
+    city = {
+      _id: seo.slug,
+      name: seo.name || seo.slug,
+      slug: seo.slug,
+      state: "",
+      region: "",
+      famousFood: "",
+      seoDescription: seo.description,
+      createdAt: new Date(),
+    };
+  }
+
   if (!city) {
     return {
       title: "City not found | Rojlo",
       robots: { index: false, follow: false },
     };
   }
-
-  const seo = await getCitySeo(slug);
   const title =
     seo?.title?.trim() ||
     `Best Places & Services in ${city.name} | Rojlo`;

@@ -33,7 +33,8 @@ export async function generateMetadata({
   }
 
   const isDeleted = (ad.status ?? "active") === "deleted";
-  if (isDeleted) {
+  const isVisible = await isAdVisiblePublicly(ad as unknown as Ad);
+  if (isDeleted || !isVisible) {
     return {
       title: "Listing Unavailable | Rojlo",
       robots: { index: false, follow: false },
