@@ -165,6 +165,11 @@ function CitySeoContent() {
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [faqDragIndex, setFaqDragIndex] = useState<number | null>(null);
+  const [jsonPasteText, setJsonPasteText] = useState("");
+  const [jsonStatusMsg, setJsonStatusMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -329,7 +334,7 @@ function CitySeoContent() {
     }
   }
 
-  function downloadSampleJson() {
+  function getSampleJsonString(): string {
     const cityName = name.trim() || "Mumbai";
     const sample = {
       name: cityName,
@@ -397,7 +402,13 @@ function CitySeoContent() {
           ],
     };
 
-    const blob = new Blob([JSON.stringify(sample, null, 2)], {
+    return JSON.stringify(sample, null, 2);
+  }
+
+  function downloadSampleJson() {
+    const cityName = name.trim() || "Mumbai";
+    const sampleStr = getSampleJsonString();
+    const blob = new Blob([sampleStr], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
@@ -410,19 +421,26 @@ function CitySeoContent() {
     URL.revokeObjectURL(url);
   }
 
-  async function handleJsonFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function applyJsonString(rawText: string): boolean {
+    const trimmed = rawText.trim();
+    if (!trimmed) {
+      const msg = "Please enter or paste JSON text first.";
+      setJsonStatusMsg({ type: "error", text: msg });
+      setError(msg);
+      return false;
+    }
+
     setError("");
     setSuccess("");
 
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
+      const data = JSON.parse(trimmed);
 
       if (!data || typeof data !== "object") {
-        setError("The uploaded JSON file is empty or not a valid JSON object.");
-        return;
+        const msg = "The JSON content is empty or not a valid JSON object.";
+        setJsonStatusMsg({ type: "error", text: msg });
+        setError(msg);
+        return false;
       }
 
       // 1. City Name & State
@@ -623,18 +641,52 @@ function CitySeoContent() {
         setStatus(data.status);
       }
 
-      setSuccess(
-        `JSON file loaded successfully! Populated SEO metadata, ${newBlocks.length} content block(s), and ${newFaqs.length} FAQ(s). You can edit any field below before saving as draft or publishing.`
-      );
+      const successMsg = `JSON arranged successfully onto the form! Populated City, SEO Title, Description, Keywords, ${newBlocks.length} content block(s), and ${newFaqs.length} FAQ(s).`;
+      setJsonStatusMsg({ type: "success", text: successMsg });
+      setSuccess(successMsg);
+      return true;
+    } catch (err) {
+      const errMsg = `Failed to parse JSON: ${
+        err instanceof Error ? err.message : "Invalid JSON syntax"
+      }`;
+      setJsonStatusMsg({ type: "error", text: errMsg });
+      setError(errMsg);
+      return false;
+    }
+  }
+
+  async function handleJsonFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      setJsonPasteText(text);
+      applyJsonString(text);
     } catch (err) {
       setError(
-        `Failed to parse JSON file: ${
-          err instanceof Error ? err.message : "Invalid JSON syntax"
+        `Failed to read file: ${
+          err instanceof Error ? err.message : "Unknown error"
         }`
       );
     } finally {
       if (e.target) e.target.value = "";
     }
+  }
+
+  function handleApplyPastedJson() {
+    applyJsonString(jsonPasteText);
+  }
+
+  function handleClearJson() {
+    setJsonPasteText("");
+    setJsonStatusMsg(null);
+  }
+
+  function handleLoadSampleJson() {
+    const sample = getSampleJsonString();
+    setJsonPasteText(sample);
+    setJsonStatusMsg(null);
   }
 
   async function save(publish: boolean): Promise<string | null> {
@@ -901,6 +953,93 @@ function CitySeoContent() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
+          {/* JSON Paste & Auto-Fill Section */}
+          <section className="rounded-2xl border border-red-200 bg-gradient-to-b from-pink-50/70 via-white to-white p-4 sm:p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-pink-100 pb-3 mb-3">
+              <div>
+                <h2 className="text-lg font-bold text-red-950 flex items-center gap-2">
+                  <span>Paste SEO JSON Content</span>
+                  <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">
+                    Fast Fill
+                  </span>
+                </h2>
+                <p className="text-xs text-red-900 mt-0.5">
+                  Paste JSON file text here to automatically arrange and fill the full SEO form below.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleLoadSampleJson}
+                  className="rounded-lg border border-pink-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-pink-50 transition cursor-pointer"
+                  title="Insert sample JSON format into textarea"
+                >
+                  Load Sample
+                </button>
+                {jsonPasteText && (
+                  <button
+                    type="button"
+                    onClick={handleClearJson}
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="relative">
+                <textarea
+                  rows={6}
+                  value={jsonPasteText}
+                  onChange={(e) => {
+                    setJsonPasteText(e.target.value);
+                    if (jsonStatusMsg) setJsonStatusMsg(null);
+                  }}
+                  onPaste={(e) => {
+                    const pasted = e.clipboardData.getData("text");
+                    if (pasted && pasted.trim().startsWith("{")) {
+                      setTimeout(() => {
+                        applyJsonString(pasted);
+                      }, 50);
+                    }
+                  }}
+                  placeholder={`Paste your JSON file text here...\nExample:\n{\n  "name": "Mumbai",\n  "state": "Maharashtra",\n  "title": "Best Escort & Call Girl Services in Mumbai | Rojlo",\n  "description": "Find top verified escorts and independent call girls in Mumbai...",\n  "primaryKeyword": "call girls in mumbai",\n  "secondaryKeywords": ["escorts in mumbai", "mumbai call girls"],\n  "content": [\n    { "type": "h1", "text": "Top Escort Services in Mumbai" },\n    { "type": "p", "text": "Mumbai offers unmatched nightlife..." }\n  ],\n  "faqs": [\n    { "question": "How do I contact providers in Mumbai?", "answer": "Browse verified profiles..." }\n  ]\n}`}
+                  className="w-full font-mono text-xs sm:text-sm rounded-xl border border-pink-200 bg-pink-50/60 p-3 text-red-950 placeholder-red-300 focus:border-red-500 focus:bg-white focus:outline-none transition resize-y leading-relaxed"
+                  spellCheck={false}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={handleApplyPastedJson}
+                  disabled={!jsonPasteText.trim()}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2 text-sm font-bold text-white shadow-xs hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                >
+                  <span>Apply JSON to Form</span>
+                </button>
+
+                <p className="text-[11px] text-red-700">
+                  Tip: Pasting valid JSON will auto-arrange and fill all fields on the page.
+                </p>
+              </div>
+
+              {jsonStatusMsg && (
+                <div
+                  className={`rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium animate-in fade-in ${
+                    jsonStatusMsg.type === "success"
+                      ? "bg-green-50 text-green-800 border border-green-200"
+                      : "bg-red-50 text-red-800 border border-red-200"
+                  }`}
+                >
+                  {jsonStatusMsg.text}
+                </div>
+              )}
+            </div>
+          </section>
+
           <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-bold text-red-950">City Information</h2>
