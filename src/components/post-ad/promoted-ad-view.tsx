@@ -34,6 +34,8 @@ interface PromoModalData {
   promotedUntil: Date;
   isCurrentShift: boolean;
   isNextDay: boolean;
+  days?: number;
+  totalCoins?: number;
 }
 
 export default function PromotedAdView() {
@@ -48,6 +50,7 @@ export default function PromotedAdView() {
   const [promoPackages, setPromoPackages] = useState<PromotionPackage[]>(DEFAULT_PROMO_PACKAGES);
   const [selectedAdId, setSelectedAdId] = useState<string>(adIdParam);
   const [selectedShift, setSelectedShift] = useState<PromoShift>("morning");
+  const [selectedDays, setSelectedDays] = useState<number>(1);
   const [selectedPackageId, setSelectedPackageId] = useState<string>("platinum-vip");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -146,12 +149,17 @@ export default function PromotedAdView() {
   const selectedTierInfo = getTierRankInfo(selectedPkg.tier, `${selectedPkg.id} ${selectedPkg.title}`);
   const selectedRankRange = selectedPkg.rankRange || selectedTierInfo.rankRange;
   const userCoins = Number(user?.coins ?? 0);
-  const hasEnoughCoins = userCoins >= selectedPkg.coinsCost;
 
-  // Real-time projected shift timing and expiration calculation
+  const baseCoinsPerDay = Math.max(1, Math.round(Number(selectedPkg.coinsCost || 5)));
+  const totalCoinsCost = baseCoinsPerDay * selectedDays;
+  const hasEnoughCoins = userCoins >= totalCoinsCost;
+
+  // Real-time projected shift timing and multi-day expiration calculation
   const currentShiftTiming = calculateShiftTiming(selectedShift);
-  const projectedExpiration = calculatePromoExpiration(selectedPkg, selectedShift);
-  void projectedExpiration;
+  const projectedExpiration = calculatePromoExpiration(
+    { durationDays: selectedDays },
+    selectedShift
+  );
 
   const isAdPromoted = (ad: Ad) => {
     const raw = ad as unknown as Record<string, unknown>;
@@ -166,7 +174,7 @@ export default function PromotedAdView() {
 
     if (!hasEnoughCoins) {
       setErrorMessage(
-        `You need ${selectedPkg.coinsCost} coins for this package, but you only have ${userCoins} coins.`
+        `You need ${totalCoinsCost} coins (${baseCoinsPerDay} coins/day × ${selectedDays} days) for this package, but you only have ${userCoins} coins.`
       );
       return;
     }
@@ -181,9 +189,8 @@ export default function PromotedAdView() {
         body: JSON.stringify({
           packageId: selectedPkg.id,
           title: selectedPkg.title,
-          durationDays: selectedPkg.durationDays,
-          durationHours: selectedPkg.durationHours,
-          coinsCost: selectedPkg.coinsCost,
+          durationDays: selectedDays,
+          coinsCost: totalCoinsCost,
           shift: selectedShift,
           tier: selectedTierInfo.tier,
         }),
@@ -195,7 +202,7 @@ export default function PromotedAdView() {
       }
 
       const expiry = new Date(
-        data.promotedUntil || calculatePromoExpiration(selectedPkg, selectedShift)
+        data.promotedUntil || projectedExpiration
       );
       const start = new Date(data.promotedFrom || currentShiftTiming.promotedFrom);
 
@@ -207,6 +214,8 @@ export default function PromotedAdView() {
         promotedUntil: expiry,
         isCurrentShift: Boolean(data.isCurrentShift ?? currentShiftTiming.isCurrentShift),
         isNextDay: Boolean(data.isNextDay ?? currentShiftTiming.isNextDay),
+        days: selectedDays,
+        totalCoins: totalCoinsCost,
       });
 
       await refreshAuth();
@@ -379,50 +388,140 @@ export default function PromotedAdView() {
           )}
         </div>
 
-        {/* Shift Selection Dropdown */}
+        {/* Shift Selection & Promotion Duration Section */}
         <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
-          <h2 className="text-sm sm:text-base font-black text-red-950">
-            select your shift
-          </h2>
-          <div className="mt-3 max-w-md">
-            <select
-              value={selectedShift}
-              onChange={(e) => setSelectedShift(e.target.value as PromoShift)}
-              className="w-full rounded-xl border border-red-200 bg-pink-50/30 p-2.5 text-xs sm:text-sm font-bold text-red-950 focus:border-red-600 focus:outline-none"
-            >
-              <option value="morning">🌅 Morning Shift (06:00 AM – 12:00 PM • 6 Hours)</option>
-              <option value="afternoon">☀️ Afternoon Shift (12:00 PM – 06:00 PM • 6 Hours)</option>
-              <option value="evening">🌇 Evening Shift (06:00 PM – 12:00 AM Midnight • 6 Hours)</option>
-              <option value="night">🌙 Night Shift (12:00 AM Midnight – 06:00 AM • 6 Hours)</option>
-            </select>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-red-100 pb-3">
+            <div>
+              <h2 className="text-sm sm:text-base font-black text-red-950 uppercase tracking-wide">
+                2. Select Your Shift & Number of Days
+              </h2>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
+                Choose the 6-hour daily time slot and how many days you want your ad featured.
+              </p>
+            </div>
+            <span className="self-start sm:self-auto rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-900 border border-red-200">
+              📅 {selectedDays} {selectedDays === 1 ? "Day" : "Days"} Selected
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Shift dropdown */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Select Your Shift (6-Hour Daily Slot):
+              </label>
+              <select
+                value={selectedShift}
+                onChange={(e) => setSelectedShift(e.target.value as PromoShift)}
+                className="w-full rounded-xl border border-red-200 bg-pink-50/30 p-2.5 text-xs sm:text-sm font-bold text-red-950 focus:border-red-600 focus:outline-none"
+              >
+                <option value="morning">🌅 Morning Shift (06:00 AM – 12:00 PM • 6 Hours)</option>
+                <option value="afternoon">☀️ Afternoon Shift (12:00 PM – 06:00 PM • 6 Hours)</option>
+                <option value="evening">🌇 Evening Shift (06:00 PM – 12:00 AM Midnight • 6 Hours)</option>
+                <option value="night">🌙 Night Shift (12:00 AM Midnight – 06:00 AM • 6 Hours)</option>
+              </select>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Your ad will stay on top during this shift every day.
+              </p>
+            </div>
+
+            {/* Days input */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                How Many Days to Show Your Ad on This Time Slot?
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDays((prev) => Math.max(1, prev - 1))}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-pink-50/60 font-black text-red-950 hover:bg-pink-100 transition active:scale-95 cursor-pointer text-lg select-none"
+                  aria-label="Decrease days"
+                >
+                  &minus;
+                </button>
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={90}
+                    value={selectedDays}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (isNaN(val) || val < 1) {
+                        setSelectedDays(1);
+                      } else {
+                        setSelectedDays(Math.min(90, val));
+                      }
+                    }}
+                    className="w-full rounded-xl border border-red-200 bg-pink-50/30 py-2 px-3 text-center text-sm font-black text-red-950 focus:border-red-600 focus:outline-none"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 pointer-events-none">
+                    {selectedDays === 1 ? "day" : "days"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDays((prev) => Math.min(90, prev + 1))}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-pink-50/60 font-black text-red-950 hover:bg-pink-100 transition active:scale-95 cursor-pointer text-lg select-none"
+                  aria-label="Increase days"
+                >
+                  &#43;
+                </button>
+              </div>
+
+              {/* Quick Select Preset Buttons */}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-bold text-gray-500 mr-0.5">Quick select:</span>
+                {[1, 2, 3, 5, 7, 15, 30].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setSelectedDays(d)}
+                    className={`rounded-lg px-2 py-0.5 text-xs font-bold transition cursor-pointer ${
+                      selectedDays === d
+                        ? "bg-[#450a0a] text-white shadow-xs"
+                        : "bg-pink-50 text-red-900 border border-red-200/80 hover:bg-pink-100"
+                    }`}
+                  >
+                    {d} {d === 1 ? "day" : "days"}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Real-time Shift Schedule Note */}
-          <div className="mt-3 rounded-xl border border-red-100 bg-pink-50/40 p-3 max-w-md text-xs font-semibold">
+          <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/40 p-3 text-xs font-semibold">
             {currentShiftTiming.isCurrentShift ? (
               <p className="text-emerald-800 flex items-start gap-1.5 leading-relaxed">
                 <span className="text-sm shrink-0">🟢</span>
                 <span>
-                  <strong>Active Now:</strong> Your ad will post immediately and stay on top until{" "}
-                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedUntil)}</strong> (end of this 6-hour shift).
+                  <strong>Active Now:</strong> Your ad will post immediately and run during the{" "}
+                  <strong>{getShiftShortLabel(selectedShift)}</strong> shift every day for{" "}
+                  <strong className="underline">{selectedDays} {selectedDays === 1 ? "day" : "days"}</strong> until{" "}
+                  <strong className="underline">{formatDateTime(projectedExpiration)}</strong>.
                 </span>
               </p>
             ) : currentShiftTiming.isNextDay ? (
               <p className="text-indigo-900 flex items-start gap-1.5 leading-relaxed">
                 <span className="text-sm shrink-0">📅</span>
                 <span>
-                  <strong>Shift has passed today:</strong> Your ad is scheduled to start on{" "}
-                  <strong className="underline">Tomorrow ({formatDateTime(currentShiftTiming.promotedFrom)})</strong> and run until{" "}
-                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
+                  <strong>Shift has passed today:</strong> Scheduled to start tomorrow (
+                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedFrom)}</strong>) and run during the{" "}
+                  <strong>{getShiftShortLabel(selectedShift)}</strong> shift for{" "}
+                  <strong className="underline">{selectedDays} {selectedDays === 1 ? "day" : "days"}</strong> until{" "}
+                  <strong className="underline">{formatDateTime(projectedExpiration)}</strong>.
                 </span>
               </p>
             ) : (
               <p className="text-amber-900 flex items-start gap-1.5 leading-relaxed">
                 <span className="text-sm shrink-0">🕒</span>
                 <span>
-                  <strong>Scheduled for Today:</strong> Your ad will start at{" "}
-                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and run until{" "}
-                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
+                  <strong>Scheduled for Today:</strong> Starts today at{" "}
+                  <strong className="underline">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and runs during the{" "}
+                  <strong>{getShiftShortLabel(selectedShift)}</strong> shift for{" "}
+                  <strong className="underline">{selectedDays} {selectedDays === 1 ? "day" : "days"}</strong> until{" "}
+                  <strong className="underline">{formatDateTime(projectedExpiration)}</strong>.
                 </span>
               </p>
             )}
@@ -431,16 +530,23 @@ export default function PromotedAdView() {
 
         {/* Promotion Packages Grid */}
         <div className="mt-6 rounded-2xl bg-white border border-red-200/90 p-4 sm:p-6 shadow-xs">
-          <div className="border-b border-red-100 pb-3">
-            <h2 className="text-sm sm:text-base font-black text-red-950">
-              Choose a Promotion Package
-            </h2>
+          <div className="border-b border-red-100 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 className="text-sm sm:text-base font-black text-red-950 uppercase tracking-wide">
+                3. Choose a Promotion Package
+              </h2>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">
+                Packages show 1-day rate. Total cost multiplies by your {selectedDays} selected {selectedDays === 1 ? "day" : "days"}.
+              </p>
+            </div>
           </div>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {promoPackages.map((pkg) => {
               const isSelected = selectedPackageId === pkg.id;
               const tierInfo = getTierRankInfo(pkg.tier, `${pkg.id} ${pkg.title}`);
+              const dailyRate = Math.max(1, Math.round(Number(pkg.coinsCost || 5)));
+              const pkgTotalCoins = dailyRate * selectedDays;
 
               return (
                 <div
@@ -483,16 +589,32 @@ export default function PromotedAdView() {
                       <span className="text-red-700 underline">{pkg.rankRange || tierInfo.rankRange}</span>
                     </div>
 
-                    <div className="mt-2.5 flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-red-600">
-                        {pkg.coinsCost}
-                      </span>
-                      <span className="text-xs font-bold text-gray-600">Coins</span>
-                      <span className="text-xs text-gray-500 ml-1.5">
-                        ({pkg.durationHours && pkg.durationHours < 24
-                          ? `${pkg.durationHours} Hours (${pkg.durationHours === 6 ? "1 Shift" : `${pkg.durationHours}h`})`
-                          : `${pkg.durationDays ?? 1} ${Number(pkg.durationDays) === 1 ? "Day" : "Days"} (Daily Shift)`})
-                      </span>
+                    {/* 1-Day Amount Rate */}
+                    <div className="mt-3">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-red-600">
+                          {dailyRate}
+                        </span>
+                        <span className="text-xs font-bold text-gray-600">Coins</span>
+                        <span className="rounded-md bg-pink-100 px-1.5 py-0.5 text-[10px] font-black text-red-900 uppercase">
+                          / 1 Day
+                        </span>
+                      </div>
+
+                      {/* Multiplied Total for Selected Days */}
+                      <div className="mt-2 rounded-xl bg-pink-100/60 border border-red-200/60 p-2 text-xs">
+                        <div className="flex items-center justify-between font-bold">
+                          <span className="text-gray-700">Total ({selectedDays} {selectedDays === 1 ? "day" : "days"}):</span>
+                          <span className="text-red-700 font-black text-sm">
+                            {pkgTotalCoins} Coins
+                          </span>
+                        </div>
+                        {selectedDays > 1 && (
+                          <p className="text-[10px] text-gray-500 mt-0.5 text-right font-semibold">
+                            ({dailyRate} coins &times; {selectedDays} days)
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <ul className="mt-3 space-y-1.5 text-[11px] text-gray-600">
@@ -525,9 +647,12 @@ export default function PromotedAdView() {
           {/* Action CTA */}
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-pink-50/40 border border-red-100 p-4">
             <div>
-              <p className="text-xs text-gray-600 font-medium">Selected Package</p>
+              <p className="text-xs text-gray-600 font-medium">Selected Package &amp; Total</p>
               <p className="text-sm font-black text-red-950">
-                {selectedPkg.title} &bull; <span className="text-red-700">{selectedPkg.coinsCost} Coins</span>
+                {selectedPkg.title} &bull; <span className="text-red-700 font-black">{totalCoinsCost} Coins</span>
+                <span className="text-xs text-gray-600 ml-1.5 font-bold">
+                  ({baseCoinsPerDay} coins/day &times; {selectedDays} {selectedDays === 1 ? "day" : "days"})
+                </span>
               </p>
             </div>
 
@@ -539,12 +664,12 @@ export default function PromotedAdView() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#450a0a] hover:bg-[#7f1d1d] disabled:opacity-50 text-white px-6 py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-md cursor-pointer"
               >
                 <span>🚀</span>
-                <span>{submitting ? "Promoting..." : `Promote Now (${selectedPkg.coinsCost} Coins)`}</span>
+                <span>{submitting ? "Promoting..." : `Promote for ${selectedDays} ${selectedDays === 1 ? "Day" : "Days"} (${totalCoinsCost} Coins)`}</span>
               </button>
             ) : (
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-rose-700">
-                  Need {selectedPkg.coinsCost - userCoins} more coins
+                  Need {totalCoinsCost - userCoins} more coins
                 </span>
                 <Link
                   href="/post-ad/buy-coin"
@@ -587,10 +712,19 @@ export default function PromotedAdView() {
             <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/50 p-4 space-y-2.5 text-left">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                  Promotion Duration &amp; Cost:
+                </p>
+                <p className="text-xs font-bold text-red-950 mt-0.5">
+                  {modalData.days || selectedDays} {((modalData.days || selectedDays) === 1) ? "Day" : "Days"} &bull; <span className="text-red-700 font-extrabold">{modalData.totalCoins || totalCoinsCost} Coins Paid</span>
+                </p>
+              </div>
+
+              <div className="border-t border-red-100/80 pt-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">
                   Shift Timing:
                 </p>
                 <p className="text-xs font-bold text-red-950 mt-0.5">
-                  {modalData.shiftName} {modalData.isCurrentShift ? "• 🟢 Live Now" : modalData.isNextDay ? "• 📅 Tomorrow" : "• 🕒 Scheduled"}
+                  {modalData.shiftName} (6h daily) {modalData.isCurrentShift ? "• 🟢 Live Now" : modalData.isNextDay ? "• 📅 Tomorrow" : "• 🕒 Scheduled"}
                 </p>
               </div>
 
@@ -610,7 +744,7 @@ export default function PromotedAdView() {
 
               <div className="border-t border-red-100/80 pt-2 flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-600">
-                  {modalData.isCurrentShift ? "Time Left:" : "Shift Length:"}
+                  {modalData.isCurrentShift ? "Time Left in Shift:" : "Shift Length:"}
                 </span>
                 <span className="text-sm font-black text-emerald-700 font-mono">
                   {modalData.isCurrentShift ? (countdown || "Calculating...") : "6 Hours"}

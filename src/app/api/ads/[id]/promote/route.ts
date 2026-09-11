@@ -33,14 +33,19 @@ export async function POST(
       (body?.title && p.title === body.title)
   );
 
-  const durationDays = Number(
-    matchedPkg?.durationDays !== undefined
-      ? matchedPkg.durationDays
-      : matchedPkg?.durationHours && matchedPkg.durationHours >= 24
-      ? Math.floor(matchedPkg.durationHours / 24)
-      : (body?.durationDays ?? 1)
-  );
-  const coinsCost = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
+  // Selected promotion days (minimum 1 day)
+  const durationDays = Math.max(1, Math.floor(Number(body?.durationDays ?? 1)));
+
+  // Base 1-day package price
+  let baseCoinsPerDay = 5;
+  if (matchedPkg) {
+    baseCoinsPerDay = Math.max(1, Math.round(Number(matchedPkg.coinsCost || 5)));
+  } else if (body?.coinsCost) {
+    baseCoinsPerDay = Math.max(1, Math.round(Number(body.coinsCost) / durationDays));
+  }
+
+  // Total coins = 1-day rate * number of days
+  const totalCoinsCost = baseCoinsPerDay * durationDays;
   const packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
 
   // Determine shift: "morning" | "afternoon" | "evening" | "night"
@@ -68,19 +73,19 @@ export async function POST(
   const user = await findUserById(userId);
   const currentCoins = Number(user?.coins ?? 0);
 
-  if (currentCoins < coinsCost) {
+  if (currentCoins < totalCoinsCost) {
     return NextResponse.json(
       {
-        error: `Insufficient coins. You have ${currentCoins} coins, but this package requires ${coinsCost} coins.`,
+        error: `Insufficient coins. You have ${currentCoins} coins, but promoting for ${durationDays} day(s) requires ${totalCoinsCost} coins (${baseCoinsPerDay} coins/day).`,
         currentCoins,
-        requiredCoins: coinsCost,
+        requiredCoins: totalCoinsCost,
       },
       { status: 400 }
     );
   }
 
   // Deduct coins
-  const deducted = await updateUserCoins(userId, -coinsCost, user?.email);
+  const deducted = await updateUserCoins(userId, -totalCoinsCost, user?.email);
   if (!deducted) {
     return NextResponse.json(
       { error: "Failed to deduct coins. Please try again." },
@@ -92,9 +97,9 @@ export async function POST(
   const now = new Date();
   const shiftTiming = calculateShiftTiming(promoShift, now);
 
-  // If package has multi-day duration, calculate final expiration
+  // Multi-day duration expiration (runs through chosen shift each day)
   const finalPromotedUntil = calculatePromoExpiration(
-    matchedPkg || { durationDays, durationHours: body?.durationHours },
+    { durationDays },
     promoShift,
     now
   );
@@ -111,7 +116,7 @@ export async function POST(
 
   if (!updatedAd) {
     // Refund coins if ad update failed
-    await updateUserCoins(userId, coinsCost, user?.email);
+    await updateUserCoins(userId, totalCoinsCost, user?.email);
     return NextResponse.json(
       { error: "Failed to promote ad. Coins have been refunded." },
       { status: 500 }
@@ -128,9 +133,11 @@ export async function POST(
 
   return NextResponse.json({
     success: true,
-    message: `🎉 Ad promoted successfully with ${packageName}! Position: ${tierInfo.rankRange} during ${shiftText}. ${statusPrefix}.`,
+    message: `🎉 Ad promoted successfully with ${packageName} for ${durationDays} day(s)! Position: ${tierInfo.rankRange} during ${shiftText}. ${statusPrefix}.`,
     ad: updatedAd,
-    remainingCoins: currentCoins - coinsCost,
+    remainingCoins: currentCoins - totalCoinsCost,
+    durationDays,
+    coinsCost: totalCoinsCost,
     promotedFrom: shiftTiming.promotedFrom.toISOString(),
     promotedUntil: finalPromotedUntil.toISOString(),
     startTimeFormatted: startFormatted,

@@ -18,8 +18,8 @@ function normalizePackage(pkg: Partial<PromotionPackage>, index = 0): PromotionP
   if (!durationHours && durationDays) {
     durationHours = Math.round(durationDays * 24);
   } else if (!durationHours) {
-    durationHours = tier === "bronze" ? 6 : tier === "silver" ? 24 : tier === "gold" ? 72 : 168;
-    durationDays = durationHours / 24;
+    durationHours = 24;
+    durationDays = 1;
   }
 
   if (!durationDays && durationHours) {
