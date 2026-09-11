@@ -7,6 +7,7 @@ import AdGallery from "@/components/ads/AdGallery";
 import ContactActions from "@/components/ads/ContactActions";
 import { Card, SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { getPublicAdById, listAdsByCity, isAdVisiblePublicly, type Ad } from "@/lib/models/ad";
 import { getCityBySlug } from "@/lib/models/city";
 import { DEFAULT_SERVICE_RATES } from "@/components/post-ad/types";
@@ -45,7 +46,7 @@ export async function generateMetadata({
   const canonical = `${siteConfig.url}/places/${location}/${id}`;
   const images =
     ad.images && ad.images.length > 0
-      ? [{ url: ad.images[0], alt: `${ad.name} image` }]
+      ? [{ url: ad.images[0], alt: `${ad.name} in ${ad.city}` }]
       : [{ url: `${siteConfig.url}/rojlo.png`, alt: "Rojlo" }];
 
   return {
@@ -160,6 +161,15 @@ async function AdContent({ location, id }: { location: string; id: string }) {
       <JsonLd data={[breadcrumbSchema, serviceSchema]} />
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <SectionPanel>
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Places", href: "/places" },
+              { label: cityName, href: `/places/${location}` },
+              { label: ad.name },
+            ]}
+          />
+
           {isDeleted && (
             <p className="mt-4 rounded-[1rem] bg-pink-100 p-4 text-red-900">
               This ad has been deleted. The information below is archived.
@@ -178,7 +188,9 @@ async function AdContent({ location, id }: { location: string; id: string }) {
             </div>
           )}
 
-          <Eyebrow>{ad.category}</Eyebrow>
+          <div className="mt-4">
+            <Eyebrow>{ad.category}</Eyebrow>
+          </div>
           <h1 className="mt-3 flex flex-wrap items-baseline gap-2 sm:gap-3 text-2xl sm:text-3xl md:text-4xl font-black text-red-950 break-words">
             <span>{ad.name}</span>
             {ad.age && (

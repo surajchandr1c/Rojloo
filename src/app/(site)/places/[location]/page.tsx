@@ -6,9 +6,10 @@ import { notFound } from "next/navigation";
 import ContactActions from "@/components/ads/ContactActions";
 import { Card, SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { listAdsByCity } from "@/lib/models/ad";
 import { getCitySeo } from "@/lib/models/city-seo";
-import { getCityBySlug } from "@/lib/models/city";
+import { getCityBySlug, listAllCities } from "@/lib/models/city";
 import { listLocalAreas } from "@/lib/models/localArea";
 import { CityPageSkeleton } from "@/components/skeletons/places-skeletons";
 import { isAdActiveInCurrentShift, getTierRankInfo } from "@/lib/promo-shifts";
@@ -49,6 +50,7 @@ export async function generateMetadata({
       .join(", ") || undefined;
 
   const canonical = seo?.canonicalUrl?.trim() || `${siteConfig.url}/places/${slug}`;
+  const ogImage = seo?.featuredImage?.trim() || `${siteConfig.url}/rojlo.png`;
 
   return {
     title,
@@ -63,11 +65,20 @@ export async function generateMetadata({
       url: canonical,
       type: "website",
       siteName: siteConfig.name,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${city.name} - Services & Places on Rojlo`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
@@ -115,10 +126,22 @@ async function CityContent({
 
   if (!city) notFound();
 
-  const [ads, localAreas] = await Promise.all([
+  const [ads, localAreas, allCities] = await Promise.all([
     listAdsByCity(city.name),
     listLocalAreas({ cityName: city.name, citySlug: city.slug }),
+    city.state ? listAllCities() : Promise.resolve([]),
   ]);
+
+  const siblingCities = city.state
+    ? allCities
+        .filter(
+          (c) =>
+            c.state &&
+            c.state.trim().toLowerCase() === city.state?.trim().toLowerCase() &&
+            c.slug.toLowerCase() !== city.slug.toLowerCase()
+        )
+        .slice(0, 12)
+    : [];
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -200,10 +223,19 @@ async function CityContent({
       <JsonLd data={[breadcrumbSchema, collectionSchema, ...(faqSchema ? [faqSchema] : [])]} />
       <section className="px-4 py-10 sm:px-6">
         <SectionPanel>
-          <Eyebrow>Services in {city.name}</Eyebrow>
-          <h2 className="mt-3 text-2xl font-black text-red-950 sm:text-3xl">
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Places", href: "/places" },
+              { label: city.name },
+            ]}
+          />
+          <div className="mt-4">
+            <Eyebrow>Services in {city.name}</Eyebrow>
+          </div>
+          <h1 className="mt-3 text-2xl font-black text-red-950 sm:text-3xl">
             Services posted in {city.name}
-          </h2>
+          </h1>
 
           {localAreas.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -267,7 +299,7 @@ async function CityContent({
                       <div className="relative mt-4 h-56 overflow-hidden rounded-[1rem] bg-pink-50 sm:h-64">
                         <Image
                           src={ad.images[0]}
-                          alt={`${ad.name} image`}
+                          alt={`${ad.name} - Services in ${city.name}`}
                           fill
                           className="object-contain transition-transform duration-300 group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, 360px"
@@ -309,12 +341,12 @@ async function CityContent({
             {seo.content.map((block) => {
               if (block.type === "h1")
                 return (
-                  <h1
+                  <h2
                     key={block.id}
                     className="mt-6 text-3xl font-black text-red-950"
                   >
                     {block.text}
-                  </h1>
+                  </h2>
                 );
               if (block.type === "h2")
                 return (
@@ -349,6 +381,28 @@ async function CityContent({
 
       {shouldShowSeo && seo?.faqs && seo.faqs.length > 0 && (
         <CityFaqSection faqs={seo.faqs} cityName={city.name} />
+      )}
+
+      {siblingCities.length > 0 && (
+        <section className="px-4 py-8 sm:px-6">
+          <SectionPanel>
+            <Eyebrow>Regional Directory</Eyebrow>
+            <h2 className="mt-3 text-xl font-bold text-red-950 sm:text-2xl">
+              More Cities in {city.state}
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {siblingCities.map((sibling) => (
+                <Link
+                  key={sibling.slug}
+                  href={`/places/${sibling.slug}`}
+                  className="rounded-full border border-pink-200 bg-pink-50 px-3.5 py-1.5 text-xs font-semibold text-red-950 transition hover:bg-pink-100 hover:border-pink-300"
+                >
+                  {sibling.name}
+                </Link>
+              ))}
+            </div>
+          </SectionPanel>
+        </section>
       )}
     </main>
   );

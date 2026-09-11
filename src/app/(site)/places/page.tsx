@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { listAllCities } from "@/lib/models/city";
 import { getAdCountsByCity } from "@/lib/models/ad";
 import PlacesExplorer from "@/components/places/places-explorer";
@@ -22,12 +23,21 @@ export const metadata: Metadata = {
       "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
     url: `${siteConfig.url}/places`,
     type: "website",
+    images: [
+      {
+        url: `${siteConfig.url}/rojlo.png`,
+        width: 1200,
+        height: 630,
+        alt: "Explore Places on Rojlo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Explore Places & Local Cities | Rojlo",
     description:
       "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
+    images: [`${siteConfig.url}/rojlo.png`],
   },
 };
 
@@ -89,7 +99,15 @@ export default async function Places({
     <div className="w-full min-w-0 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       <JsonLd data={schema} />
       <SectionPanel>
-        <Eyebrow>Places</Eyebrow>
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Places" },
+          ]}
+        />
+        <div className="mt-4">
+          <Eyebrow>Places</Eyebrow>
+        </div>
         <h1 className="mt-2 text-3xl font-black text-red-950 sm:text-4xl">
           Places
         </h1>

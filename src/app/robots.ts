@@ -28,6 +28,8 @@ export default function robots(): MetadataRoute.Robots {
         "/login",
         "/post-ad",
         "/post-ad/*",
+        "/*?*preview=*",
+        "/places?*q=*",
       ],
     },
     sitemap: `${siteConfig.url}/sitemap.xml`,

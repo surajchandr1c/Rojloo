@@ -4,7 +4,7 @@ const rawUrl =
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : "https://rojloo.vercel.app");
+    : "https://rojlo.in");
 
 const siteUrl = rawUrl.trim().replace(/\/+$/, "");
 
