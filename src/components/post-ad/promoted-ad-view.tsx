@@ -31,43 +31,28 @@ interface ShiftBoxItem {
   id: PromoShift;
   name: string;
   timeRange: string;
-  hours: string;
-  icon: string;
-  desc: string;
 }
 
 const SHIFT_BOXES: ShiftBoxItem[] = [
   {
     id: "morning",
-    name: "Morning Shift",
+    name: "Morning",
     timeRange: "06:00 AM – 12:00 PM",
-    hours: "6 Hours",
-    icon: "🌅",
-    desc: "Peak morning browsing & active callers",
   },
   {
     id: "afternoon",
-    name: "Afternoon Shift",
+    name: "Afternoon",
     timeRange: "12:00 PM – 06:00 PM",
-    hours: "6 Hours",
-    icon: "☀️",
-    desc: "Lunch breaks & afternoon inquiries",
   },
   {
     id: "evening",
-    name: "Evening Shift",
-    timeRange: "06:00 PM – 12:00 AM Midnight",
-    hours: "6 Hours",
-    icon: "🌇",
-    desc: "Prime evening rush & highest traffic",
+    name: "Evening",
+    timeRange: "06:00 PM – 12:00 AM",
   },
   {
     id: "night",
-    name: "Night Shift",
-    timeRange: "12:00 AM Midnight – 06:00 AM",
-    hours: "6 Hours",
-    icon: "🌙",
-    desc: "Late night seekers & nocturnal inquiries",
+    name: "Night",
+    timeRange: "12:00 AM – 06:00 AM",
   },
 ];
 
@@ -536,26 +521,20 @@ export default function PromotedAdView() {
                 </h2>
                 {allShifts && (
                   <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-black text-emerald-900 uppercase tracking-wider">
-                    ⚡ 24h Full Day (4× Slots)
+                    24h Full Day (4 Slots)
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
-                Pick one of the 4 shifts below, or turn ON all slots for round-the-clock 24-hour top ranking.
-              </p>
             </div>
 
             {/* ON/OFF Switch for All Slots */}
             <div className="flex items-center gap-3 self-start md:self-auto bg-pink-50/80 border border-red-200/80 rounded-2xl px-3.5 py-2">
               <div className="text-left">
                 <div className="text-xs font-black text-red-950 flex items-center gap-1.5">
-                  <span>⚡ All Time Slots</span>
-                  <span className="rounded-md bg-red-100 px-1.5 py-0.2 text-[9px] font-bold text-red-800 uppercase">
+                  <span>All Time Slots</span>
+                  <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-800 uppercase">
                     24 Hours
                   </span>
-                </div>
-                <div className="text-[10px] text-gray-600 font-semibold">
-                  {allShifts ? "Active in all 4 shifts (4× rate)" : "Turn ON for 24h continuous coverage"}
                 </div>
               </div>
 
@@ -579,7 +558,7 @@ export default function PromotedAdView() {
           </div>
 
           {/* 4 Shift Slot Boxes */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3.5">
             {SHIFT_BOXES.map((shift) => {
               const isBoxActiveNow = activeISTShift === shift.id;
               const isSelected = allShifts || selectedShift === shift.id;
@@ -588,63 +567,25 @@ export default function PromotedAdView() {
                 <div
                   key={shift.id}
                   onClick={() => handleSelectSingleShift(shift.id)}
-                  className={`relative cursor-pointer rounded-2xl p-4 transition-all flex flex-col justify-between border select-none ${
+                  className={`relative cursor-pointer rounded-2xl p-4 text-center transition-all select-none border ${
                     allShifts
-                      ? "border-emerald-500 bg-emerald-50/50 shadow-xs ring-2 ring-emerald-500/20"
+                      ? "border-emerald-500 bg-emerald-50/60 shadow-xs ring-2 ring-emerald-500/20"
                       : isSelected
-                      ? "border-red-600 bg-pink-50/90 shadow-md ring-2 ring-red-500/30 scale-[1.01]"
-                      : "border-red-100 bg-white hover:border-red-300 hover:bg-pink-50/30 hover:shadow-xs"
+                      ? "border-red-600 bg-pink-50 shadow-md ring-2 ring-red-500/30 scale-[1.01]"
+                      : "border-red-200/80 bg-white hover:border-red-300 hover:bg-pink-50/20"
                   }`}
                 >
-                  {/* Top Badges */}
-                  <div className="flex items-center justify-between gap-1.5 mb-2">
-                    <span className="text-2xl">{shift.icon}</span>
-                    <div className="flex items-center gap-1">
-                      {isBoxActiveNow && (
-                        <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[9px] font-black text-emerald-800 uppercase tracking-wider animate-pulse">
-                          🟢 LIVE NOW
-                        </span>
-                      )}
-                      <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">
-                        {shift.hours}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Shift Title & Hours */}
-                  <div>
-                    <h3 className="text-sm font-black text-red-950">
-                      {shift.name}
-                    </h3>
-                    <p className="mt-1 text-xs font-extrabold text-red-700">
-                      {shift.timeRange}
-                    </p>
-                    <p className="mt-1 text-[11px] text-gray-500 font-medium leading-snug">
-                      {shift.desc}
-                    </p>
-                  </div>
-
-                  {/* Selection Indicator Button */}
-                  <div className="mt-3 pt-2.5 border-t border-red-100/60 flex items-center justify-between text-xs">
-                    <span className="text-[11px] font-bold text-gray-500">
-                      {allShifts
-                        ? "24h Pass"
-                        : isSelected
-                        ? "Selected"
-                        : "Click to select"}
+                  <h3 className="text-sm sm:text-base font-black text-red-950">
+                    {shift.name}
+                  </h3>
+                  <p className="mt-1 text-xs font-bold text-red-700">
+                    {shift.timeRange}
+                  </p>
+                  {isBoxActiveNow && (
+                    <span className="mt-2 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      Live Now
                     </span>
-                    <span
-                      className={`rounded-lg px-2 py-0.5 text-[11px] font-black transition ${
-                        allShifts
-                          ? "bg-emerald-600 text-white"
-                          : isSelected
-                          ? "bg-[#450a0a] text-white"
-                          : "bg-pink-100 text-red-900"
-                      }`}
-                    >
-                      {allShifts ? "✓ In 24h Pass" : isSelected ? "✓ Active" : "Select"}
-                    </span>
-                  </div>
+                  )}
                 </div>
               );
             })}
@@ -654,41 +595,29 @@ export default function PromotedAdView() {
           {isShiftSelected && (
             <div className="mt-4 rounded-xl border border-red-100 bg-pink-50/40 p-3 text-xs font-semibold">
               {allShifts ? (
-                <p className="text-emerald-900 flex items-start gap-2 leading-relaxed">
-                  <span className="text-base shrink-0">⚡</span>
-                  <span>
-                    <strong>24-Hour Full Day Active:</strong> Your ad will run continuously across all 4 shifts (Morning, Afternoon, Evening, and Night) starting immediately until{" "}
-                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong> (24 hours full coverage).
-                  </span>
+                <p className="text-emerald-900 leading-relaxed">
+                  <strong>24-Hour Full Day Active:</strong> Your ad will run continuously across all 4 shifts starting immediately until{" "}
+                  <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
                 </p>
               ) : currentShiftTiming.isCurrentShift ? (
-                <p className="text-emerald-800 flex items-start gap-1.5 leading-relaxed">
-                  <span className="text-sm shrink-0">🟢</span>
-                  <span>
-                    <strong>Active Now:</strong> Your ad will post immediately and run during the{" "}
-                    <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
-                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
-                  </span>
+                <p className="text-emerald-800 leading-relaxed">
+                  <strong>Active Now:</strong> Your ad will post immediately and run during the{" "}
+                  <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
+                  <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
                 </p>
               ) : currentShiftTiming.isNextDay ? (
-                <p className="text-indigo-900 flex items-start gap-1.5 leading-relaxed">
-                  <span className="text-sm shrink-0">📅</span>
-                  <span>
-                    <strong>Shift has passed today:</strong> Scheduled to start tomorrow at{" "}
-                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and run during the{" "}
-                    <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
-                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
-                  </span>
+                <p className="text-indigo-900 leading-relaxed">
+                  <strong>Shift has passed today:</strong> Scheduled to start tomorrow at{" "}
+                  <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and run during the{" "}
+                  <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
+                  <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
                 </p>
               ) : (
-                <p className="text-amber-900 flex items-start gap-1.5 leading-relaxed">
-                  <span className="text-sm shrink-0">🕒</span>
-                  <span>
-                    <strong>Scheduled for Today:</strong> Starts today at{" "}
-                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and runs during the{" "}
-                    <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
-                    <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
-                  </span>
+                <p className="text-amber-900 leading-relaxed">
+                  <strong>Scheduled for Today:</strong> Starts today at{" "}
+                  <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedFrom)}</strong> and runs during the{" "}
+                  <strong>{getShiftShortLabel(selectedShift || "morning")}</strong> shift until{" "}
+                  <strong className="underline text-red-950">{formatDateTime(currentShiftTiming.promotedUntil)}</strong>.
                 </p>
               )}
             </div>
