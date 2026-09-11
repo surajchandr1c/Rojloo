@@ -6,6 +6,7 @@ import Button from "@/components/ui/button";
 import { TextInput } from "@/components/ui/field";
 import { serviceNames } from "@/lib/services";
 import { useAuth } from "@/lib/auth-context";
+import { FormSkeleton } from "@/components/ui/skeleton";
 
 const serviceOptions = Object.values(serviceNames);
 const OTP_TTL_SECONDS = 10 * 60; // 10 minutes
@@ -184,9 +185,9 @@ function AuthPage() {
       if (data.token) setToken(data.token);
       if (data.user) setUser(data.user);
       router.push(returnTo);
-      router.refresh();
     } catch {
       setError("Network error. Please try again.");
+    } finally {
       setBusy(false);
     }
   }
@@ -241,7 +242,6 @@ function AuthPage() {
         if (verifyData.resendInMs) setResendIn(Math.ceil(verifyData.resendInMs / 1000));
         setDigits(["", "", "", "", "", ""]);
         digitRefs.current[0]?.focus();
-        setBusy(false);
         return;
       }
 
@@ -250,13 +250,11 @@ function AuthPage() {
         if (verifyData.token) setToken(verifyData.token);
         setUser(verifyData.user);
         router.push(returnTo);
-        router.refresh();
         return;
       }
 
       if (!verifyData.signupToken) {
         setError("Verification failed. Please try sending a new code.");
-        setBusy(false);
         return;
       }
 
@@ -276,15 +274,14 @@ function AuthPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || data.message || "Something went wrong.");
-        setBusy(false);
         return;
       }
       if (data.token) setToken(data.token);
       if (data.user) setUser(data.user);
       router.push(returnTo);
-      router.refresh();
     } catch {
       setError("Network error. Please try again.");
+    } finally {
       setBusy(false);
     }
   }
@@ -573,13 +570,11 @@ function AuthPage() {
             variant="solid"
             fullWidth
             disabled={busy}
+            loading={busy}
+            loadingText={mode === "login" ? "Logging in..." : "Creating account..."}
             className="!text-white"
           >
-            {busy
-              ? "Please wait..."
-              : mode === "login"
-              ? "Log in"
-              : "Create account"}
+            {mode === "login" ? "Log in" : "Create account"}
           </Button>
         </form>
       </section>
@@ -589,7 +584,13 @@ function AuthPage() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <main className="flex min-h-[80vh] items-center justify-center px-4 py-8 sm:py-10">
+          <FormSkeleton fields={3} />
+        </main>
+      }
+    >
       <AuthPage />
     </Suspense>
   );

@@ -16,7 +16,14 @@ export async function GET(req: NextRequest) {
   }
 
   const requests = await listPaymentRequests();
-  return NextResponse.json({ requests, success: true });
+  return NextResponse.json(
+    { requests, success: true },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    }
+  );
 }
 
 export async function POST(req: NextRequest) {

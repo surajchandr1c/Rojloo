@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/button";
@@ -16,26 +16,47 @@ export default function BuyCoinSection() {
   const router = useRouter();
   const { user } = useAuth();
   const [packages, setPackages] = useState<CoinPackage[]>(FALLBACK_PACKAGES);
+  const [navigatingPkgId, setNavigatingPkgId] = useState<string | null>(null);
+
+  const loadPackages = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/coin-packages?_t=${Date.now()}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = Array.isArray(data.packages) ? data.packages : [];
+      if (list.length) {
+        setPackages(list);
+      }
+    } catch (err) {
+      console.error("Failed to load coin packages:", err);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadPackages() {
-      try {
-        const res = await fetch(`/api/coin-packages?_t=${Date.now()}`, {
-          cache: "no-store",
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        const list = Array.isArray(data.packages) ? data.packages : [];
-        if (list.length) {
-          setPackages(list);
-        }
-      } catch (err) {
-        console.error("Failed to load coin packages:", err);
-      }
-    }
+    queueMicrotask(() => {
+      void loadPackages();
+    });
 
-    loadPackages();
-  }, []);
+    const handleUpdated = () => { void loadPackages(); };
+    const handleFocus = () => { void loadPackages(); };
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "rojlo_coin_packages_update") {
+        void loadPackages();
+      }
+    };
+
+    window.addEventListener("coin_packages:updated", handleUpdated);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("coin_packages:updated", handleUpdated);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [loadPackages]);
 
   return (
     <section className="rounded-2xl bg-white p-4 sm:p-6 w-full max-w-full overflow-hidden box-border">
@@ -134,13 +155,16 @@ export default function BuyCoinSection() {
                 variant="solid"
                 size="sm"
                 className="!text-white w-full py-1.5 text-xs font-bold mt-auto shrink-0 shadow-xs"
-                onClick={() =>
+                loading={navigatingPkgId === (pkg._id || String(pkg.coins))}
+                loadingText="Redirecting..."
+                onClick={() => {
+                  setNavigatingPkgId(pkg._id || String(pkg.coins));
                   router.push(
                     `/post-ad/payment?coins=${pkg.coins}&price=${encodeURIComponent(
                       `₹${Number(pkg.price).toFixed(2)}`
                     )}`
-                  )
-                }
+                  );
+                }}
               >
                 Buy
               </Button>

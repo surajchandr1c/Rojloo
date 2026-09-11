@@ -116,11 +116,13 @@ export default function PromotedAdView() {
   const [activeISTShift, setActiveISTShift] = useState<string>("morning");
 
   useEffect(() => {
-    try {
-      setActiveISTShift(getCurrentShift());
-    } catch {
-      setActiveISTShift("morning");
-    }
+    queueMicrotask(() => {
+      try {
+        setActiveISTShift(getCurrentShift());
+      } catch {
+        setActiveISTShift("morning");
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -152,7 +154,7 @@ export default function PromotedAdView() {
       .finally(() => setLoading(false));
   }, [adIdParam]);
 
-  useEffect(() => {
+  const loadPromotionPackages = useCallback(() => {
     fetch(`/api/promotion-packages?_t=${Date.now()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
@@ -176,6 +178,30 @@ export default function PromotedAdView() {
         console.error("Failed to load promotion packages:", err);
       });
   }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadPromotionPackages();
+    });
+
+    const handlePromotionsUpdated = () => loadPromotionPackages();
+    const handleFocus = () => loadPromotionPackages();
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "rojlo_promo_update") {
+        loadPromotionPackages();
+      }
+    };
+
+    window.addEventListener("promotions:updated", handlePromotionsUpdated);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("promotions:updated", handlePromotionsUpdated);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [loadPromotionPackages]);
 
   useEffect(() => {
     if (!ready) return;

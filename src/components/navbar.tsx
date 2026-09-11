@@ -51,20 +51,27 @@ export default function NavBar() {
     };
     const handleCoinsUpdated = () => refresh();
 
-    const intervalId = window.setInterval(refresh, 30000);
+    const intervalId = window.setInterval(refresh, 25000);
     const handleFocus = () => refresh();
     const handleVisibility = () => {
       if (!document.hidden) refresh();
     };
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "rojlo_coin_update" || e.key === "rojlo_auth_user") {
+        refresh();
+      }
+    };
 
     window.addEventListener("focus", handleFocus);
     window.addEventListener("coins:updated", handleCoinsUpdated);
+    window.addEventListener("storage", handleStorage);
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("coins:updated", handleCoinsUpdated);
+      window.removeEventListener("storage", handleStorage);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [isLoading, isLoggedIn, refreshAuth]);

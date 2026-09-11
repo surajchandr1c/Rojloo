@@ -1,3 +1,5 @@
+import type { Document } from "mongodb";
+import { getDb } from "@/lib/db";
 import { readStore, writeStore, invalidateStoreCache } from "@/lib/persist";
 import {
   type PromotionPackage,
@@ -46,12 +48,38 @@ function normalizePackage(pkg: Partial<PromotionPackage>, index = 0): PromotionP
 }
 
 export async function getPromotionPackages(): Promise<PromotionPackage[]> {
+  const db = await getDb();
+  if (db) {
+    try {
+      const docs = await db.collection("promotion_packages").find({}).toArray();
+      if (docs && docs.length > 0) {
+        return docs.map((doc, idx) =>
+          normalizePackage(
+            {
+              ...doc,
+              _id: doc._id?.toString(),
+            } as Partial<PromotionPackage>,
+            idx
+          )
+        );
+      }
+    } catch (err) {
+      console.error("[promotion-package] MongoDB fetch failed:", err);
+    }
+  }
+
   const store = await readStore();
   const rawPackages = ((store.promotionPackages ?? []) as unknown) as Partial<PromotionPackage>[];
-  const isInitialized = Boolean((store as Record<string, unknown>).promotionPackagesInitialized);
 
-  if (isInitialized && rawPackages.length > 0) {
-    return rawPackages.map((pkg, idx) => normalizePackage(pkg, idx));
+  if (Array.isArray(rawPackages) && rawPackages.length > 0) {
+    const list = rawPackages.map((pkg, idx) => normalizePackage(pkg, idx));
+    if (db) {
+      try {
+        await db.collection("promotion_packages").deleteMany({});
+        await db.collection("promotion_packages").insertMany(list.map(({ _id, ...p }) => p as Document));
+      } catch {}
+    }
+    return list;
   }
 
   // Initial seeding on fresh database or re-seed
@@ -62,8 +90,15 @@ export async function getPromotionPackages(): Promise<PromotionPackage[]> {
     updatedAt: new Date(),
   }));
 
+  if (db) {
+    try {
+      await db.collection("promotion_packages").deleteMany({});
+      await db.collection("promotion_packages").insertMany(seeded.map(({ _id, ...p }) => p as Document));
+    } catch {}
+  }
+
   store.promotionPackages = (seeded as unknown) as typeof store.promotionPackages;
-  (store as Record<string, unknown>).promotionPackagesInitialized = true;
+  store.promotionPackagesInitialized = true;
   await writeStore(store);
 
   return seeded;
@@ -136,9 +171,22 @@ export async function savePromotionPackages(
       };
     });
 
+  const db = await getDb();
+  if (db) {
+    try {
+      const col = db.collection("promotion_packages");
+      await col.deleteMany({});
+      if (cleaned.length > 0) {
+        await col.insertMany(cleaned.map(({ _id, ...p }) => p as Document));
+      }
+    } catch (err) {
+      console.error("[promotion-package] MongoDB write failed:", err);
+    }
+  }
+
   const store = await readStore();
   store.promotionPackages = (cleaned as unknown) as typeof store.promotionPackages;
-  (store as Record<string, unknown>).promotionPackagesInitialized = true;
+  store.promotionPackagesInitialized = true;
 
   await writeStore(store);
   invalidateStoreCache();

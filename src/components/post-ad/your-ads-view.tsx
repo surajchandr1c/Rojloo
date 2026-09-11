@@ -10,6 +10,8 @@ import { useAuth } from "@/lib/auth-context";
 import { authenticatedFetch } from "@/lib/auth-fetch";
 import type { Ad } from "./types";
 
+import { YourAdsListSkeleton } from "@/components/skeletons/post-ad-skeletons";
+
 export default function YourAdsView() {
   const router = useRouter();
   const ready = useAuthGuard();
@@ -28,8 +30,8 @@ export default function YourAdsView() {
     hiddenAdsCount: 0,
   });
 
-  const loadAds = useCallback(() => {
-    setLoading(true);
+  const loadAds = useCallback((silent = false) => {
+    if (!silent) setLoading(true);
     authenticatedFetch("/api/ads")
       .then((r) => r.json())
       .then((data) => {
@@ -42,7 +44,9 @@ export default function YourAdsView() {
         });
       })
       .catch(() => setAds([]))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!silent) setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -75,30 +79,54 @@ export default function YourAdsView() {
   const handleEdit = (ad: Ad) => router.push(`/post-ad/edit/${ad._id}`);
 
   const handleDelete = async (ad: Ad) => {
-    if (!ad._id) return;
+    const id = ad._id;
+    if (!id) return;
     if (!window.confirm(`Delete "${ad.name}"?`)) return;
-    await authenticatedFetch(`/api/ads/${ad._id}`, { method: "DELETE" }).catch(() => {});
-    loadAds();
+    // Optimistic removal
+    setAds((prev) => prev.filter((a) => a._id !== id));
+    await authenticatedFetch(`/api/ads/${id}`, { method: "DELETE" }).catch(() => {});
+    loadAds(true);
   };
 
   const handleToggleStatus = async (ad: Ad) => {
-    if (!ad._id) return;
+    const id = ad._id;
+    if (!id) return;
     const nextStatus = ad.status === "suspended" ? "active" : "suspended";
+    // Optimistic status update
+    setAds((prev) =>
+      prev.map((a) => (a._id === id ? { ...a, status: nextStatus } : a))
+    );
     try {
-      const res = await authenticatedFetch(`/api/ads/${ad._id}`, {
+      const res = await authenticatedFetch(`/api/ads/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus }),
       });
       if (res.ok) {
-        loadAds();
+        loadAds(true);
+      } else {
+        loadAds(true);
       }
     } catch (err) {
       console.error("Failed to toggle status:", err);
+      loadAds(true);
     }
   };
 
-  if (!ready) return null;
+  if (!ready) {
+    return (
+      <main className="px-2.5 py-6 sm:px-6 sm:py-10 lg:px-8 max-w-full overflow-hidden">
+        <SectionPanel className="p-3 sm:p-6 md:p-8 w-full max-w-6xl mx-auto overflow-hidden">
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="text-3xl font-black text-red-950 sm:text-4xl">Ads</h1>
+          </div>
+          <div className="mt-6">
+            <YourAdsListSkeleton />
+          </div>
+        </SectionPanel>
+      </main>
+    );
+  }
 
   const validAds = ads.filter((ad) => (ad.status ?? "active") !== "deleted");
 

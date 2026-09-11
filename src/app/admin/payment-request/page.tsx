@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
@@ -35,14 +35,20 @@ export default function PaymentRequestPage() {
   const [upis, setUpis] = useState<UPI[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "confirmed" | "declined">("pending");
   const [processingIds, setProcessingIds] = useState<Record<string, "confirm" | "decline">>({});
+  const isPollingRef = useRef(false);
 
-  const loadRequests = useCallback(async () => {
+  const loadRequests = useCallback(async (silent = false) => {
+    if (isPollingRef.current) return;
+    isPollingRef.current = true;
+    if (!silent) setLoading(true);
+
     try {
-      setLoading(true);
       const response = await fetch("/api/admin/payment-request", {
         credentials: "include",
+        cache: "no-store",
       });
 
       if (response.status === 401) {
@@ -50,14 +56,19 @@ export default function PaymentRequestPage() {
         return;
       }
 
-      const data = await response.json();
-      setRequests(Array.isArray(data.requests) ? data.requests : []);
-      setError("");
+      if (response.ok) {
+        const data = await response.json();
+        setRequests(Array.isArray(data.requests) ? data.requests : []);
+        setError("");
+      }
     } catch (err) {
-      setError("Failed to load payment requests");
+      if (!silent) {
+        setError("Failed to load payment requests");
+      }
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+      isPollingRef.current = false;
     }
   }, [router]);
 
@@ -83,10 +94,46 @@ export default function PaymentRequestPage() {
     }
 
     queueMicrotask(() => {
-      void loadRequests();
+      void loadRequests(false);
       void loadUPIs();
     });
+
+    // Visibility-aware background polling every 5 seconds (zero flicker)
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        void loadRequests(true);
+      }
+    }, 5000);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void loadRequests(true);
+      }
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "rojlo_coin_update") {
+        void loadRequests(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleVisibilityChange);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleVisibilityChange);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, [loadRequests, loadUPIs, me, router]);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(null), 4000);
+    return () => clearTimeout(timer);
+  }, [feedback]);
 
   async function handleConfirm(request: PaymentRequest) {
     const reqId = request._id;
@@ -116,18 +163,28 @@ export default function PaymentRequestPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        alert(data.error || "Failed to confirm payment");
+        const data = await response.json().catch(() => ({}));
+        setFeedback({ type: "error", message: data.error || "Failed to confirm payment" });
         return;
       }
+
+      // Optimistic update
+      setRequests((prev) =>
+        prev.map((r) =>
+          r._id === reqId
+            ? { ...r, status: "confirmed", confirmedAt: new Date().toISOString() }
+            : r
+        )
+      );
+
+      setFeedback({ type: "success", message: `Payment for ${request.userEmail} confirmed successfully!` });
 
       window.dispatchEvent(new CustomEvent("coins:updated"));
       window.localStorage.setItem("rojlo_coin_update", "confirmed");
 
-      await loadRequests();
-      alert("Payment confirmed successfully!");
+      void loadRequests(true);
     } catch (err) {
-      alert("Failed to confirm payment");
+      setFeedback({ type: "error", message: "Failed to confirm payment" });
       console.error(err);
     } finally {
       setProcessingIds((prev) => {
@@ -157,15 +214,25 @@ export default function PaymentRequestPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        alert(data.error || "Failed to decline payment");
+        const data = await response.json().catch(() => ({}));
+        setFeedback({ type: "error", message: data.error || "Failed to decline payment" });
         return;
       }
 
-      await loadRequests();
-      alert("Payment declined successfully!");
+      // Optimistic update
+      setRequests((prev) =>
+        prev.map((r) =>
+          r._id === reqId
+            ? { ...r, status: "declined", declinedReason: "Wrong Transaction ID" }
+            : r
+        )
+      );
+
+      setFeedback({ type: "success", message: `Payment for ${request.userEmail} declined.` });
+
+      void loadRequests(true);
     } catch (err) {
-      alert("Failed to decline payment");
+      setFeedback({ type: "error", message: "Failed to decline payment" });
       console.error(err);
     } finally {
       setProcessingIds((prev) => {
@@ -207,8 +274,20 @@ export default function PaymentRequestPage() {
       <div className="mx-auto max-w-5xl">
         <h1 className="text-3xl font-black text-red-950">Payment Requests</h1>
 
+        {feedback && (
+          <div
+            className={`mt-4 rounded-lg p-4 font-semibold text-sm transition-all shadow-xs ${
+              feedback.type === "success"
+                ? "bg-green-100 text-green-950 border border-green-300"
+                : "bg-red-100 text-red-950 border border-red-300"
+            }`}
+          >
+            {feedback.message}
+          </div>
+        )}
+
         {error && (
-          <div className="mt-4 rounded-lg bg-red-100 p-4 text-red-900">
+          <div className="mt-4 rounded-lg bg-red-100 p-4 text-red-900 border border-red-200">
             {error}
           </div>
         )}
@@ -329,17 +408,31 @@ export default function PaymentRequestPage() {
                     {request.status === "pending" && (
                       <div className="flex w-full flex-col gap-2 sm:ml-4 sm:w-auto">
                         <button
+                          type="button"
                           onClick={() => handleConfirm(request)}
                           disabled={Boolean(request._id && processingIds[request._id])}
-                          className="whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                         >
+                          {request._id && processingIds[request._id] === "confirm" && (
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                          )}
                           {request._id && processingIds[request._id] === "confirm" ? "Confirming..." : "Confirm"}
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDecline(request)}
                           disabled={Boolean(request._id && processingIds[request._id])}
-                          className="whitespace-nowrap rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="whitespace-nowrap rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                         >
+                          {request._id && processingIds[request._id] === "decline" && (
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                          )}
                           {request._id && processingIds[request._id] === "decline" ? "Declining..." : "Decline"}
                         </button>
                       </div>

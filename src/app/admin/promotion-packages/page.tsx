@@ -173,6 +173,8 @@ export default function PromotionPackagesPage() {
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
       }
+      window.dispatchEvent(new CustomEvent("promotions:updated"));
+      window.localStorage.setItem("rojlo_promo_update", "updated");
     } catch (err) {
       console.error(err);
       setError("Failed to delete package.");
@@ -213,6 +215,8 @@ export default function PromotionPackagesPage() {
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
       }
+      window.dispatchEvent(new CustomEvent("promotions:updated"));
+      window.localStorage.setItem("rojlo_promo_update", "updated");
     } catch (err) {
       console.error(err);
       setError("Failed to save default packages.");
@@ -257,6 +261,8 @@ export default function PromotionPackagesPage() {
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
       }
+      window.dispatchEvent(new CustomEvent("promotions:updated"));
+      window.localStorage.setItem("rojlo_promo_update", "updated");
     } catch (err) {
       console.error(err);
       setError("Network error. Please try again.");

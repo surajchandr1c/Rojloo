@@ -26,6 +26,10 @@ type StoreData = {
   paymentHistory: StoreRecord[];
   coinPackages: StoreRecord[];
   promotionPackages?: StoreRecord[];
+  promotionPackagesInitialized?: boolean;
+  coinPackagesInitialized?: boolean;
+  coinPackagesVersion?: number;
+  allPackagesCoins?: number;
   deletedCities: string[];
   admins: StoreRecord[];
   upiRotation: {
@@ -36,6 +40,7 @@ type StoreData = {
   notFoundLogs: StoreRecord[];
   vipUsers?: StoreRecord[];
   vipPhoneOverrides?: StoreRecord[];
+  [key: string]: unknown;
 };
 
 function reviveDates(record: StoreRecord) {
@@ -62,6 +67,10 @@ function defaults(): StoreData {
     paymentHistory: [],
     coinPackages: [],
     promotionPackages: [],
+    promotionPackagesInitialized: false,
+    coinPackagesInitialized: false,
+    coinPackagesVersion: 2,
+    allPackagesCoins: 55,
     deletedCities: [],
     admins: [],
     upiRotation: {
@@ -77,6 +86,7 @@ function defaults(): StoreData {
 
 function normalize(raw: Partial<StoreData>): StoreData {
   const data: StoreData = {
+    ...raw,
     users: raw.users ?? [],
     ads: raw.ads ?? [],
     cities: raw.cities ?? [],
@@ -89,6 +99,10 @@ function normalize(raw: Partial<StoreData>): StoreData {
     paymentHistory: raw.paymentHistory ?? [],
     coinPackages: raw.coinPackages ?? [],
     promotionPackages: raw.promotionPackages ?? [],
+    promotionPackagesInitialized: raw.promotionPackagesInitialized !== undefined ? Boolean(raw.promotionPackagesInitialized) : ((raw.promotionPackages && raw.promotionPackages.length > 0) ? true : false),
+    coinPackagesInitialized: raw.coinPackagesInitialized !== undefined ? Boolean(raw.coinPackagesInitialized) : ((raw.coinPackages && raw.coinPackages.length > 0) ? true : false),
+    coinPackagesVersion: raw.coinPackagesVersion !== undefined ? Number(raw.coinPackagesVersion) : 2,
+    allPackagesCoins: raw.allPackagesCoins !== undefined && Number(raw.allPackagesCoins) > 0 ? Number(raw.allPackagesCoins) : 55,
     deletedCities: raw.deletedCities ?? [],
     admins: raw.admins ?? [],
     upiRotation: raw.upiRotation ?? {

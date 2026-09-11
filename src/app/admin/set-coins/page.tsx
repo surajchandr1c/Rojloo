@@ -134,6 +134,8 @@ export default function SetCoinsPage() {
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
       }
+      window.dispatchEvent(new CustomEvent("coin_packages:updated"));
+      window.localStorage.setItem("rojlo_coin_packages_update", "updated");
     } catch (err) {
       console.error(err);
       setError("Network error while removing package.");
@@ -176,6 +178,8 @@ export default function SetCoinsPage() {
       if (Array.isArray(data.packages)) {
         setPackages(data.packages);
       }
+      window.dispatchEvent(new CustomEvent("coin_packages:updated"));
+      window.localStorage.setItem("rojlo_coin_packages_update", "updated");
     } catch (err) {
       console.error(err);
       setError("Failed to save default packages.");
@@ -221,6 +225,8 @@ export default function SetCoinsPage() {
       if (data.allPackagesCoins) {
         setAllPackagesCoins(Number(data.allPackagesCoins));
       }
+      window.dispatchEvent(new CustomEvent("coin_packages:updated"));
+      window.localStorage.setItem("rojlo_coin_packages_update", "updated");
     } catch (err) {
       console.error(err);
       setError("Network error. Please try again.");

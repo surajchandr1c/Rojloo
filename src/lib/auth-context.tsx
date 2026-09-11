@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -38,45 +39,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<AuthUser | null>(null);
   const [token, setTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const inFlightPromiseRef = useRef<Promise<boolean | null> | null>(null);
 
   const refreshAuthFromServer = useCallback(async (tokenToUse?: string | null) => {
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      if (tokenToUse) {
-        headers["Authorization"] = `Bearer ${tokenToUse}`;
-      }
-
-      const response = await fetch("/api/auth/me", {
-        method: "GET",
-        headers,
-        credentials: "include", // Include cookies in request
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.user) {
-          setUserState(data.user);
-          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
-          return true;
-        }
-      } else if (response.status === 401) {
-        // Clear auth only when the server confirms the session is invalid.
-        setUserState(null);
-        setTokenState(null);
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(USER_STORAGE_KEY);
-        return false;
-      }
-      return null;
-    } catch (error) {
-      console.error("Failed to refresh auth:", error);
-      return null;
-    } finally {
-      setIsLoading(false);
+    if (inFlightPromiseRef.current) {
+      return inFlightPromiseRef.current;
     }
+
+    const promise = (async () => {
+      try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+
+        if (tokenToUse) {
+          headers["Authorization"] = `Bearer ${tokenToUse}`;
+        }
+
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          headers,
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            setUserState(data.user);
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+            return true;
+          }
+        } else if (response.status === 401) {
+          // Clear auth only when the server confirms the session is invalid.
+          setUserState(null);
+          setTokenState(null);
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(USER_STORAGE_KEY);
+          return false;
+        }
+        return null;
+      } catch (error) {
+        console.error("Failed to refresh auth:", error);
+        return null;
+      } finally {
+        setIsLoading(false);
+        inFlightPromiseRef.current = null;
+      }
+    })();
+
+    inFlightPromiseRef.current = promise;
+    return promise;
   }, []);
 
   // Initialize from localStorage on mount

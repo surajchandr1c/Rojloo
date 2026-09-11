@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type {
+import React, {
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,
   ReactNode,
@@ -10,14 +10,14 @@ type Variant = "solid" | "soft" | "outline" | "ghost" | "light";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center rounded-full font-semibold transition-colors focus:outline-none disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-150 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed select-none";
 
 const variants: Record<Variant, string> = {
-  solid: "bg-red-600 text-white hover:bg-red-700",
-  soft: "border border-red-300 bg-pink-50 text-white hover:bg-pink-100",
-  outline: "border border-red-200 bg-white text-white hover:bg-red-50",
-  ghost: "text-white hover:bg-red-50",
-  light: "bg-white text-white hover:bg-pink-100",
+  solid: "bg-red-600 text-white hover:bg-red-700 active:scale-[0.98]",
+  soft: "border border-red-300 bg-pink-50 text-red-950 hover:bg-pink-100 active:scale-[0.98]",
+  outline: "border border-red-200 bg-white text-red-950 hover:bg-red-50 active:scale-[0.98]",
+  ghost: "text-red-950 hover:bg-red-50 active:scale-[0.98]",
+  light: "bg-white text-red-950 hover:bg-pink-100 active:scale-[0.98]",
 };
 
 const sizes: Record<Size, string> = {
@@ -34,6 +34,9 @@ type CommonProps = {
   size?: Size;
   fullWidth?: boolean;
   active?: boolean;
+  loading?: boolean;
+  loadingText?: ReactNode;
+  disabled?: boolean;
   className?: string;
   children?: ReactNode;
 };
@@ -48,7 +51,33 @@ type ButtonAsLink = CommonProps &
     href: string;
   };
 
-type ButtonProps = ButtonAsButton | ButtonAsLink;
+export type ButtonProps = ButtonAsButton | ButtonAsLink;
+
+export function Spinner({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      className={`animate-spin ${className}`}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
 
 export default function Button(props: ButtonProps) {
   const {
@@ -56,31 +85,60 @@ export default function Button(props: ButtonProps) {
     size = "md",
     fullWidth = false,
     active = false,
+    loading = false,
+    loadingText,
     className,
     children,
+    disabled,
     ...rest
   } = props;
+
+  const isDisabled = Boolean(disabled || loading);
 
   const classes = cn(
     base,
     active ? activeClass : variants[variant],
     sizes[size],
     fullWidth && "w-full",
+    loading && "pointer-events-none opacity-70",
     className
   );
 
+  const content = (
+    <>
+      {loading && <Spinner className="h-4 w-4 shrink-0" />}
+      {loading && loadingText !== undefined ? loadingText : children}
+    </>
+  );
+
   if (props.href !== undefined) {
-    const { href, ...anchorRest } = rest as AnchorHTMLAttributes<HTMLAnchorElement>;
+    const { href, onClick, ...anchorRest } = rest as AnchorHTMLAttributes<HTMLAnchorElement>;
+
     return (
-      <Link href={href!} className={classes} {...anchorRest}>
-        {children}
+      <Link
+        href={href!}
+        className={cn(classes, isDisabled && "pointer-events-none opacity-60")}
+        aria-disabled={isDisabled || undefined}
+        tabIndex={isDisabled ? -1 : undefined}
+        {...(onClick ? { onClick } : {})}
+        {...anchorRest}
+      >
+        {content}
       </Link>
     );
   }
 
+  const { onClick, ...buttonRest } = rest as ButtonHTMLAttributes<HTMLButtonElement>;
+
   return (
-    <button className={classes} {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)}>
-      {children}
+    <button
+      className={classes}
+      disabled={isDisabled}
+      aria-busy={loading || undefined}
+      {...(onClick ? { onClick } : {})}
+      {...buttonRest}
+    >
+      {content}
     </button>
   );
 }
