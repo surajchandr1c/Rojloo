@@ -57,7 +57,7 @@ export default function Contact() {
           below.
         </p>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 max-w-3xl">
           <Card>
             <Eyebrow className="tracking-[0.25em]">Email</Eyebrow>
             <a
@@ -76,13 +76,6 @@ export default function Contact() {
             >
               {siteInfo.phone}
             </a>
-          </Card>
-
-          <Card>
-            <Eyebrow className="tracking-[0.25em]">Address</Eyebrow>
-            <p className="mt-3 text-base leading-7 text-red-900">
-              {siteInfo.address}
-            </p>
           </Card>
         </div>
       </SectionPanel>

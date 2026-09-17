@@ -1,7 +1,7 @@
 export const siteInfo = {
   name: "Rojlo",
-  email: "support@rojlo.com",
-  phone: "+91 98765 43210",
+  email: "rojloofficial@gmail.com",
+  phone: "0000000000",
   address: "Rojlo HQ, Andheri East, Mumbai, Maharashtra 400069, India",
 } as const;
 
