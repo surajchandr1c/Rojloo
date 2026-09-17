@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Rojlo – Find Services, Places & Post Ads in Your City",
     description:
-      "Rojlo connects you with call girls, male escorts, wellness, and the best local spots and services across Indian cities.",
+      "Rojlo connects you with call girls, male escorts, wellness, and the best local spots across Indian cities.",
     url: siteConfig.url,
     type: "website",
   },
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Rojlo – Find Services, Places & Post Ads in Your City",
     description:
-      "Rojlo connects you with call girls, male escorts, wellness, and the best local spots and services across Indian cities.",
+      "Rojlo connects you with call girls, male escorts, wellness, and the best local spots across Indian cities.",
   },
 };
 
@@ -37,7 +37,7 @@ export default function Home() {
               get you fun
             </p>
             <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-red-950 break-words">
-              Rojlo Moj lo na Mile Chog Lo
+              Roj Lo Moj Lo Na Mile Khoj Lo
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-base sm:text-lg leading-7 sm:leading-8 text-red-900">
               Rojlo connects you with call girls, male escorts, wellness, and the

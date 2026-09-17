@@ -12,7 +12,7 @@ const uri = process.env.MONGODB_URI?.trim().replace(/^['"]|['"]$/g, "");
 const dbName = (process.env.MONGODB_DB || "rojlo")
   .trim()
   .replace(/^['"]|['"]$/g, "");
-const retryAfterMs = 30_000;
+const retryAfterMs = 3_000;
 
 // Validate URI format
 if (uri && !uri.startsWith("mongodb+srv://") && !uri.startsWith("mongodb://")) {
@@ -39,6 +39,10 @@ let lastConnectionFailureAt = 0;
 let warned = false;
 
 export async function getDb(): Promise<Db | null> {
+  try {
+    dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
+  } catch {}
+
   if (!uri) {
     if (!warned) {
       console.error(
@@ -93,6 +97,9 @@ export async function getDb(): Promise<Db | null> {
         console.log("[db] MongoDB connected successfully");
         globalCache.client = connectedClient;
         cachedDb = connectedClient.db(dbName);
+        connectionFailed = false;
+        lastConnectionFailure = null;
+        warned = false;
         return { client: connectedClient, db: cachedDb! };
       })
       .catch((err) => {
@@ -100,6 +107,9 @@ export async function getDb(): Promise<Db | null> {
         lastConnectionFailure = err instanceof Error ? err : new Error(String(err));
         lastConnectionFailureAt = Date.now();
         globalCache.promise = null;
+        try {
+          dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
+        } catch {}
         if (!warned) {
           console.error(
             "[db] CRITICAL: MongoDB connection failed\n" +

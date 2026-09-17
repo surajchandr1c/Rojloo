@@ -42,7 +42,7 @@ export async function getCoinPackages(): Promise<CoinPackage[]> {
     if (db) {
       try {
         await db.collection("coin_packages").deleteMany({});
-        await db.collection("coin_packages").insertMany(list.map(({ _id, ...p }) => p as Document));
+        await db.collection("coin_packages").insertMany(list.map(({ _id, ...p }) => { void _id; return p as Document; }));
       } catch {}
     }
     return list;
@@ -59,7 +59,7 @@ export async function getCoinPackages(): Promise<CoinPackage[]> {
   if (db) {
     try {
       await db.collection("coin_packages").deleteMany({});
-      await db.collection("coin_packages").insertMany(seeded.map(({ _id, ...p }) => p as Document));
+      await db.collection("coin_packages").insertMany(seeded.map(({ _id, ...p }) => { void _id; return p as Document; }));
     } catch {}
   }
 
@@ -109,7 +109,7 @@ export async function saveCoinPackages(
       const col = db.collection("coin_packages");
       await col.deleteMany({});
       if (cleaned.length > 0) {
-        await col.insertMany(cleaned.map(({ _id, ...p }) => p as Document));
+        await col.insertMany(cleaned.map(({ _id, ...p }) => { void _id; return p as Document; }));
       }
     } catch (err) {
       console.error("[coin-package] MongoDB write failed:", err);

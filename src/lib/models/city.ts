@@ -126,7 +126,21 @@ export async function getCustomCityBySlug(
 
 export type CombinedCity = CityRecord & { source: "Static" | "Custom" };
 
+let cachedCombinedCities: CombinedCity[] | null = null;
+let cachedCombinedCitiesExpiresAt = 0;
+const COMBINED_CITIES_CACHE_TTL_MS = 5 * 60_000; // 5 minutes
+
+export function invalidateCityCache(): void {
+  cachedCombinedCities = null;
+  cachedCombinedCitiesExpiresAt = 0;
+}
+
 export async function listAllCities(): Promise<CombinedCity[]> {
+  const now = Date.now();
+  if (cachedCombinedCities && now < cachedCombinedCitiesExpiresAt) {
+    return cachedCombinedCities;
+  }
+
   const store = await readStore();
   const deleted = new Set(
     (store.deletedCities ?? []).map((s: string) => s.trim().toLowerCase())
@@ -158,7 +172,7 @@ export async function listAllCities(): Promise<CombinedCity[]> {
         return false;
       }
       const key = `${stateSlug}:${slug}`;
-      if (customCityKeys.has(key)) return false;
+      if (customCityKeys.has(key) || customCities.some((cc) => cc.slug.toLowerCase() === slug)) return false;
       return true;
     })
     .map((c) => ({
@@ -173,7 +187,18 @@ export async function listAllCities(): Promise<CombinedCity[]> {
       source: "Static" as const,
     }));
 
-  return [...customCities, ...staticCities];
+  const seenSlugs = new Set<string>();
+  const deduped: CombinedCity[] = [];
+  for (const c of [...customCities, ...staticCities]) {
+    const slug = c.slug.toLowerCase().trim();
+    if (!slug || seenSlugs.has(slug)) continue;
+    seenSlugs.add(slug);
+    deduped.push(c);
+  }
+
+  cachedCombinedCities = deduped;
+  cachedCombinedCitiesExpiresAt = now + COMBINED_CITIES_CACHE_TTL_MS;
+  return deduped;
 }
 
 export async function createCity(data: {
@@ -247,6 +272,7 @@ export async function createCity(data: {
     existing.seoDescription = data.seoDescription.trim();
     existing.createdAt = new Date();
     await writeStore(store);
+    invalidateCityCache();
     return existing;
   }
 
@@ -263,6 +289,7 @@ export async function createCity(data: {
   };
   store.cities.push(city as unknown as (typeof store.cities)[number]);
   await writeStore(store);
+  invalidateCityCache();
 
   return city;
 }
@@ -348,6 +375,7 @@ export async function deleteCity(id: string): Promise<boolean> {
   }
 
   await writeStore(store);
+  invalidateCityCache();
   return true;
 }
 

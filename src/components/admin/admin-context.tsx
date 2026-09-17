@@ -26,20 +26,7 @@ const AdminContext = createContext<AdminCtx | null>(null);
 const ADMIN_STORAGE_KEY = "rojlo_admin_me";
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [me, setMe] = useState<AdminMe | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && typeof parsed.authenticated === "boolean") {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-    return null;
-  });
+  const [me, setMe] = useState<AdminMe | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -76,6 +63,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     queueMicrotask(() => {
+      try {
+        const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed.authenticated === "boolean") {
+            setMe(parsed);
+          }
+        }
+      } catch {}
       void refresh();
     });
   }, [refresh]);

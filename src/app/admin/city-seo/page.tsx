@@ -64,9 +64,14 @@ function TagInput({
   function add() {
     const v = val.trim();
     if (!v) return;
-    if (!tags.some((t) => t.toLowerCase() === v.toLowerCase())) {
-      onChange([...tags, v]);
+    const pieces = v.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+    const nextTags = [...tags];
+    for (const piece of pieces) {
+      if (!nextTags.some((t) => t.toLowerCase() === piece.toLowerCase())) {
+        nextTags.push(piece);
+      }
     }
+    onChange(nextTags);
     setVal("");
   }
 
@@ -96,7 +101,7 @@ function TagInput({
           placeholder={placeholder}
           onChange={(e) => setVal(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" || e.key === ",") {
               e.preventDefault();
               add();
             }
@@ -149,8 +154,7 @@ function CitySeoContent() {
   const [urlSlug, setUrlSlug] = useState("");
   const [slugManual, setSlugManual] = useState(false);
   const [primaryKeyword, setPrimaryKeyword] = useState("");
-  const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
-  const [longTailKeywords, setLongTailKeywords] = useState<string[]>([]);
+  const [popularSearches, setPopularSearches] = useState<string[]>([]);
   const [canonicalUrl, setCanonicalUrl] = useState("");
   const [featuredImage, setFeaturedImage] = useState("");
   const [imageAlt, setImageAlt] = useState("");
@@ -192,7 +196,14 @@ function CitySeoContent() {
           slug: string;
           state?: string;
         }[];
-        setAllCities(fetchedCities);
+        const seenSlugSet = new Set<string>();
+        const uniqueCities = fetchedCities.filter((c) => {
+          const s = (c.slug || "").toLowerCase().trim();
+          if (!s || seenSlugSet.has(s)) return false;
+          seenSlugSet.add(s);
+          return true;
+        });
+        setAllCities(uniqueCities);
 
         const targetSlug = editSlug || activeSlug;
         if (targetSlug) {
@@ -212,8 +223,17 @@ function CitySeoContent() {
             setDescription(seo.description ?? "");
             setUrlSlug(seo.urlSlug ?? targetSlug);
             setPrimaryKeyword(seo.primaryKeyword ?? "");
-            setSecondaryKeywords(seo.secondaryKeywords ?? []);
-            setLongTailKeywords(seo.longTailKeywords ?? []);
+            const rawPopular = (seo as { popularSearches?: string[] }).popularSearches;
+            const combinedKeywords = Array.from(
+              new Set([
+                ...(Array.isArray(rawPopular) ? rawPopular : []),
+                ...(Array.isArray(seo.secondaryKeywords) ? seo.secondaryKeywords : []),
+                ...(Array.isArray(seo.longTailKeywords) ? seo.longTailKeywords : []),
+              ])
+            )
+              .map((s) => String(s).trim())
+              .filter(Boolean);
+            setPopularSearches(combinedKeywords);
             setCanonicalUrl(seo.canonicalUrl ?? "");
             setFeaturedImage(seo.featuredImage ?? "");
             setImageAlt(seo.imageAlt ?? "");
@@ -234,6 +254,7 @@ function CitySeoContent() {
               { id: uid(), type: "p", text: "" },
             ]);
             setFaqs([]);
+            setPopularSearches([]);
           }
         } else {
           setContent([
@@ -241,6 +262,7 @@ function CitySeoContent() {
             { id: uid(), type: "p", text: "" },
           ]);
           setFaqs([]);
+          setPopularSearches([]);
         }
       } catch {
         setError("Failed to load city details.");
@@ -252,6 +274,7 @@ function CitySeoContent() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editSlug]);
 
   function handleCityNameChange(val: string) {
@@ -347,16 +370,12 @@ function CitySeoContent() {
         `Find top verified escorts and independent call girls in ${cityName}. 100% genuine photos, safe booking, 24/7 service.`,
       urlSlug: urlSlug || slugify(cityName),
       primaryKeyword: primaryKeyword || `call girls in ${cityName.toLowerCase()}`,
-      secondaryKeywords: secondaryKeywords.length
-        ? secondaryKeywords
+      popularSearches: popularSearches.length
+        ? popularSearches
         : [
             `escorts in ${cityName.toLowerCase()}`,
             `${cityName.toLowerCase()} call girls`,
             `independent escorts ${cityName.toLowerCase()}`,
-          ],
-      longTailKeywords: longTailKeywords.length
-        ? longTailKeywords
-        : [
             `vip escort service in ${cityName.toLowerCase()}`,
             `hotel delivery call girl ${cityName.toLowerCase()}`,
           ],
@@ -500,26 +519,27 @@ function CitySeoContent() {
       ).trim();
       if (parsedPrimary) setPrimaryKeyword(parsedPrimary);
 
+      const rawPop = data.popularSearches || data.popular_searches || data.searches;
       const rawSec = data.secondaryKeywords || data.secondary_keywords;
-      if (Array.isArray(rawSec)) {
-        setSecondaryKeywords(
-          rawSec.map(String).map((s) => s.trim()).filter(Boolean)
-        );
-      } else if (typeof rawSec === "string" && rawSec.trim()) {
-        setSecondaryKeywords(
-          rawSec.split(",").map((s) => s.trim()).filter(Boolean)
-        );
-      }
-
       const rawLong = data.longTailKeywords || data.long_tail_keywords;
-      if (Array.isArray(rawLong)) {
-        setLongTailKeywords(
-          rawLong.map(String).map((s) => s.trim()).filter(Boolean)
-        );
-      } else if (typeof rawLong === "string" && rawLong.trim()) {
-        setLongTailKeywords(
-          rawLong.split(",").map((s) => s.trim()).filter(Boolean)
-        );
+
+      const combinedKeywords: string[] = [];
+
+      const parseToArray = (val: unknown): string[] => {
+        if (Array.isArray(val)) {
+          return val.map(String).map((s) => s.trim()).filter(Boolean);
+        } else if (typeof val === "string" && val.trim()) {
+          return val.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+        }
+        return [];
+      };
+
+      if (rawPop) combinedKeywords.push(...parseToArray(rawPop));
+      if (rawSec) combinedKeywords.push(...parseToArray(rawSec));
+      if (rawLong) combinedKeywords.push(...parseToArray(rawLong));
+
+      if (combinedKeywords.length > 0) {
+        setPopularSearches(Array.from(new Set(combinedKeywords)));
       }
 
       // 5. Canonical & Images
@@ -762,8 +782,9 @@ function CitySeoContent() {
           keywords: primaryKeyword,
           urlSlug: finalUrlSlug,
           primaryKeyword,
-          secondaryKeywords,
-          longTailKeywords,
+          popularSearches,
+          secondaryKeywords: popularSearches,
+          longTailKeywords: [],
           canonicalUrl:
             canonicalUrl.trim() ||
             `https://rojloo.vercel.app/places/${finalUrlSlug}`,
@@ -1005,7 +1026,7 @@ function CitySeoContent() {
                       }, 50);
                     }
                   }}
-                  placeholder={`Paste your JSON file text here...\nExample:\n{\n  "name": "Mumbai",\n  "state": "Maharashtra",\n  "title": "Best Escort & Call Girl Services in Mumbai | Rojlo",\n  "description": "Find top verified escorts and independent call girls in Mumbai...",\n  "primaryKeyword": "call girls in mumbai",\n  "secondaryKeywords": ["escorts in mumbai", "mumbai call girls"],\n  "content": [\n    { "type": "h1", "text": "Top Escort Services in Mumbai" },\n    { "type": "p", "text": "Mumbai offers unmatched nightlife..." }\n  ],\n  "faqs": [\n    { "question": "How do I contact providers in Mumbai?", "answer": "Browse verified profiles..." }\n  ]\n}`}
+                  placeholder={`Paste your JSON file text here...\nExample:\n{\n  "name": "Mumbai",\n  "state": "Maharashtra",\n  "title": "Best Escort & Call Girl Services in Mumbai | Rojlo",\n  "description": "Find top verified escorts and independent call girls in Mumbai...",\n  "primaryKeyword": "call girls in mumbai",\n  "popularSearches": ["escorts in mumbai", "mumbai call girls", "vip escort service in mumbai"],\n  "content": [\n    { "type": "h1", "text": "Top Escort Services in Mumbai" },\n    { "type": "p", "text": "Mumbai offers unmatched nightlife..." }\n  ],\n  "faqs": [\n    { "question": "How do I contact providers in Mumbai?", "answer": "Browse verified profiles..." }\n  ]\n}`}
                   className="w-full font-mono text-xs sm:text-sm rounded-xl border border-pink-200 bg-pink-50/60 p-3 text-red-950 placeholder-red-300 focus:border-red-500 focus:bg-white focus:outline-none transition resize-y leading-relaxed"
                   spellCheck={false}
                 />
@@ -1059,8 +1080,8 @@ function CitySeoContent() {
                   placeholder="e.g. Mumbai"
                 />
                 <datalist id="city-suggestions-list">
-                  {allCities.map((c) => (
-                    <option key={c.slug} value={c.name}>
+                  {allCities.map((c, idx) => (
+                    <option key={`${c.slug}-${idx}`} value={c.name}>
                       {c.state ? `${c.name} (${c.state})` : c.name}
                     </option>
                   ))}
@@ -1130,17 +1151,11 @@ function CitySeoContent() {
               </Field>
 
               <TagInput
-                label="Secondary Keywords"
-                placeholder="Type and press Enter"
-                tags={secondaryKeywords}
-                onChange={setSecondaryKeywords}
-              />
-
-              <TagInput
-                label="Long-Tail Keywords"
-                placeholder="Type and press Enter"
-                tags={longTailKeywords}
-                onChange={setLongTailKeywords}
+                label="Popular Searches"
+                placeholder="Type keyword and press Enter (or comma)"
+                tags={popularSearches}
+                onChange={setPopularSearches}
+                hint="Add popular and trending search terms for this city. These will appear under 'Most Search in {city name}' on the published city page."
               />
 
               <Field label="Canonical URL">

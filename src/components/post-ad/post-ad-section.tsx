@@ -363,8 +363,8 @@ export default function PostAdSection({
                 ) : (
                   <>
                     <option value="">Select a city</option>
-                    {stateCities.map((c) => (
-                      <option key={c.slug} value={c.name}>
+                    {stateCities.map((c, idx) => (
+                      <option key={`${c.slug}-${idx}`} value={c.name}>
                         {c.name}
                       </option>
                     ))}

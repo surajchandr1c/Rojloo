@@ -17,7 +17,7 @@ import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import CityFaqSection from "@/components/places/city-faq-section";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const dynamicParams = true;
 
 export async function generateMetadata({
@@ -57,7 +57,9 @@ export async function generateMetadata({
   const keywords =
     [
       seo?.primaryKeyword?.trim(),
+      ...(seo?.popularSearches ?? []).map((k) => k.trim()),
       ...(seo?.secondaryKeywords ?? []).map((k) => k.trim()),
+      ...(seo?.longTailKeywords ?? []).map((k) => k.trim()),
     ]
       .filter(Boolean)
       .join(", ") || undefined;
@@ -222,6 +224,16 @@ async function CityContent({
 
   const isPublished = seo?.status === "published";
   const shouldShowSeo = Boolean(seo && (isPublished || isPreview));
+
+  const popularKeywords = Array.from(
+    new Set([
+      ...(seo?.popularSearches ?? []),
+      ...(seo?.secondaryKeywords ?? []),
+      ...(seo?.longTailKeywords ?? []),
+    ])
+  )
+    .map((k) => (typeof k === "string" ? k.trim() : ""))
+    .filter(Boolean);
 
   return (
     <main>
@@ -402,6 +414,27 @@ async function CityContent({
 
       {shouldShowSeo && seo?.faqs && seo.faqs.length > 0 && (
         <CityFaqSection faqs={seo.faqs} cityName={city.name} />
+      )}
+
+      {shouldShowSeo && popularKeywords.length > 0 && (
+        <section className="px-4 py-8 sm:px-6">
+          <SectionPanel>
+            <Eyebrow className="text-center">Popular Searches</Eyebrow>
+            <h2 className="mt-3 text-center text-2xl font-black text-red-950 sm:text-3xl">
+              Most Search in {city.name}
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {popularKeywords.map((keyword, index) => (
+                <span
+                  key={`${keyword}-${index}`}
+                  className="rounded-full border border-pink-200 bg-pink-50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-red-950 transition hover:bg-pink-100 hover:border-pink-300 shadow-2xs"
+                >
+                  {keyword}
+                </span>
+              ))}
+            </div>
+          </SectionPanel>
+        </section>
       )}
 
       {siblingCities.length > 0 && (

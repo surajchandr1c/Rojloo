@@ -88,11 +88,12 @@ function PaymentView() {
     };
   }, [submitted, submittedTxId, submittedStatus]);
 
+  const userEmail = user?.email;
   const checkEligibility = useCallback(async () => {
-    if (!user?.email) return;
+    if (!userEmail) return;
     try {
       const res = await fetch(
-        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(user.email)}&_t=${Date.now()}`,
+        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(userEmail)}&_t=${Date.now()}`,
         {
           cache: "no-store",
           credentials: "include",
@@ -113,17 +114,18 @@ function PaymentView() {
     } catch (err) {
       console.error("Failed to check coin purchase eligibility:", err);
     }
-  }, [user?.email]);
+  }, [userEmail]);
 
   useEffect(() => {
-    if (user?.email) {
-      void checkEligibility();
+    if (userEmail) {
+      queueMicrotask(() => {
+        void checkEligibility();
+      });
     }
-  }, [user?.email, checkEligibility]);
+  }, [userEmail, checkEligibility]);
 
   useEffect(() => {
     if (!eligibility || eligibility.allowed || !eligibility.nextAllowedAt) {
-      setLiveCountdown("");
       return;
     }
 
@@ -151,8 +153,11 @@ function PaymentView() {
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [eligibility?.allowed, eligibility?.nextAllowedAt, checkEligibility]);
+    return () => {
+      clearInterval(interval);
+      setLiveCountdown("");
+    };
+  }, [eligibility, checkEligibility]);
 
   useEffect(() => {
     if (!ready) return;

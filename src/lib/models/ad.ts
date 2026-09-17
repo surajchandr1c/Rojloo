@@ -99,13 +99,20 @@ async function collectionListByCity(city: string): Promise<Ad[]> {
   if (!collection) return [];
 
   const escaped = city.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const c = city.trim();
+  const titleCased = c.charAt(0).toUpperCase() + c.slice(1).toLowerCase();
+  const variations = Array.from(new Set([c, c.toLowerCase(), c.toUpperCase(), titleCased]));
+
   const docs = await collection
     .find({
-      city: { $regex: new RegExp(`^${escaped}$`, "i") },
+      $or: [
+        { city: { $in: variations } },
+        { city: { $regex: new RegExp(`^${escaped}$`, "i") } },
+      ],
       status: { $nin: ["deleted", "suspended"] },
     })
     .sort({ createdAt: -1 })
-    .limit(200)
+    .limit(100)
     .toArray();
   return docs.map((doc) => doc as unknown as Ad);
 }
@@ -161,17 +168,15 @@ async function getAdsCollection(): Promise<Collection<Document> | null> {
 
   const collection = db.collection("ads");
   if (!adIndexesCreated) {
-    try {
-      await collection.createIndexes([
+    adIndexesCreated = true;
+    collection
+      .createIndexes([
         { key: { userId: 1 }, name: "user_idx" },
         { key: { userId: 1, _id: 1 }, name: "user_ad_idx" },
         { key: { city: 1, status: 1, createdAt: -1 }, name: "city_status_created_idx" },
         { key: { status: 1, createdAt: -1 }, name: "status_created_idx" },
-      ]);
-      adIndexesCreated = true;
-    } catch {
-      // Non-fatal.
-    }
+      ])
+      .catch(() => {});
   }
   return collection;
 }
@@ -194,10 +199,26 @@ export async function getFreeAdIdsForUsers(userIds: string[]): Promise<Set<strin
   if (collection) {
     try {
       const results = await collection
-        .find({
-          userId: { $in: cleanIds },
-          status: { $nin: ["deleted", "suspended"] },
-        })
+        .find(
+          {
+            userId: { $in: cleanIds },
+            status: { $nin: ["deleted", "suspended"] },
+          },
+          {
+            projection: {
+              _id: 1,
+              userId: 1,
+              status: 1,
+              createdAt: 1,
+              promoted: 1,
+              isPromoted: 1,
+              promotedUntil: 1,
+              promoShift: 1,
+              promoPackage: 1,
+              promoTier: 1,
+            },
+          }
+        )
         .sort({ createdAt: 1 })
         .toArray();
       mongoDocs = results.map((d) => d as unknown as Ad);
@@ -391,7 +412,24 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
   if (collection) {
     try {
       const docs = await collection
-        .find({ status: { $nin: ["deleted", "suspended"] } })
+        .find(
+          { status: { $nin: ["deleted", "suspended"] } },
+          {
+            projection: {
+              _id: 1,
+              userId: 1,
+              city: 1,
+              status: 1,
+              createdAt: 1,
+              promoted: 1,
+              isPromoted: 1,
+              promotedUntil: 1,
+              promoShift: 1,
+              promoPackage: 1,
+              promoTier: 1,
+            },
+          }
+        )
         .toArray();
       allAds = docs.map((d) => d as unknown as Ad);
     } catch (err) {
@@ -402,10 +440,39 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
   const store = await readStore();
   const memoryAds = (store.ads ?? []).filter((ad) => isVisibleAd(ad as unknown as Ad)) as unknown as Ad[];
   const merged = mergeAds(allAds, memoryAds);
-  const visible = await filterVisibleCityAds(merged);
 
-  for (const ad of visible) {
-    if (ad.city) {
+  // Compute free ads in-memory from merged without an extra DB round-trip
+  const nowDate = new Date(now);
+  const userAdsMap = new Map<string, Ad[]>();
+  for (const ad of merged) {
+    if (!ad.userId) continue;
+    const uid = String(ad.userId);
+    let list = userAdsMap.get(uid);
+    if (!list) {
+      list = [];
+      userAdsMap.set(uid, list);
+    }
+    list.push(ad);
+  }
+
+  const freeAdIds = new Set<string>();
+  for (const list of userAdsMap.values()) {
+    list.sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    for (const ad of list) {
+      if (!isAdPromotionActive(ad, nowDate)) {
+        if (ad._id) freeAdIds.add(String(ad._id));
+        break;
+      }
+    }
+  }
+
+  for (const ad of merged) {
+    if (!ad.city || !ad._id) continue;
+    const isPromoted = isAdPromotionActive(ad, nowDate);
+    const isFree = freeAdIds.has(String(ad._id));
+    if (isPromoted || isFree) {
       const key = String(ad.city).trim().toLowerCase();
       counts[key] = (counts[key] ?? 0) + 1;
     }

@@ -423,9 +423,9 @@ export default function PlacesExplorer({
         </div>
       ) : (
         <div className="grid w-full min-w-0 gap-3 sm:gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-          {filtered.map((city) => (
+          {filtered.map((city, idx) => (
             <Link
-              key={city.slug}
+              key={`${city.slug}-${city.state ?? ""}-${idx}`}
               href={`/places/${city.slug}`}
               className="group flex w-full min-w-0 flex-col rounded-xl border border-red-100 bg-white p-3 sm:p-3.5 transition-all hover:border-red-300 hover:shadow-md"
             >

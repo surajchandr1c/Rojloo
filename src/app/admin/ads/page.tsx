@@ -158,9 +158,9 @@ export default function AdminAds() {
                   </span>
                 </button>
                 <div className="max-h-72 overflow-y-auto">
-                  {cities.map((c) => (
+                  {cities.map((c, idx) => (
                     <button
-                      key={c.slug}
+                      key={`${c.slug}-${idx}`}
                       type="button"
                       onClick={() => {
                         setSelectedSlug(c.slug);

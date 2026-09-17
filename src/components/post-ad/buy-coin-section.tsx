@@ -45,11 +45,12 @@ export default function BuyCoinSection() {
     }
   }, []);
 
+  const userEmail = user?.email;
   const checkEligibility = useCallback(async () => {
-    if (!user?.email) return;
+    if (!userEmail) return;
     try {
       const res = await fetch(
-        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(user.email)}&_t=${Date.now()}`,
+        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(userEmail)}&_t=${Date.now()}`,
         {
           cache: "no-store",
           credentials: "include",
@@ -70,7 +71,7 @@ export default function BuyCoinSection() {
     } catch (err) {
       console.error("Failed to check coin purchase eligibility:", err);
     }
-  }, [user?.email]);
+  }, [userEmail]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -97,8 +98,10 @@ export default function BuyCoinSection() {
   }, [loadPackages]);
 
   useEffect(() => {
-    if (user?.email) {
-      void checkEligibility();
+    if (userEmail) {
+      queueMicrotask(() => {
+        void checkEligibility();
+      });
     }
 
     const handleCoinUpdate = () => {
@@ -111,11 +114,10 @@ export default function BuyCoinSection() {
       window.removeEventListener("coins:updated", handleCoinUpdate);
       window.removeEventListener("focus", handleCoinUpdate);
     };
-  }, [user?.email, checkEligibility]);
+  }, [userEmail, checkEligibility]);
 
   useEffect(() => {
     if (!eligibility || eligibility.allowed || !eligibility.nextAllowedAt) {
-      setLiveCountdown("");
       return;
     }
 
@@ -143,8 +145,11 @@ export default function BuyCoinSection() {
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [eligibility?.allowed, eligibility?.nextAllowedAt, checkEligibility]);
+    return () => {
+      clearInterval(interval);
+      setLiveCountdown("");
+    };
+  }, [eligibility, checkEligibility]);
 
   const handleBuyClick = (pkg: CoinPackage) => {
     if (eligibility && !eligibility.allowed) {

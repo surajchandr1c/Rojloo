@@ -76,7 +76,7 @@ export async function getPromotionPackages(): Promise<PromotionPackage[]> {
     if (db) {
       try {
         await db.collection("promotion_packages").deleteMany({});
-        await db.collection("promotion_packages").insertMany(list.map(({ _id, ...p }) => p as Document));
+        await db.collection("promotion_packages").insertMany(list.map(({ _id, ...p }) => { void _id; return p as Document; }));
       } catch {}
     }
     return list;
@@ -93,7 +93,7 @@ export async function getPromotionPackages(): Promise<PromotionPackage[]> {
   if (db) {
     try {
       await db.collection("promotion_packages").deleteMany({});
-      await db.collection("promotion_packages").insertMany(seeded.map(({ _id, ...p }) => p as Document));
+      await db.collection("promotion_packages").insertMany(seeded.map(({ _id, ...p }) => { void _id; return p as Document; }));
     } catch {}
   }
 
@@ -177,7 +177,7 @@ export async function savePromotionPackages(
       const col = db.collection("promotion_packages");
       await col.deleteMany({});
       if (cleaned.length > 0) {
-        await col.insertMany(cleaned.map(({ _id, ...p }) => p as Document));
+        await col.insertMany(cleaned.map(({ _id, ...p }) => { void _id; return p as Document; }));
       }
     } catch (err) {
       console.error("[promotion-package] MongoDB write failed:", err);

@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     keywords,
     urlSlug,
     primaryKeyword,
+    popularSearches,
     secondaryKeywords,
     longTailKeywords,
     canonicalUrl,
@@ -52,6 +53,9 @@ export async function POST(request: NextRequest) {
     keywords: keywords ? String(keywords) : "",
     urlSlug: urlSlug ? String(urlSlug) : undefined,
     primaryKeyword: primaryKeyword ? String(primaryKeyword) : "",
+    popularSearches: Array.isArray(popularSearches)
+      ? popularSearches.map(String)
+      : undefined,
     secondaryKeywords: Array.isArray(secondaryKeywords)
       ? secondaryKeywords.map(String)
       : [],

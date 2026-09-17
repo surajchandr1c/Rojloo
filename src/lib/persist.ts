@@ -218,7 +218,7 @@ async function writeStoreToFile(data: StoreData): Promise<void> {
 
 // In-memory cache for fast repeated reads across requests and server components
 let storeCache: { data: StoreData; expiresAt: number } | null = null;
-const CACHE_TTL_MS = 10_000; // 10 seconds
+const CACHE_TTL_MS = 60_000; // 60 seconds (mutations immediately update storeCache)
 
 // ---------- Public API ----------
 

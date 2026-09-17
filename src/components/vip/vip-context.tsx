@@ -28,20 +28,7 @@ const VipContext = createContext<VipCtx | null>(null);
 const VIP_STORAGE_KEY = "rojlo_vip_me";
 
 export function VipProvider({ children }: { children: ReactNode }) {
-  const [me, setMe] = useState<VipMe | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(VIP_STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && typeof parsed.authenticated === "boolean") {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-    return null;
-  });
+  const [me, setMe] = useState<VipMe | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -78,6 +65,15 @@ export function VipProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     queueMicrotask(() => {
+      try {
+        const stored = localStorage.getItem(VIP_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed.authenticated === "boolean") {
+            setMe(parsed);
+          }
+        }
+      } catch {}
       void refresh();
     });
   }, [refresh]);

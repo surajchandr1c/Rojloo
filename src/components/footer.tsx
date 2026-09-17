@@ -32,6 +32,7 @@ export default function Footer() {
               alt="Rojlo Logo"
               width={220}
               height={220}
+              loading="eager"
               className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 lg:h-52 lg:w-52 object-contain drop-shadow-xl"
             />
           </Link>

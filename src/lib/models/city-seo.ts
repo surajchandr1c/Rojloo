@@ -28,6 +28,7 @@ export type CitySeo = {
   primaryKeyword?: string;
   secondaryKeywords?: string[];
   longTailKeywords?: string[];
+  popularSearches?: string[];
   canonicalUrl?: string;
   featuredImage?: string;
   imageAlt?: string;
@@ -52,12 +53,31 @@ function normalizeSeoDoc(raw: Record<string, unknown>): CitySeo {
     longTailKeywords: Array.isArray(raw.longTailKeywords)
       ? (raw.longTailKeywords as string[]).map(String)
       : [],
+    popularSearches: Array.isArray(raw.popularSearches) && raw.popularSearches.length > 0
+      ? Array.from(
+          new Set(
+            (raw.popularSearches as string[])
+              .map(String)
+              .map((s) => s.trim())
+              .filter(Boolean)
+          )
+        )
+      : Array.from(
+          new Set(
+            [
+              ...(Array.isArray(raw.secondaryKeywords) ? (raw.secondaryKeywords as string[]).map(String) : []),
+              ...(Array.isArray(raw.longTailKeywords) ? (raw.longTailKeywords as string[]).map(String) : []),
+            ]
+              .map((s) => s.trim())
+              .filter(Boolean)
+          )
+        ),
     canonicalUrl: String(raw.canonicalUrl || ""),
     featuredImage: String(raw.featuredImage || ""),
     imageAlt: String(raw.imageAlt || ""),
     content: Array.isArray(raw.content)
       ? (raw.content as ContentBlock[]).map((b, i) => ({
-          id: b.id || `b_${i}_${Date.now()}`,
+          id: b.id || `b_${i}`,
           type: (["h1", "h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
           text: String(b.text || ""),
         }))
@@ -65,7 +85,7 @@ function normalizeSeoDoc(raw: Record<string, unknown>): CitySeo {
     faqs: Array.isArray(raw.faqs)
       ? (raw.faqs as FaqItem[])
           .map((f, i) => ({
-            id: f.id || `faq_${Date.now()}_${i}`,
+            id: f.id || `faq_${i}`,
             question: String(f.question || "").trim(),
             answer: String(f.answer || "").trim(),
           }))
@@ -93,12 +113,30 @@ export async function getAllCitySeo(): Promise<CitySeo[]> {
   return ((store.citySeo ?? []) as unknown as Record<string, unknown>[]).map(normalizeSeoDoc);
 }
 
+const seoCache = new Map<string, { data: CitySeo | null; expiresAt: number }>();
+const SEO_CACHE_TTL_MS = 60_000;
+
+export function invalidateCitySeoCache(slug?: string): void {
+  if (slug) {
+    seoCache.delete(slug.toLowerCase().trim());
+  } else {
+    seoCache.clear();
+  }
+}
+
 export const getCitySeo = cache(async function (
   slug: string
 ): Promise<CitySeo | null> {
   const target = String(slug || "").trim().toLowerCase();
   if (!target) return null;
 
+  const now = Date.now();
+  const cached = seoCache.get(target);
+  if (cached && now < cached.expiresAt) {
+    return cached.data;
+  }
+
+  let result: CitySeo | null = null;
   const db = await getDb();
   if (db) {
     try {
@@ -108,25 +146,42 @@ export const getCitySeo = cache(async function (
           { urlSlug: target },
           { slug: new RegExp(`^${target}$`, "i") },
           { urlSlug: new RegExp(`^${target}$`, "i") },
+          { slug: new RegExp(`^${target}-`, "i") },
+          { urlSlug: new RegExp(`^${target}-`, "i") },
+          { name: new RegExp(`^${target}$`, "i") },
         ],
       });
       if (doc) {
-        return normalizeSeoDoc(doc as unknown as Record<string, unknown>);
+        result = normalizeSeoDoc(doc as unknown as Record<string, unknown>);
       }
     } catch (err) {
       console.error("[city-seo] getCitySeo from mongo failed:", err);
     }
   }
 
-  const store = await readStore();
-  const list = (store.citySeo ?? []) as unknown as Record<string, unknown>[];
-  const found = list.find((c) => {
-    const s = String(c.slug || "").toLowerCase();
-    const u = String(c.urlSlug || "").toLowerCase();
-    return s === target || u === target;
-  });
+  if (!result) {
+    const store = await readStore();
+    const list = (store.citySeo ?? []) as unknown as Record<string, unknown>[];
+    const found = list.find((c) => {
+      const s = String(c.slug || "").toLowerCase();
+      const u = String(c.urlSlug || "").toLowerCase();
+      const n = String(c.name || "").toLowerCase();
+      return (
+        s === target ||
+        u === target ||
+        s.startsWith(`${target}-`) ||
+        u.startsWith(`${target}-`) ||
+        n === target
+      );
+    });
 
-  return found ? normalizeSeoDoc(found) : null;
+    if (found) {
+      result = normalizeSeoDoc(found);
+    }
+  }
+
+  seoCache.set(target, { data: result, expiresAt: now + SEO_CACHE_TTL_MS });
+  return result;
 });
 
 export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
@@ -140,9 +195,17 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
       (data.primaryKeyword ? data.primaryKeyword.trim() : ""),
     urlSlug: data.urlSlug?.trim() || data.slug,
     primaryKeyword: data.primaryKeyword?.trim() ?? "",
-    secondaryKeywords: Array.isArray(data.secondaryKeywords)
+    popularSearches: Array.isArray(data.popularSearches)
+      ? Array.from(new Set(data.popularSearches.map((s) => String(s).trim()).filter(Boolean)))
+      : Array.from(
+          new Set([
+            ...(Array.isArray(data.secondaryKeywords) ? data.secondaryKeywords.map((s) => String(s).trim()) : []),
+            ...(Array.isArray(data.longTailKeywords) ? data.longTailKeywords.map((s) => String(s).trim()) : []),
+          ].filter(Boolean))
+        ),
+    secondaryKeywords: Array.isArray(data.secondaryKeywords) && data.secondaryKeywords.length > 0
       ? data.secondaryKeywords.map((s) => String(s).trim()).filter(Boolean)
-      : [],
+      : (Array.isArray(data.popularSearches) ? data.popularSearches.map((s) => String(s).trim()).filter(Boolean) : []),
     longTailKeywords: Array.isArray(data.longTailKeywords)
       ? data.longTailKeywords.map((s) => String(s).trim()).filter(Boolean)
       : [],
@@ -151,7 +214,7 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
     imageAlt: data.imageAlt?.trim() ?? "",
     content: Array.isArray(data.content)
       ? data.content.map((b, i) => ({
-          id: b.id || `b_${i}_${Date.now()}`,
+          id: b.id || `b_${i}`,
           type: (["h1", "h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
           text: String(b.text || "").trim(),
         }))
@@ -159,7 +222,7 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
     faqs: Array.isArray(data.faqs)
       ? data.faqs
           .map((f, i) => ({
-            id: f.id || `faq_${Date.now()}_${i}`,
+            id: f.id || `faq_${i}`,
             question: String(f.question || "").trim(),
             answer: String(f.answer || "").trim(),
           }))
@@ -198,5 +261,6 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
   }
 
   invalidateStoreCache();
+  invalidateCitySeoCache();
   return record;
 }
