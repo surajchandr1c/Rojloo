@@ -191,11 +191,11 @@ export async function getFreeAdIdsForUsers(userIds: string[]): Promise<Set<strin
   if (cleanIds.length === 0) return new Set();
 
   const freeAdIds = new Set<string>();
-  const [collection, store] = await Promise.all([getAdsCollection(), readStore()]);
+  const collection = await getAdsCollection();
   const now = new Date();
 
   // 1. Check MongoDB
-  let mongoDocs: Ad[] = [];
+  let allAds: Ad[] = [];
   if (collection) {
     try {
       const results = await collection
@@ -221,38 +221,28 @@ export async function getFreeAdIdsForUsers(userIds: string[]): Promise<Set<strin
         )
         .sort({ createdAt: 1 })
         .toArray();
-      mongoDocs = results.map((d) => d as unknown as Ad);
+      allAds = results.map((d) => d as unknown as Ad);
     } catch (err) {
       console.error("[ad] getFreeAdIdsForUsers find failed:", err);
     }
   }
 
-  // 2. Memory store ads
-  const memoryAds = (store.ads ?? [])
-    .filter(
-      (ad) =>
-        cleanIds.includes(String(ad.userId ?? "")) &&
-        (ad.status ?? "active") !== "deleted" &&
-        ad.status !== "suspended"
-    )
-    .sort(
-      (a, b) =>
-        new Date(a.createdAt as string | Date).getTime() -
-        new Date(b.createdAt as string | Date).getTime()
-    ) as unknown as Ad[];
-
-  // Merge ads per user, preserving order by createdAt ascending
-  const mergedMap = new Map<string, Ad>();
-  for (const ad of [...mongoDocs, ...memoryAds]) {
-    if (ad._id && !mergedMap.has(String(ad._id))) {
-      mergedMap.set(String(ad._id), ad);
-    }
+  // 2. Memory store ads fallback only if collection unavailable or empty
+  if (allAds.length === 0 && !collection) {
+    const store = await readStore();
+    allAds = (store.ads ?? [])
+      .filter(
+        (ad) =>
+          cleanIds.includes(String(ad.userId ?? "")) &&
+          (ad.status ?? "active") !== "deleted" &&
+          ad.status !== "suspended"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt as string | Date).getTime() -
+          new Date(b.createdAt as string | Date).getTime()
+      ) as unknown as Ad[];
   }
-
-  const allAds = Array.from(mergedMap.values()).sort(
-    (a, b) =>
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
 
   const seenUsers = new Set<string>();
   for (const ad of allAds) {
@@ -272,11 +262,11 @@ export async function getFreeAdIdsForUsers(userIds: string[]): Promise<Set<strin
   return freeAdIds;
 }
 
-export async function getUserFreeAdId(userId: string): Promise<string | null> {
+export const getUserFreeAdId = cache(async function (userId: string): Promise<string | null> {
   const freeSet = await getFreeAdIdsForUsers([userId]);
   const first = Array.from(freeSet)[0];
   return first ?? null;
-}
+});
 
 export async function filterVisibleCityAds(ads: Ad[]): Promise<Ad[]> {
   const unpromotedCandidates = ads.filter((ad) => !isAdPromotionActive(ad));
@@ -294,7 +284,7 @@ export async function filterVisibleCityAds(ads: Ad[]): Promise<Ad[]> {
   });
 }
 
-export async function isAdVisiblePublicly(ad: Ad): Promise<boolean> {
+export const isAdVisiblePublicly = cache(async function (ad: Ad): Promise<boolean> {
   if (!ad._id) return false;
   const status = ad.status ?? "active";
   if (status === "deleted" || status === "suspended") {
@@ -305,17 +295,15 @@ export async function isAdVisiblePublicly(ad: Ad): Promise<boolean> {
   }
   const freeAdId = await getUserFreeAdId(ad.userId);
   return Boolean(freeAdId && String(freeAdId) === String(ad._id));
-}
+});
 
 export async function listAds(userId: string): Promise<PublicAd[]> {
   const collection = await getAdsCollection();
-  const memoryAds = await memoryListByUser(userId);
   let allUserAds: Ad[] = [];
   if (!collection) {
-    allUserAds = memoryAds;
+    allUserAds = await memoryListByUser(userId);
   } else {
-    const docs = await collectionListByUser(userId);
-    allUserAds = mergeAds(docs, memoryAds);
+    allUserAds = await collectionListByUser(userId);
   }
 
   // Determine user's single free ad ID
@@ -341,37 +329,83 @@ export async function listAds(userId: string): Promise<PublicAd[]> {
 }
 
 export async function listAdsByCity(city: string): Promise<PublicAd[]> {
-  const [collection, store, override] = await Promise.all([
+  const [collection, override] = await Promise.all([
     getAdsCollection(),
-    readStore(),
     getActiveVipPhoneOverride(city),
   ]);
 
-  const normalized = city.trim().toLowerCase();
-  const memoryAds = store.ads
-    .filter(
-      (ad) =>
-        isVisibleAd(ad as unknown as Ad) &&
-        String(ad.city ?? "").trim().toLowerCase() === normalized
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt as string | Date).getTime() -
-        new Date(a.createdAt as string | Date).getTime()
-    ) as unknown as Ad[];
-
   if (!collection) {
+    const store = await readStore();
+    const normalized = city.trim().toLowerCase();
+    const memoryAds = store.ads
+      .filter(
+        (ad) =>
+          isVisibleAd(ad as unknown as Ad) &&
+          String(ad.city ?? "").trim().toLowerCase() === normalized
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt as string | Date).getTime() -
+          new Date(a.createdAt as string | Date).getTime()
+      ) as unknown as Ad[];
     const visibleMemoryAds = await filterVisibleCityAds(memoryAds);
     const sortedMemoryAds = sortAdsWithPromotions(visibleMemoryAds);
     return sortedMemoryAds.map((a) => toPublicAd(a, override));
   }
 
   const docs = await collectionListByCity(city);
-  const merged = mergeAds(docs, memoryAds);
-  const visibleAds = await filterVisibleCityAds(merged);
+  const visibleAds = await filterVisibleCityAds(docs);
   const sorted = sortAdsWithPromotions(visibleAds);
   return sorted.map((a) => toPublicAd(a, override));
 }
+
+export const listRelatedCityAds = cache(async function (
+  city: string,
+  excludeId: string,
+  limit = 6
+): Promise<PublicAd[]> {
+  const [collection, override] = await Promise.all([
+    getAdsCollection(),
+    getActiveVipPhoneOverride(city),
+  ]);
+
+  if (collection) {
+    try {
+      const c = city.trim();
+      const escaped = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const titleCased = c.charAt(0).toUpperCase() + c.slice(1).toLowerCase();
+      const variations = Array.from(new Set([c, c.toLowerCase(), c.toUpperCase(), titleCased]));
+
+      const excludeCandidates = buildAdIdCandidates(excludeId);
+      const docs = await collection
+        .find({
+          $and: [
+            {
+              $or: [
+                { city: { $in: variations } },
+                { city: { $regex: new RegExp(`^${escaped}$`, "i") } },
+              ],
+            },
+            { _id: { $nin: excludeCandidates as import("mongodb").ObjectId[] } },
+            { status: { $nin: ["deleted", "suspended"] } },
+          ],
+        })
+        .sort({ createdAt: -1 })
+        .limit(limit * 2)
+        .toArray();
+
+      const visibleAds = await filterVisibleCityAds(docs.map((d) => d as unknown as Ad));
+      const sorted = sortAdsWithPromotions(visibleAds);
+      return sorted.slice(0, limit).map((a) => toPublicAd(a, override));
+    } catch (err) {
+      console.error("[ad] listRelatedCityAds find failed:", err);
+    }
+  }
+
+  // Memory fallback
+  const allCityAds = await listAdsByCity(city);
+  return allCityAds.filter((p) => p._id && p._id !== excludeId).slice(0, limit);
+});
 
 export async function getAdById(
   id: string,
@@ -609,13 +643,13 @@ export async function updateAd(
   }
 
   for (const candidate of buildAdIdCandidates(id)) {
-    const result = await collection.updateOne(
+    const updated = await collection.findOneAndUpdate(
       { _id: candidate, userId } as MongoQuery,
-      { $set: { ...data, updatedAt: now } }
+      { $set: { ...data, updatedAt: now } },
+      { returnDocument: "after" }
     );
-    if (result.matchedCount > 0) {
-      const updated = await collection.findOne({ _id: candidate, userId } as MongoQuery);
-      return updated ? toPublicAd(updated as unknown as Ad) : null;
+    if (updated) {
+      return toPublicAd(updated as unknown as Ad);
     }
   }
 

@@ -148,6 +148,11 @@ export default function PostAdForm({ adId }: { adId?: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formLoading) return;
+    if (imageUploading) {
+      setFormError("Please wait for images to finish uploading before submitting.");
+      return;
+    }
     setFormError("");
     
     if (!form.termsAccepted) {

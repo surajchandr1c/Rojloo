@@ -510,3 +510,57 @@ export function toPublicUser(user: User): PublicUser {
     updatedAt: user.updatedAt,
   };
 }
+
+export interface ExportUserData {
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  coins: number;
+  service?: string;
+  emailVerified?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export async function exportAllUsers(): Promise<ExportUserData[]> {
+  const collection = await getUsersCollection();
+  if (collection) {
+    try {
+      const docs = await collection.find({}).sort({ createdAt: -1 }).toArray();
+      return docs.map((doc) => ({
+        id: doc._id?.toString(),
+        name: String(doc.name || ""),
+        email: String(doc.email || ""),
+        phone: String(doc.phone || ""),
+        password: String(doc.passwordHash || ""),
+        coins: Number(doc.coins || 0),
+        service: doc.service ? String(doc.service) : undefined,
+        emailVerified: Boolean(doc.emailVerified),
+        createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || ""),
+        updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt ? String(doc.updatedAt) : undefined),
+      }));
+    } catch (err) {
+      console.error("[user] exportAllUsers MongoDB query failed:", err);
+    }
+  }
+
+  const store = await readStore();
+  return (store.users || []).map((u) => {
+    const user = u as unknown as User;
+    return {
+      id: user._id,
+      name: String(user.name || ""),
+      email: String(user.email || ""),
+      phone: String(user.phone || ""),
+      password: String(user.passwordHash || ""),
+      coins: Number(user.coins || 0),
+      service: user.service ? String(user.service) : undefined,
+      emailVerified: Boolean(user.emailVerified),
+      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : String(user.createdAt || ""),
+      updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : (user.updatedAt ? String(user.updatedAt) : undefined),
+    };
+  });
+}
+

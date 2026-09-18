@@ -715,9 +715,11 @@ export default function PostAdSection({
         </label>
       </div>
 
-      <Button type="submit" variant="solid" fullWidth disabled={formLoading} className="!text-white">
+      <Button type="submit" variant="solid" fullWidth disabled={formLoading || imageUploading} className="!text-white">
         {formLoading
           ? "Saving..."
+          : imageUploading
+          ? "Uploading Images..."
           : editingId
           ? "Update Ad"
           : hasExistingFreeAd

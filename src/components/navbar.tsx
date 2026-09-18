@@ -46,19 +46,23 @@ export default function NavBar() {
   useEffect(() => {
     if (isLoading || !isLoggedIn) return;
 
-    const refresh = () => {
+    let lastRefresh = Date.now();
+    const refresh = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastRefresh < 60_000) return;
+      lastRefresh = now;
       void refreshAuth();
     };
-    const handleCoinsUpdated = () => refresh();
+    const handleCoinsUpdated = () => refresh(true);
 
-    const intervalId = window.setInterval(refresh, 25000);
-    const handleFocus = () => refresh();
+    const intervalId = window.setInterval(() => refresh(false), 60000);
+    const handleFocus = () => refresh(false);
     const handleVisibility = () => {
-      if (!document.hidden) refresh();
+      if (!document.hidden) refresh(false);
     };
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "rojlo_coin_update" || e.key === "rojlo_auth_user") {
-        refresh();
+        refresh(true);
       }
     };
 

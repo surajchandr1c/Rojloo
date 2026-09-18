@@ -4,6 +4,7 @@ import {
   listPaymentRequests,
   confirmPaymentRequest,
   declinePaymentRequest,
+  deletePaymentRequests,
 } from "@/lib/models/payment-request";
 import { createPaymentHistory } from "@/lib/models/payment-history";
 import { findUserById, findUserByEmail } from "@/lib/models/user";
@@ -102,6 +103,38 @@ export async function POST(req: NextRequest) {
     console.error("Payment request action error:", error);
     return NextResponse.json(
       { error: "Failed to process payment request" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const ctx = await getAdminContext(req);
+
+  if (!ctx || !canAccess(ctx, "payment-request")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { all, startDate, endDate, id } = body;
+
+    const result = await deletePaymentRequests({
+      all: Boolean(all),
+      startDate: startDate ? String(startDate) : undefined,
+      endDate: endDate ? String(endDate) : undefined,
+      id: id ? String(id) : undefined,
+    });
+
+    return NextResponse.json({
+      success: true,
+      count: result.deletedCount,
+      message: `${result.deletedCount} payment request(s) deleted successfully.`,
+    });
+  } catch (error) {
+    console.error("Payment request DELETE error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete payment requests" },
       { status: 500 }
     );
   }

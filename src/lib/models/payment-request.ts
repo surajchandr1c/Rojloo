@@ -120,15 +120,17 @@ export async function createPaymentRequest(request: {
     newRequest._id = Date.now().toString();
   }
 
-  // Also sync to file/store for offline/dev fallback
-  try {
-    const store = await readStore();
-    const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
-    requests.push(newRequest);
-    store.paymentRequests = requests;
-    await writeStore(store);
-  } catch (err) {
-    console.error("[payment-request] writeStore sync failed:", err);
+  // Fallback to store only when MongoDB is unavailable
+  if (!col) {
+    try {
+      const store = await readStore();
+      const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
+      requests.push(newRequest);
+      store.paymentRequests = requests;
+      await writeStore(store);
+    } catch (err) {
+      console.error("[payment-request] writeStore sync failed:", err);
+    }
   }
 
   return newRequest;
@@ -272,20 +274,6 @@ export async function confirmPaymentRequest(
         }
       }
 
-      // Sync to local store
-      try {
-        const store = await readStore();
-        const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
-        const idx = requests.findIndex((r) => r._id === id || r.transactionId === existing?.transactionId);
-        if (idx !== -1) {
-          requests[idx] = existing;
-          store.paymentRequests = requests;
-          await writeStore(store);
-        }
-      } catch {
-        // Non-fatal
-      }
-
       return existing;
     }
 
@@ -367,18 +355,6 @@ export async function declinePaymentRequest(
 
     if (atomicUpdate) {
       const declinedReq = { ...(atomicUpdate as unknown as PaymentRequest), _id: atomicUpdate._id.toString() };
-      try {
-        const store = await readStore();
-        const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
-        const idx = requests.findIndex((r) => r._id === id || r.transactionId === declinedReq.transactionId);
-        if (idx !== -1) {
-          requests[idx] = declinedReq;
-          store.paymentRequests = requests;
-          await writeStore(store);
-        }
-      } catch {
-        // Non-fatal
-      }
       return declinedReq;
     }
 
@@ -617,5 +593,113 @@ export async function checkCoinPurchaseEligibility(
     nextAllowedAt,
     reason: `Each email address can only purchase coins once every 24 hours. Please wait ${remainingFormatted} before purchasing again.`,
   };
+}
+
+export async function deletePaymentRequests(options: {
+  all?: boolean;
+  startDate?: string;
+  endDate?: string;
+  id?: string;
+}): Promise<{ deletedCount: number }> {
+  let deletedCount = 0;
+  const col = await getPaymentRequestsCollection();
+
+  if (options.all) {
+    if (col) {
+      try {
+        const res = await col.deleteMany({});
+        deletedCount = res.deletedCount;
+      } catch (err) {
+        console.error("[payment-request] MongoDB deleteMany all failed:", err);
+      }
+    }
+    try {
+      const store = await readStore();
+      if (!deletedCount) {
+        deletedCount = (store.paymentRequests ?? []).length;
+      }
+      store.paymentRequests = [];
+      await writeStore(store);
+    } catch (err) {
+      console.error("[payment-request] store delete all failed:", err);
+    }
+    return { deletedCount };
+  }
+
+  if (options.id) {
+    const id = options.id.trim();
+    if (col) {
+      try {
+        const query = ObjectId.isValid(id)
+          ? { _id: new ObjectId(id) }
+          : { $or: [{ _id: id as unknown as ObjectId }, { transactionId: id }] };
+        const res = await col.deleteOne(query);
+        deletedCount = res.deletedCount;
+      } catch (err) {
+        console.error("[payment-request] MongoDB deleteById failed:", err);
+      }
+    }
+    try {
+      const store = await readStore();
+      const list = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
+      const idx = list.findIndex((r) => r._id === id || r.transactionId === id);
+      if (idx !== -1) {
+        list.splice(idx, 1);
+        store.paymentRequests = list;
+        await writeStore(store);
+        if (!deletedCount) deletedCount = 1;
+      }
+    } catch (err) {
+      console.error("[payment-request] store deleteById failed:", err);
+    }
+    return { deletedCount };
+  }
+
+  const startD = options.startDate ? new Date(`${options.startDate}T00:00:00.000Z`) : null;
+  const endD = options.endDate ? new Date(`${options.endDate}T23:59:59.999Z`) : null;
+
+  if (startD || endD) {
+    if (col) {
+      try {
+        const dateFilters: Record<string, unknown>[] = [];
+
+        const objCond: Record<string, unknown> = {};
+        if (startD) objCond.$gte = startD;
+        if (endD) objCond.$lte = endD;
+        dateFilters.push({ createdAt: objCond });
+
+        const strCond: Record<string, unknown> = {};
+        if (startD) strCond.$gte = startD.toISOString();
+        if (endD) strCond.$lte = endD.toISOString();
+        dateFilters.push({ createdAt: strCond });
+
+        const res = await col.deleteMany({ $or: dateFilters });
+        deletedCount = res.deletedCount;
+      } catch (err) {
+        console.error("[payment-request] MongoDB deleteByDate failed:", err);
+      }
+    }
+
+    try {
+      const store = await readStore();
+      const originalLen = (store.paymentRequests ?? []).length;
+      const filtered = ((store.paymentRequests ?? []) as unknown as PaymentRequest[]).filter((r) => {
+        const t = new Date(r.createdAt).getTime();
+        if (isNaN(t)) return false;
+        if (startD && t < startD.getTime()) return true;
+        if (endD && t > endD.getTime()) return true;
+        return false;
+      });
+      store.paymentRequests = filtered;
+      await writeStore(store);
+      if (!deletedCount) {
+        deletedCount = originalLen - filtered.length;
+      }
+    } catch (err) {
+      console.error("[payment-request] store deleteByDate failed:", err);
+    }
+  }
+
+  return { deletedCount };
 }
 

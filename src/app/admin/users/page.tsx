@@ -17,6 +17,32 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadData() {
+    try {
+      setDownloading(true);
+      const res = await fetch("/api/admin/users/export");
+      if (!res.ok) {
+        throw new Error("Failed to export user data");
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const today = new Date().toISOString().split("T")[0];
+      a.download = `rojlo-users-${today}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Failed to download user data:", err);
+      alert("Failed to download user data. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -60,8 +86,35 @@ export default function AdminUsers() {
 
   return (
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <h1 className="text-3xl font-black text-red-950">Users</h1>
-      <p className="mt-2 text-red-900">Manage registered users.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-red-950">Users</h1>
+          <p className="mt-2 text-red-900">Manage registered users.</p>
+        </div>
+        <button
+          type="button"
+          disabled={downloading}
+          onClick={handleDownloadData}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-xs cursor-pointer"
+        >
+          {downloading ? (
+            <>
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Downloading...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download Data
+            </>
+          )}
+        </button>
+      </div>
 
       {loading ? (
         <AdminTableSkeleton

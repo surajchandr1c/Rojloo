@@ -18,36 +18,52 @@ export type EmailResult =
 const FALLBACK_USER = "rojloofficial@gmail.com";
 const FALLBACK_PASS = "svsgsykzenlxtpmw";
 
-function createDirectTransporter(
+const transporterCache = new Map<string, nodemailer.Transporter>();
+
+function getPooledTransporter(
   host: string,
   port: number,
   user: string,
   pass: string,
   isGmail: boolean
 ): nodemailer.Transporter {
+  const cacheKey = `${host}:${port}:${user}`;
+  const existing = transporterCache.get(cacheKey);
+  if (existing) {
+    return existing;
+  }
+
   const transportOptions = isGmail
     ? {
         host: "smtp.gmail.com",
         port: 465,
         secure: true,
         auth: { user, pass },
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 10000,
+        pool: true,
+        maxConnections: 3,
+        maxMessages: 100,
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 8000,
       }
     : {
         host,
         port,
         secure: port === 465,
         auth: { user, pass },
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 10000,
+        pool: true,
+        maxConnections: 3,
+        maxMessages: 100,
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 8000,
       };
 
-  return nodemailer.createTransport(
+  const transporter = nodemailer.createTransport(
     transportOptions as nodemailer.TransportOptions
   );
+  transporterCache.set(cacheKey, transporter);
+  return transporter;
 }
 
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
@@ -79,8 +95,9 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     user.toLowerCase().endsWith("@gmail.com");
 
   // Attempt 1: Send using primary credentials
+  const primaryCacheKey = `${host}:${port}:${user}`;
   try {
-    const transporter = createDirectTransporter(host, port, user, pass, isGmail);
+    const transporter = getPooledTransporter(host, port, user, pass, isGmail);
     await transporter.sendMail({
       from,
       to: cleanTo,
@@ -96,6 +113,8 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error(`[email] Attempt with primary credentials failed for ${cleanTo}:`, errMsg);
 
+    transporterCache.delete(primaryCacheKey);
+
     const isAuthError =
       errMsg.includes("535") ||
       errMsg.includes("BadCredentials") ||
@@ -105,8 +124,9 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     // Attempt 2: If primary credentials failed and they differ from verified fallback, retry with fallback
     if (isAuthError && (user !== FALLBACK_USER || pass !== FALLBACK_PASS)) {
       console.warn("[email] Primary credentials rejected. Retrying with official verified fallback credentials...");
+      const fallbackCacheKey = `smtp.gmail.com:465:${FALLBACK_USER}`;
       try {
-        const fallbackTransporter = createDirectTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
+        const fallbackTransporter = getPooledTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
         await fallbackTransporter.sendMail({
           from: `"${siteName}" <${FALLBACK_USER}>`,
           to: cleanTo,
@@ -119,6 +139,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
         console.log(`[email] Email sent successfully using fallback credentials to ${cleanTo}`);
         return { sent: true };
       } catch (fallbackError: unknown) {
+        transporterCache.delete(fallbackCacheKey);
         const fbErrMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
         console.error("[email] Fallback credentials attempt also failed:", fbErrMsg);
         return {

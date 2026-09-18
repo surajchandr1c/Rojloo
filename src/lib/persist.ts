@@ -147,7 +147,10 @@ async function readStoreFromMongo(): Promise<StoreData> {
   }
 }
 
-async function writeStoreToMongo(data: StoreData): Promise<void> {
+let inFlightMongoWrite: Promise<void> | null = null;
+let pendingMongoWriteData: StoreData | null = null;
+
+async function doWriteStoreToMongo(data: StoreData): Promise<void> {
   const db = await getDb();
   if (!db) {
     console.error("[persist] MongoDB not available, write skipped");
@@ -166,8 +169,31 @@ async function writeStoreToMongo(data: StoreData): Promise<void> {
       );
   } catch (err) {
     console.error("[persist] MongoDB writeStore failed:", err);
-    throw err;
   }
+}
+
+async function writeStoreToMongo(data: StoreData): Promise<void> {
+  if (inFlightMongoWrite) {
+    // Another write is currently transmitting; queue the latest data
+    pendingMongoWriteData = data;
+    return inFlightMongoWrite;
+  }
+
+  inFlightMongoWrite = (async () => {
+    try {
+      await doWriteStoreToMongo(data);
+      // If another write arrived while this was transmitting, flush the latest snapshot
+      if (pendingMongoWriteData) {
+        const nextData = pendingMongoWriteData;
+        pendingMongoWriteData = null;
+        await doWriteStoreToMongo(nextData);
+      }
+    } finally {
+      inFlightMongoWrite = null;
+    }
+  })();
+
+  return inFlightMongoWrite;
 }
 
 // ---------- File (development) ----------
@@ -218,6 +244,7 @@ async function writeStoreToFile(data: StoreData): Promise<void> {
 
 // In-memory cache for fast repeated reads across requests and server components
 let storeCache: { data: StoreData; expiresAt: number } | null = null;
+let inFlightReadStorePromise: Promise<StoreData> | null = null;
 const CACHE_TTL_MS = 60_000; // 60 seconds (mutations immediately update storeCache)
 
 // ---------- Public API ----------
@@ -228,10 +255,23 @@ export async function readStore(): Promise<StoreData> {
     return storeCache.data;
   }
 
-  const db = await getDb();
-  const data = db ? await readStoreFromMongo() : await readStoreFromFile();
-  storeCache = { data, expiresAt: now + CACHE_TTL_MS };
-  return data;
+  // Deduplicate concurrent in-flight reads across server components / requests
+  if (inFlightReadStorePromise) {
+    return inFlightReadStorePromise;
+  }
+
+  inFlightReadStorePromise = (async () => {
+    try {
+      const db = await getDb();
+      const data = db ? await readStoreFromMongo() : await readStoreFromFile();
+      storeCache = { data, expiresAt: Date.now() + CACHE_TTL_MS };
+      return data;
+    } finally {
+      inFlightReadStorePromise = null;
+    }
+  })();
+
+  return inFlightReadStorePromise;
 }
 
 export async function writeStore(data: StoreData): Promise<void> {

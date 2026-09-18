@@ -78,10 +78,17 @@ export default function BuyCoinSection() {
       void loadPackages();
     });
 
-    const handleUpdated = () => { void loadPackages(); };
-    const handleFocus = () => { void loadPackages(); };
+    let lastLoad = Date.now();
+    const handleUpdated = () => { lastLoad = Date.now(); void loadPackages(); };
+    const handleFocus = () => {
+      const now = Date.now();
+      if (now - lastLoad < 30_000) return;
+      lastLoad = now;
+      void loadPackages();
+    };
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "rojlo_coin_packages_update") {
+        lastLoad = Date.now();
         void loadPackages();
       }
     };
@@ -104,15 +111,23 @@ export default function BuyCoinSection() {
       });
     }
 
+    let lastCheck = Date.now();
     const handleCoinUpdate = () => {
+      lastCheck = Date.now();
+      void checkEligibility();
+    };
+    const handleFocus = () => {
+      const now = Date.now();
+      if (now - lastCheck < 30_000) return;
+      lastCheck = now;
       void checkEligibility();
     };
     window.addEventListener("coins:updated", handleCoinUpdate);
-    window.addEventListener("focus", handleCoinUpdate);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
       window.removeEventListener("coins:updated", handleCoinUpdate);
-      window.removeEventListener("focus", handleCoinUpdate);
+      window.removeEventListener("focus", handleFocus);
     };
   }, [userEmail, checkEligibility]);
 

@@ -8,7 +8,7 @@ import ContactActions from "@/components/ads/ContactActions";
 import { Card, SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { getPublicAdById, listAdsByCity, isAdVisiblePublicly, type Ad } from "@/lib/models/ad";
+import { getPublicAdById, listRelatedCityAds, isAdVisiblePublicly, type Ad } from "@/lib/models/ad";
 import { getCityBySlug } from "@/lib/models/city";
 import { DEFAULT_SERVICE_RATES } from "@/components/post-ad/types";
 import { AdDetailSkeleton } from "@/components/skeletons/places-skeletons";
@@ -100,9 +100,7 @@ async function AdContent({ location, id }: { location: string; id: string }) {
     ad.serviceRates && ad.serviceRates.length > 0
       ? ad.serviceRates
       : DEFAULT_SERVICE_RATES;
-  const relatedProfiles = (await listAdsByCity(cityName)).filter(
-    (profile) => profile._id && profile._id !== ad._id
-  );
+  const relatedProfiles = await listRelatedCityAds(cityName, ad._id ?? id, 6);
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",

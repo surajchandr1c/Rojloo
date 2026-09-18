@@ -1,7 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function AdminStatSkeleton({ className = "h-8 w-16 sm:h-9 sm:w-20" }: { className?: string }) {
-  return <Skeleton className={`inline-block rounded-md ${className}`} />;
+  return (
+    <span
+      className={`inline-block animate-pulse motion-reduce:animate-none rounded-md bg-pink-200/60 ${className}`}
+      aria-hidden="true"
+    />
+  );
 }
 
 export function AdminTableSkeleton({

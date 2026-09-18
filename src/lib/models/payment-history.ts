@@ -1,4 +1,4 @@
-import { Collection, Document } from "mongodb";
+import { Collection, Document, ObjectId } from "mongodb";
 import { getDb } from "../db";
 import { readStore, writeStore } from "../persist";
 
@@ -150,14 +150,16 @@ export async function createPaymentHistory(payment: {
     newPayment._id = Date.now().toString();
   }
 
-  try {
-    const store = await readStore();
-    const history = (store.paymentHistory ?? []) as unknown as PaymentHistory[];
-    history.push(newPayment);
-    store.paymentHistory = history;
-    await writeStore(store);
-  } catch (err) {
-    console.error("[payment-history] writeStore sync failed:", err);
+  if (!col) {
+    try {
+      const store = await readStore();
+      const history = (store.paymentHistory ?? []) as unknown as PaymentHistory[];
+      history.push(newPayment);
+      store.paymentHistory = history;
+      await writeStore(store);
+    } catch (err) {
+      console.error("[payment-history] writeStore sync failed:", err);
+    }
   }
 
   return newPayment;
@@ -274,3 +276,112 @@ export async function getTotalCoinsIssued(): Promise<number> {
   const history = await listPaymentHistory();
   return history.reduce((sum, p) => sum + p.coins, 0);
 }
+
+export async function deletePaymentHistory(options: {
+  all?: boolean;
+  startDate?: string;
+  endDate?: string;
+  id?: string;
+}): Promise<{ deletedCount: number }> {
+  let deletedCount = 0;
+  const col = await getPaymentHistoryCollection();
+
+  if (options.all) {
+    if (col) {
+      try {
+        const res = await col.deleteMany({});
+        deletedCount = res.deletedCount;
+      } catch (err) {
+        console.error("[payment-history] MongoDB deleteMany all failed:", err);
+      }
+    }
+    try {
+      const store = await readStore();
+      if (!deletedCount) {
+        deletedCount = (store.paymentHistory ?? []).length;
+      }
+      store.paymentHistory = [];
+      await writeStore(store);
+    } catch (err) {
+      console.error("[payment-history] store delete all failed:", err);
+    }
+    return { deletedCount };
+  }
+
+  if (options.id) {
+    const id = options.id.trim();
+    if (col) {
+      try {
+        const query = ObjectId.isValid(id)
+          ? { _id: new ObjectId(id) }
+          : { $or: [{ _id: id as unknown as ObjectId }, { transactionId: id }] };
+        const res = await col.deleteOne(query);
+        deletedCount = res.deletedCount;
+      } catch (err) {
+        console.error("[payment-history] MongoDB deleteById failed:", err);
+      }
+    }
+    try {
+      const store = await readStore();
+      const list = (store.paymentHistory ?? []) as unknown as PaymentHistory[];
+      const idx = list.findIndex((p) => p._id === id || p.transactionId === id);
+      if (idx !== -1) {
+        list.splice(idx, 1);
+        store.paymentHistory = list;
+        await writeStore(store);
+        if (!deletedCount) deletedCount = 1;
+      }
+    } catch (err) {
+      console.error("[payment-history] store deleteById failed:", err);
+    }
+    return { deletedCount };
+  }
+
+  const startD = options.startDate ? new Date(`${options.startDate}T00:00:00.000Z`) : null;
+  const endD = options.endDate ? new Date(`${options.endDate}T23:59:59.999Z`) : null;
+
+  if (startD || endD) {
+    if (col) {
+      try {
+        const dateFilters: Record<string, unknown>[] = [];
+
+        const objCond: Record<string, unknown> = {};
+        if (startD) objCond.$gte = startD;
+        if (endD) objCond.$lte = endD;
+        dateFilters.push({ createdAt: objCond });
+
+        const strCond: Record<string, unknown> = {};
+        if (startD) strCond.$gte = startD.toISOString();
+        if (endD) strCond.$lte = endD.toISOString();
+        dateFilters.push({ createdAt: strCond });
+
+        const res = await col.deleteMany({ $or: dateFilters });
+        deletedCount = res.deletedCount;
+      } catch (err) {
+        console.error("[payment-history] MongoDB deleteByDate failed:", err);
+      }
+    }
+
+    try {
+      const store = await readStore();
+      const originalLen = (store.paymentHistory ?? []).length;
+      const filtered = ((store.paymentHistory ?? []) as unknown as PaymentHistory[]).filter((p) => {
+        const t = new Date(p.createdAt).getTime();
+        if (isNaN(t)) return false;
+        if (startD && t < startD.getTime()) return true;
+        if (endD && t > endD.getTime()) return true;
+        return false;
+      });
+      store.paymentHistory = filtered;
+      await writeStore(store);
+      if (!deletedCount) {
+        deletedCount = originalLen - filtered.length;
+      }
+    } catch (err) {
+      console.error("[payment-history] store deleteByDate failed:", err);
+    }
+  }
+
+  return { deletedCount };
+}
+

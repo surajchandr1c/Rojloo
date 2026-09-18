@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AdminStatSkeleton } from "@/components/skeletons/admin-skeletons";
 
@@ -100,16 +101,16 @@ export default function AdminDashboard() {
         <h2 className="mb-4 text-xl font-bold text-red-950">Platform Summary</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {baseCards.map((card) => (
-            <a
+            <Link
               key={card.label}
               href={card.href}
               className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-red-200"
             >
               <p className="text-sm font-medium text-red-900">{card.label}</p>
-              <p className="mt-2 text-3xl sm:text-4xl font-black text-red-950 break-words">
+              <div className="mt-2 text-3xl sm:text-4xl font-black text-red-950 break-words">
                 {loading ? <AdminStatSkeleton /> : card.value}
-              </p>
-            </a>
+              </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -123,9 +124,9 @@ export default function AdminDashboard() {
               className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-red-200"
             >
               <p className="text-sm font-medium text-red-900">{card.label}</p>
-              <p className="mt-3 text-2xl sm:text-3xl font-black text-red-950 break-words">
+              <div className="mt-3 text-2xl sm:text-3xl font-black text-red-950 break-words">
                 {loading ? <AdminStatSkeleton /> : card.value}
-              </p>
+              </div>
             </div>
           ))}
         </div>

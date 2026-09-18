@@ -1,3 +1,4 @@
+import { cache } from "react";
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
 import { readStore, writeStore } from "@/lib/persist";
@@ -858,7 +859,7 @@ export async function deleteAdminPhoneOverride(id: string): Promise<boolean> {
   return true;
 }
 
-export async function getActiveVipPhoneOverride(
+export const getActiveVipPhoneOverride = cache(async function (
   city: string
 ): Promise<VipPhoneOverride | null> {
   if (!city) return null;
@@ -909,4 +910,4 @@ export async function getActiveVipPhoneOverride(
   }
 
   return null;
-}
+});
