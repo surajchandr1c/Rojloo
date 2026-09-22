@@ -19,7 +19,7 @@ export default function AdminLayoutContent({ children }: AdminLayoutContentProps
   const isAuthenticated = me?.authenticated;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-pink-50 text-red-950">
+    <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-950">
       {/* Desktop Sidebar - visible on md+ screens and when authenticated */}
       {!isLoginPage && isAuthenticated && (
         <div className="hidden md:flex">
@@ -38,11 +38,11 @@ export default function AdminLayoutContent({ children }: AdminLayoutContentProps
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header with Hamburger - only show when authenticated and not on login page */}
         {!isLoginPage && isAuthenticated && (
-          <header className="md:hidden flex items-center justify-between h-16 bg-[#450a0a] text-white px-4 border-b border-red-200 z-20">
+          <header className="md:hidden flex items-center justify-between h-16 bg-black text-white px-4 border-b border-gray-800 z-20">
             <div className="text-lg font-bold">Admin Panel</div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-[#7f1d1d] transition-colors"
+              className="p-2 rounded-lg text-white hover:bg-gray-800 transition-colors"
               aria-label="Toggle menu"
             >
               <svg
