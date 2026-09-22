@@ -67,6 +67,7 @@ export default async function Places({
       adCounts[city.slug.toLowerCase()] ??
       0,
   }));
+  const totalLocations = allCities.length + allLocalAreas.length;
 
   const schema = [
     {
@@ -110,9 +111,14 @@ export default async function Places({
         <div className="mt-4">
           <Eyebrow>Places</Eyebrow>
         </div>
-        <h1 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">
-          Places
-        </h1>
+        <div className="mt-2 flex items-center justify-between gap-4">
+          <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">
+            Places
+          </h1>
+          <span className="shrink-0 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-800 sm:px-4 sm:py-2 sm:text-sm">
+            Total Locations: {totalLocations}
+          </span>
+        </div>
 
         <PlacesExplorer
           initialCities={citiesWithAds}
