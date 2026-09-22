@@ -165,3 +165,21 @@ textarea {
   }
 }
 
+/* ==========================================================================
+   Age Gate Locked Mode: Absolutely block scrolling and clicks on the website
+   ========================================================================== */
+body.age-gate-locked {
+  overflow: hidden !important;
+  touch-action: none !important;
+  user-select: none !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+body.age-gate-locked #site-content {
+  pointer-events: none !important;
+  user-select: none !important;
+  filter: blur(2px);
+  transition: filter 0.3s ease;
+}
+
