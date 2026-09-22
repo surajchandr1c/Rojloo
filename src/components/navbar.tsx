@@ -201,7 +201,7 @@ export default function NavBar() {
       </div>
 
       {menuOpen && (
-        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1 border-b border-gray-800 bg-black px-4 py-3 shadow-xl md:hidden">
+        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1 border-b border-gray-800 bg-black px-4 py-3 text-white shadow-xl md:hidden">
           {navLinks.map((link) => {
             const active =
               pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -212,8 +212,8 @@ export default function NavBar() {
                 onClick={() => setMenuOpen(false)}
                 className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-gray-800 text-white"
-                    : "text-white hover:bg-gray-800 hover:text-white"
+                    ? "bg-gray-800 !text-white"
+                    : "text-white hover:bg-gray-800 hover:!text-white"
                 }`}
               >
                 {link.name}
