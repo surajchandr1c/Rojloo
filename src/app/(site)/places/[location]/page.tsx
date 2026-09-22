@@ -319,9 +319,9 @@ async function CityContent({
                   )}
 
                   <div className="pointer-events-none relative z-10">
-                    <h3 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-gray-950 break-words">
+                    <h2 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-gray-950 break-words">
                       {ad.name}
-                    </h3>
+                    </h2>
 
                     {ad.about && (
                       <p className="mt-2 text-sm leading-6 sm:leading-7 text-gray-900 line-clamp-3">
@@ -373,32 +373,14 @@ async function CityContent({
               </div>
             )}
             {seo.content.map((block) => {
-              if (block.type === "h1")
+              if (block.type === "h1" || block.type === "h2" || block.type === "h3")
                 return (
                   <h2
                     key={block.id}
-                    className="mt-6 text-3xl font-black text-gray-950"
+                    className="mt-6 text-2xl font-bold text-gray-950 sm:text-3xl"
                   >
                     {block.text}
                   </h2>
-                );
-              if (block.type === "h2")
-                return (
-                  <h2
-                    key={block.id}
-                    className="mt-5 text-2xl font-bold text-gray-950"
-                  >
-                    {block.text}
-                  </h2>
-                );
-              if (block.type === "h3")
-                return (
-                  <h3
-                    key={block.id}
-                    className="mt-4 text-xl font-semibold text-gray-950"
-                  >
-                    {block.text}
-                  </h3>
                 );
               return (
                 <p

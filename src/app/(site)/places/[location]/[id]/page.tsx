@@ -310,25 +310,11 @@ async function LocalAreaContent({
           <SectionPanel>
             <div className="prose prose-gray max-w-none space-y-4 text-gray-900">
               {contentBlocks.map((block) => {
-                if (block.type === "h1") {
+                if (block.type === "h1" || block.type === "h2" || block.type === "h3") {
                   return (
                     <h2 key={block.id} className="text-2xl font-black text-gray-950 sm:text-3xl">
                       {block.text}
                     </h2>
-                  );
-                }
-                if (block.type === "h2") {
-                  return (
-                    <h3 key={block.id} className="text-xl font-bold text-gray-950 sm:text-2xl">
-                      {block.text}
-                    </h3>
-                  );
-                }
-                if (block.type === "h3") {
-                  return (
-                    <h4 key={block.id} className="text-lg font-bold text-gray-900">
-                      {block.text}
-                    </h4>
                   );
                 }
                 return (
