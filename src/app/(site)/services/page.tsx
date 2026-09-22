@@ -70,6 +70,7 @@ export default function Services() {
             return (
               <Card
                 key={item.title}
+                id={`${item.id}-section`}
                 className="overflow-hidden p-0 shadow-md shadow-gray-200/30"
               >
                 <div

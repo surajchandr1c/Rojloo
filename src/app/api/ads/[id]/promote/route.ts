@@ -115,54 +115,64 @@ export async function POST(
   }
 
   // Calculate promotion shift timing
-  const now = new Date();
-  const shiftTiming = calculateShiftTiming(promoShift, now);
+  try {
+    const now = new Date();
+    const shiftTiming = calculateShiftTiming(promoShift, now);
 
-  const updatedAd = await updateAd(id, userId, {
-    promoted: true,
-    isPromoted: true,
-    promotedFrom: shiftTiming.promotedFrom,
-    promotedUntil: shiftTiming.promotedUntil,
-    promoPackage: packageName,
-    promoTier,
-    promoShift,
-  });
+    const updatedAd = await updateAd(id, userId, {
+      promoted: true,
+      isPromoted: true,
+      promotedFrom: shiftTiming.promotedFrom,
+      promotedUntil: shiftTiming.promotedUntil,
+      promoPackage: packageName,
+      promoTier,
+      promoShift,
+    });
 
-  if (!updatedAd) {
-    // Refund coins if ad update failed
-    await updateUserCoins(userId, totalCoinsCost, user?.email);
+    if (!updatedAd) {
+      // Refund coins if ad update failed
+      await updateUserCoins(userId, totalCoinsCost, user?.email).catch(() => {});
+      return NextResponse.json(
+        { error: "Failed to promote ad. Coins have been refunded." },
+        { status: 500 }
+      );
+    }
+
+    const shiftText = getShiftLabel(promoShift);
+    const startFormatted = formatDateTime(shiftTiming.promotedFrom);
+    const expiryFormatted = formatDateTime(shiftTiming.promotedUntil);
+
+    const statusPrefix = shiftTiming.isCurrentShift
+      ? `Active now until ${expiryFormatted}`
+      : `Scheduled to start on ${startFormatted} until ${expiryFormatted}`;
+
+    return NextResponse.json({
+      success: true,
+      message: `🎉 Ad promoted successfully with ${packageName}! Position: ${tierInfo.rankRange} during ${shiftText}. ${statusPrefix}.`,
+      ad: updatedAd,
+      remainingCoins: currentCoins - totalCoinsCost,
+      coinsCost: totalCoinsCost,
+      isAllShifts,
+      isAllPackages,
+      promotedFrom: shiftTiming.promotedFrom.toISOString(),
+      promotedUntil: shiftTiming.promotedUntil.toISOString(),
+      startTimeFormatted: startFormatted,
+      expireTimeFormatted: expiryFormatted,
+      isCurrentShift: shiftTiming.isCurrentShift,
+      isNextDay: shiftTiming.isNextDay,
+      scheduleDescription: shiftTiming.scheduleDescription,
+      rankRange: tierInfo.rankRange,
+      tier: promoTier,
+      promoShift,
+      packageName,
+    });
+  } catch (promoErr) {
+    // Guaranteed coin refund on unexpected execution error
+    await updateUserCoins(userId, totalCoinsCost, user?.email).catch(() => {});
+    console.error("Promotion processing error, coins refunded:", promoErr);
     return NextResponse.json(
-      { error: "Failed to promote ad. Coins have been refunded." },
+      { error: "An error occurred while promoting your ad. Any deducted coins have been refunded." },
       { status: 500 }
     );
   }
-
-  const shiftText = getShiftLabel(promoShift);
-  const startFormatted = formatDateTime(shiftTiming.promotedFrom);
-  const expiryFormatted = formatDateTime(shiftTiming.promotedUntil);
-
-  const statusPrefix = shiftTiming.isCurrentShift
-    ? `Active now until ${expiryFormatted}`
-    : `Scheduled to start on ${startFormatted} until ${expiryFormatted}`;
-
-  return NextResponse.json({
-    success: true,
-    message: `🎉 Ad promoted successfully with ${packageName}! Position: ${tierInfo.rankRange} during ${shiftText}. ${statusPrefix}.`,
-    ad: updatedAd,
-    remainingCoins: currentCoins - totalCoinsCost,
-    coinsCost: totalCoinsCost,
-    isAllShifts,
-    isAllPackages,
-    promotedFrom: shiftTiming.promotedFrom.toISOString(),
-    promotedUntil: shiftTiming.promotedUntil.toISOString(),
-    startTimeFormatted: startFormatted,
-    expireTimeFormatted: expiryFormatted,
-    isCurrentShift: shiftTiming.isCurrentShift,
-    isNextDay: shiftTiming.isNextDay,
-    scheduleDescription: shiftTiming.scheduleDescription,
-    rankRange: tierInfo.rankRange,
-    tier: promoTier,
-    promoShift,
-    packageName,
-  });
 }

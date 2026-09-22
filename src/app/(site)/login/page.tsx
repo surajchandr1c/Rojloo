@@ -19,6 +19,7 @@ function AuthPage() {
   const { setUser, setToken } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -72,6 +73,7 @@ function AuthPage() {
     setOtpError("");
     resetOtp();
     setMode(next);
+    setLoginMethod("password");
   }
 
   function resetOtp() {
@@ -184,6 +186,50 @@ function AuthPage() {
       }
       if (data.token) setToken(data.token);
       if (data.user) setUser(data.user);
+      router.push(returnTo);
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // OTP Login (for users logging in or resetting via verified email)
+  async function handleOtpLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setOtpError("");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!otpSent || otpEmail !== email) {
+      await handleSendCode();
+      setError("We just sent a 6-digit verification code to your email. Enter it below to finish signing in.");
+      return;
+    }
+    const otp = digits.join("");
+    if (!/^\d{6}$/.test(otp)) {
+      setError("Enter the 6-digit verification code sent to your email.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const verifyRes = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, otp }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) {
+        setError(verifyData.error || verifyData.message || "Invalid verification code.");
+        setBusy(false);
+        return;
+      }
+      if (verifyData.token) setToken(verifyData.token);
+      if (verifyData.user) setUser(verifyData.user);
       router.push(returnTo);
     } catch {
       setError("Network error. Please try again.");
@@ -321,7 +367,13 @@ function AuthPage() {
         </p>
 
         <form
-          onSubmit={mode === "login" ? handleLogin : handleSignup}
+          onSubmit={
+            mode === "signup"
+              ? handleSignup
+              : loginMethod === "otp"
+              ? handleOtpLogin
+              : handleLogin
+          }
           className="mt-6 space-y-4"
         >
           {mode === "signup" && (
@@ -354,7 +406,7 @@ function AuthPage() {
                 className="flex-1 min-w-0"
                 required
               />
-              {mode === "signup" && (
+              {(mode === "signup" || loginMethod === "otp") && (
                 <Button
                   type="button"
                   variant={otpSent ? "soft" : "solid"}
@@ -373,7 +425,7 @@ function AuthPage() {
                 </Button>
               )}
             </div>
-            {mode === "signup" && (
+            {(mode === "signup" || loginMethod === "otp") && (
               <div className="mt-1.5">
                 {otpSent ? (
                   <p className="text-xs font-semibold text-gray-700">
@@ -393,7 +445,7 @@ function AuthPage() {
             )}
           </div>
 
-          {mode === "signup" && (
+          {(mode === "signup" || loginMethod === "otp") && (
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-900">
                 Enter verification code
@@ -449,29 +501,62 @@ function AuthPage() {
             </div>
           )}
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900">
-              Password
-            </label>
-            <div className="relative">
-              <TextInput
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="pr-12"
-                required
-              />
+          {(mode === "signup" || (mode === "login" && loginMethod === "password")) && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-900">
+                  Password
+                </label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginMethod("otp");
+                      setError("");
+                      resetOtp();
+                    }}
+                    className="text-xs font-medium text-gray-600 hover:text-gray-950 underline underline-offset-2"
+                  >
+                    Forgot password? Sign in with OTP
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <TextInput
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-12"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-900 hover:text-gray-700"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === "login" && loginMethod === "otp" && (
+            <div className="text-right">
               <button
                 type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-900 hover:text-gray-700"
+                onClick={() => {
+                  setLoginMethod("password");
+                  setError("");
+                  resetOtp();
+                }}
+                className="text-xs font-medium text-gray-600 hover:text-gray-950 underline underline-offset-2"
               >
-                {showPassword ? "Hide" : "Show"}
+                Sign in with password instead
               </button>
             </div>
-          </div>
+          )}
 
           {mode === "signup" && (
             <div>
@@ -571,10 +656,20 @@ function AuthPage() {
             fullWidth
             disabled={busy}
             loading={busy}
-            loadingText={mode === "login" ? "Logging in..." : "Creating account..."}
+            loadingText={
+              mode === "login"
+                ? loginMethod === "otp"
+                  ? "Verifying..."
+                  : "Logging in..."
+                : "Creating account..."
+            }
             className="!text-white"
           >
-            {mode === "login" ? "Log in" : "Create account"}
+            {mode === "login"
+              ? loginMethod === "otp"
+                ? "Verify & Log in"
+                : "Log in"
+              : "Create account"}
           </Button>
         </form>
       </section>

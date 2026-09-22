@@ -35,9 +35,9 @@ export async function PATCH(
 
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
-  const status = typeof body?.status === "string" ? body.status.trim() : "";
+  const status = typeof body?.status === "string" ? body.status.toLowerCase().trim() : "";
 
-  if (!status || !["active", "suspended"].includes(status)) {
+  if (!status || !["active", "suspended", "inactive"].includes(status)) {
     return NextResponse.json({ error: "Invalid status." }, { status: 400 });
   }
 

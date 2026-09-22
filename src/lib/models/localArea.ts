@@ -43,34 +43,102 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+let cachedLocalAreas: LocalAreaRecord[] | null = null;
+let cachedByCitySlug: Map<string, LocalAreaRecord[]> | null = null;
+let cachedByCityName: Map<string, LocalAreaRecord[]> | null = null;
+let cachedByState: Map<string, LocalAreaRecord[]> | null = null;
+let cacheExpiresAt = 0;
+const LOCAL_AREAS_CACHE_TTL_MS = 60_000;
+
+export function invalidateLocalAreasCache(): void {
+  cachedLocalAreas = null;
+  cachedByCitySlug = null;
+  cachedByCityName = null;
+  cachedByState = null;
+  cacheExpiresAt = 0;
+}
+
+async function getIndexedLocalAreas(): Promise<{
+  all: LocalAreaRecord[];
+  byCitySlug: Map<string, LocalAreaRecord[]>;
+  byCityName: Map<string, LocalAreaRecord[]>;
+  byState: Map<string, LocalAreaRecord[]>;
+}> {
+  const now = Date.now();
+  if (
+    cachedLocalAreas &&
+    cachedByCitySlug &&
+    cachedByCityName &&
+    cachedByState &&
+    now < cacheExpiresAt
+  ) {
+    return {
+      all: cachedLocalAreas,
+      byCitySlug: cachedByCitySlug,
+      byCityName: cachedByCityName,
+      byState: cachedByState,
+    };
+  }
+
+  const store = await readStore();
+  const rawAreas = (store.localAreas ?? []) as unknown as LocalAreaRecord[];
+  const all = [...rawAreas].sort((a, b) =>
+    String(a.name).localeCompare(String(b.name))
+  );
+
+  const byCitySlug = new Map<string, LocalAreaRecord[]>();
+  const byCityName = new Map<string, LocalAreaRecord[]>();
+  const byState = new Map<string, LocalAreaRecord[]>();
+
+  for (const a of all) {
+    if (a.citySlug) {
+      const cSlug = a.citySlug.toLowerCase();
+      const list = byCitySlug.get(cSlug) || [];
+      list.push(a);
+      byCitySlug.set(cSlug, list);
+    }
+    if (a.cityName) {
+      const cName = a.cityName.toLowerCase().trim();
+      const list = byCityName.get(cName) || [];
+      list.push(a);
+      byCityName.set(cName, list);
+    }
+    if (a.stateName) {
+      const sName = a.stateName.toLowerCase().trim();
+      const list = byState.get(sName) || [];
+      list.push(a);
+      byState.set(sName, list);
+    }
+  }
+
+  cachedLocalAreas = all;
+  cachedByCitySlug = byCitySlug;
+  cachedByCityName = byCityName;
+  cachedByState = byState;
+  cacheExpiresAt = now + LOCAL_AREAS_CACHE_TTL_MS;
+
+  return { all, byCitySlug, byCityName, byState };
+}
+
 export const listLocalAreas = cache(async function (filters?: {
   cityName?: string;
   citySlug?: string;
   stateName?: string;
 }): Promise<LocalAreaRecord[]> {
-  const store = await readStore();
-  let areas = ((store.localAreas ?? []) as unknown as LocalAreaRecord[]);
+  const indexed = await getIndexedLocalAreas();
 
   if (filters?.citySlug) {
-    const targetSlug = filters.citySlug.trim().toLowerCase();
-    areas = areas.filter((a) => a.citySlug?.toLowerCase() === targetSlug);
-  } else if (filters?.cityName) {
-    const targetName = filters.cityName.trim().toLowerCase();
-    areas = areas.filter((a) => a.cityName?.toLowerCase() === targetName);
+    return indexed.byCitySlug.get(filters.citySlug.trim().toLowerCase()) ?? [];
   }
-
+  if (filters?.cityName) {
+    return indexed.byCityName.get(filters.cityName.trim().toLowerCase()) ?? [];
+  }
   if (filters?.stateName) {
-    const targetState = filters.stateName.trim().toLowerCase();
-    areas = areas.filter(
-      (a) =>
-        a.stateName?.toLowerCase() === targetState ||
-        a.stateSlug?.toLowerCase() === slugify(targetState)
-    );
+    const s = filters.stateName.trim().toLowerCase();
+    return indexed.byState.get(s) ?? [];
   }
 
-  return [...areas].sort((a, b) =>
-    String(a.name).localeCompare(String(b.name))
-  );
+  return indexed.all;
 });
 
 export const getLocalAreaBySlug = cache(async function (
@@ -122,6 +190,7 @@ export async function createLocalArea(data: {
       existing.stateSlug = stateSlug;
     }
     await writeStore(store);
+    invalidateLocalAreasCache();
     return existing;
   }
 
@@ -138,6 +207,7 @@ export async function createLocalArea(data: {
 
   store.localAreas.push(localArea as unknown as (typeof store.localAreas)[number]);
   await writeStore(store);
+  invalidateLocalAreasCache();
   return localArea;
 }
 
@@ -167,6 +237,7 @@ export async function deleteLocalArea(id: string): Promise<boolean> {
 
   store.localAreas.splice(index, 1);
   await writeStore(store);
+  invalidateLocalAreasCache();
   return true;
 }
 
@@ -441,6 +512,7 @@ export async function importLocationsJson(json: unknown): Promise<{
   }
 
   await writeStore(store);
+  invalidateLocalAreasCache();
 
   return {
     success: true,

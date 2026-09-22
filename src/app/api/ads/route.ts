@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       telegram: telegram ? String(telegram).trim() : undefined,
       about: String(about).trim(),
       images: imageList,
-      status: typeof status === "string" && ["Active", "suspended"].includes(status) ? status : "Active",
+      status: typeof status === "string" && ["active", "suspended", "inactive"].includes(status.toLowerCase().trim()) ? status.toLowerCase().trim() : "active",
       serviceRates: rateList,
     });
 
@@ -131,12 +131,12 @@ export async function POST(request: NextRequest) {
   const ad = await createAd({
     userId,
     name: String(name).trim(),
-    title: title ? String(title).trim() : undefined,
+    title: String(name).trim(),
     age: age ? String(age).trim() : undefined,
     category: String(category).trim(),
     toServe: Array.isArray(toServe)
       ? toServe.map((s: unknown) => String(s)).filter(Boolean)
-      : undefined,
+      : [],
     placeOfService: Array.isArray(placeOfService)
       ? placeOfService.map((s: unknown) => String(s)).filter(Boolean)
       : undefined,
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     telegram: telegram ? String(telegram).trim() : undefined,
     about: String(about).trim(),
     images: imageList,
-    status: "Active",
+    status: "active",
     serviceRates: rateList,
   });
 

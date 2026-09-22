@@ -241,7 +241,7 @@ export async function confirmPaymentRequest(
 
     const targetQuery: Record<string, unknown> = mongoId
       ? { _id: mongoId }
-      : { $or: [{ _id: id as unknown as ObjectId }, { transactionId: id }] };
+      : { transactionId: id };
 
     // Atomic findOneAndUpdate ensuring the status is not already confirmed
     const atomicUpdate = await col.findOneAndUpdate(
@@ -339,7 +339,7 @@ export async function declinePaymentRequest(
 
     const targetQuery: Record<string, unknown> = mongoId
       ? { _id: mongoId }
-      : { $or: [{ _id: id as unknown as ObjectId }, { transactionId: id }] };
+      : { transactionId: id };
 
     const atomicUpdate = await col.findOneAndUpdate(
       { ...targetQuery, status: { $nin: ["confirmed", "declined"] } },

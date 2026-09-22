@@ -1,7 +1,9 @@
 import { cache } from "react";
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
+import { ObjectId } from "mongodb";
 import { readStore, writeStore } from "@/lib/persist";
+import { getDb } from "@/lib/db";
 
 export type CityVipAssignment = {
   _id?: string;
@@ -298,10 +300,11 @@ export async function upsertVipUserWithPhone(
   const existingIdx = vipUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
 
   if (existingIdx >= 0) {
+    const existing = vipUsers[existingIdx];
     vipUsers[existingIdx] = {
-      ...vipUsers[existingIdx],
+      ...existing,
       phone: cleanPhone,
-      passwordHash,
+      passwordHash: existing.passwordHash || passwordHash,
       updatedAt: new Date(),
     };
     store.vipUsers = vipUsers as unknown as typeof store.vipUsers;
@@ -519,28 +522,107 @@ export async function getVipScope(email: string): Promise<VipScope> {
   };
 }
 
-export async function getVipScopedStats(email: string) {
-  const scope = await getVipScope(email);
-  const store = await readStore();
+interface ScopedAdItem {
+  _id: string;
+  userId: string;
+  name: string;
+  title: string;
+  category: string;
+  city: string;
+  state: string;
+  phone: string;
+  status: string;
+  createdAt: Date | string;
+}
 
+async function getScopedAdsList(scope: VipScope): Promise<ScopedAdItem[]> {
   const cityLowerSet = new Set(scope.cities.map((c) => c.toLowerCase()));
   const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
 
-  // Filter ads within scope
-  const ads = (store.ads ?? []).filter((ad) => {
-    const adCity = String(ad.city ?? "").trim().toLowerCase();
-    const adState = String(ad.state ?? "").trim().toLowerCase();
-    return cityLowerSet.has(adCity) || (adState && stateLowerSet.has(adState));
-  });
+  // 1. Try MongoDB first (production)
+  try {
+    const db = await getDb();
+    if (db) {
+      const orClauses: Record<string, unknown>[] = [];
+      if (scope.cities.length > 0) {
+        const cityPatterns = scope.cities.map(
+          (c) => new RegExp(`^${c.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i")
+        );
+        orClauses.push({ city: { $in: cityPatterns } });
+      }
+      if (scope.states.length > 0) {
+        const statePatterns = scope.states.map(
+          (s) => new RegExp(`^${s.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i")
+        );
+        orClauses.push({ state: { $in: statePatterns } });
+      }
 
-  // Filter users who posted ads within scope
-  const scopedUserIds = new Set(ads.map((ad) => String(ad.userId ?? "")).filter(Boolean));
-  const usersCount = scopedUserIds.size;
+      if (orClauses.length > 0) {
+        const docs = await db
+          .collection("ads")
+          .find({
+            $or: orClauses,
+            status: { $nin: ["deleted", "suspended", "inactive", "Inactive"] },
+          })
+          .sort({ createdAt: -1 })
+          .limit(1000)
+          .toArray();
+
+        if (docs.length > 0) {
+          return docs.map((ad) => ({
+            _id: String(ad._id ?? ""),
+            userId: String(ad.userId ?? ""),
+            name: String(ad.name ?? ""),
+            title: String(ad.title ?? ad.name ?? ""),
+            category: String(ad.category ?? ""),
+            city: String(ad.city ?? ""),
+            state: String(ad.state ?? ""),
+            phone: String(ad.phone ?? ""),
+            status: String(ad.status ?? "active").toLowerCase(),
+            createdAt: ad.createdAt ?? new Date(),
+          }));
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[vip] MongoDB scoped ads query failed:", err);
+  }
+
+  // 2. Fallback to in-memory store
+  const store = await readStore();
+  return (store.ads ?? [])
+    .filter((ad) => {
+      const st = String(ad.status ?? "active").toLowerCase();
+      if (st === "deleted" || st === "suspended" || st === "inactive") return false;
+      const adCity = String(ad.city ?? "").trim().toLowerCase();
+      const adState = String(ad.state ?? "").trim().toLowerCase();
+      return cityLowerSet.has(adCity) || (adState && stateLowerSet.has(adState));
+    })
+    .map((ad) => ({
+      _id: String(ad._id ?? ""),
+      userId: String(ad.userId ?? ""),
+      name: String(ad.name ?? ""),
+      title: String(ad.title ?? ad.name ?? ""),
+      category: String(ad.category ?? ""),
+      city: String(ad.city ?? ""),
+      state: String(ad.state ?? ""),
+      phone: String(ad.phone ?? ""),
+      status: String(ad.status ?? "active").toLowerCase(),
+      createdAt: ad.createdAt ?? new Date(),
+    }));
+}
+
+export async function getVipScopedStats(email: string) {
+  const scope = await getVipScope(email);
+  const ads = await getScopedAdsList(scope);
+
+  // Fast O(1) deduplication of user IDs using Set
+  const scopedUserIds = new Set(ads.map((ad) => ad.userId).filter(Boolean));
 
   return {
     statesCount: scope.states.length,
     citiesCount: scope.cities.length,
-    usersCount,
+    usersCount: scopedUserIds.size,
     adsCount: ads.length,
     hasStateAccess: scope.hasStateAccess,
     assignments: scope.assignments,
@@ -601,9 +683,12 @@ export async function getVipScopedCities(email: string) {
     }
   } catch {}
 
-  // Count ads per city
-  for (const ad of store.ads ?? []) {
-    const adCity = String(ad.city ?? "").trim().toLowerCase();
+  // Fetch ads from MongoDB or memory
+  const ads = await getScopedAdsList(scope);
+
+  // Count ads per city using O(1) map access
+  for (const ad of ads) {
+    const adCity = ad.city.trim().toLowerCase();
     const entry = cityMap.get(adCity);
     if (entry) {
       entry.adCount += 1;
@@ -615,53 +700,57 @@ export async function getVipScopedCities(email: string) {
 
 export async function getVipScopedAds(email: string) {
   const scope = await getVipScope(email);
-  const store = await readStore();
-
-  const cityLowerSet = new Set(scope.cities.map((c) => c.toLowerCase()));
-  const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
-
-  const ads = (store.ads ?? [])
-    .filter((ad) => {
-      const adCity = String(ad.city ?? "").trim().toLowerCase();
-      const adState = String(ad.state ?? "").trim().toLowerCase();
-      return cityLowerSet.has(adCity) || (adState && stateLowerSet.has(adState));
-    })
-    .map((ad) => ({
-      _id: String(ad._id ?? ""),
-      name: String(ad.name ?? ""),
-      title: String(ad.title ?? ad.name ?? ""),
-      category: String(ad.category ?? ""),
-      city: String(ad.city ?? ""),
-      state: String(ad.state ?? ""),
-      phone: String(ad.phone ?? ""),
-      status: String(ad.status ?? "active"),
-      createdAt: ad.createdAt ?? new Date(),
-    }));
-
-  return ads;
+  return getScopedAdsList(scope);
 }
 
 export async function getVipScopedUsers(email: string) {
   const scope = await getVipScope(email);
-  const store = await readStore();
+  const ads = await getScopedAdsList(scope);
 
-  const cityLowerSet = new Set(scope.cities.map((c) => c.toLowerCase()));
-  const stateLowerSet = new Set(scope.states.map((s) => s.toLowerCase()));
-
-  // Map users to their ads in scope
+  // Map users to their ads in scope in O(N) linear time
   const userAdCounts: Record<string, number> = {};
-  for (const ad of store.ads ?? []) {
-    const adCity = String(ad.city ?? "").trim().toLowerCase();
-    const adState = String(ad.state ?? "").trim().toLowerCase();
-    if (cityLowerSet.has(adCity) || (adState && stateLowerSet.has(adState))) {
-      const uid = String(ad.userId ?? "");
-      if (uid) {
-        userAdCounts[uid] = (userAdCounts[uid] || 0) + 1;
-      }
+  for (const ad of ads) {
+    if (ad.userId) {
+      userAdCounts[ad.userId] = (userAdCounts[ad.userId] || 0) + 1;
     }
   }
 
   const scopedUserIds = new Set(Object.keys(userAdCounts));
+  if (scopedUserIds.size === 0) return [];
+
+  // Query MongoDB users if available
+  try {
+    const db = await getDb();
+    if (db) {
+      const ids = Array.from(scopedUserIds);
+      const validObjIds = ids
+        .filter((id) => ObjectId.isValid(id))
+        .map((id) => new ObjectId(id));
+
+      const queryFilter =
+        validObjIds.length > 0
+          ? { $or: [{ _id: { $in: validObjIds } }, { _id: { $in: ids } }] }
+          : { _id: { $in: ids } };
+
+      const userDocs = await db.collection("users").find(queryFilter as any).toArray();
+      if (userDocs.length > 0) {
+        return userDocs.map((u) => ({
+          _id: String(u._id ?? ""),
+          name: String(u.name ?? ""),
+          email: String(u.email ?? ""),
+          phone: String(u.phone ?? ""),
+          coins: Number(u.coins ?? 0),
+          adCount: userAdCounts[String(u._id ?? "")] || 0,
+          createdAt: u.createdAt ?? new Date(),
+        }));
+      }
+    }
+  } catch (err) {
+    console.error("[vip] MongoDB users query failed:", err);
+  }
+
+  // Fallback to memory store
+  const store = await readStore();
   const users = (store.users ?? [])
     .filter((u) => scopedUserIds.has(String(u._id ?? "")))
     .map((u) => ({

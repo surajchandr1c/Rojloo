@@ -83,19 +83,15 @@ export default function YourAdsSection({
     return isAdPromotionActive(ad);
   };
 
-  const publishedAds = ads.filter(
-    (ad) =>
-      (ad.status ?? "active") !== "deleted" &&
-      ad.status !== "suspended" &&
-      ad.status !== "pending" &&
-      ad.status !== "draft"
-  );
+  const publishedAds = ads.filter((ad) => {
+    const s = String(ad.status ?? "active").toLowerCase().trim();
+    return s !== "deleted" && s !== "suspended" && s !== "pending" && s !== "draft" && s !== "inactive";
+  });
 
-  const notPublishedAds = ads.filter(
-    (ad) =>
-      (ad.status ?? "active") !== "deleted" &&
-      (ad.status === "suspended" || ad.status === "pending" || ad.status === "draft")
-  );
+  const notPublishedAds = ads.filter((ad) => {
+    const s = String(ad.status ?? "active").toLowerCase().trim();
+    return s !== "deleted" && (s === "suspended" || s === "pending" || s === "draft" || s === "inactive");
+  });
 
   // Active promoted ads: published AND active promotion (promotedUntil > now)
   const promotedAds = publishedAds.filter((ad) => isAdPromotionActive(ad));

@@ -110,7 +110,7 @@ async function collectionListByCity(city: string): Promise<Ad[]> {
         { city: { $in: variations } },
         { city: { $regex: new RegExp(`^${escaped}$`, "i") } },
       ],
-      status: { $nin: ["deleted", "suspended"] },
+      status: { $nin: ["deleted", "suspended", "inactive", "Inactive"] },
     })
     .sort({ createdAt: -1 })
     .limit(100)
@@ -118,9 +118,11 @@ async function collectionListByCity(city: string): Promise<Ad[]> {
   return docs.map((doc) => doc as unknown as Ad);
 }
 
+const INVISIBLE_STATUSES = new Set(["deleted", "suspended", "inactive"]);
+
 function isVisibleAd(ad: Ad): boolean {
-  const status = ad.status ?? "active";
-  return status !== "deleted" && status !== "suspended";
+  const status = String(ad.status ?? "active").toLowerCase().trim();
+  return !INVISIBLE_STATUSES.has(status);
 }
 
 function mergeAds(...groups: Ad[][]): Ad[] {
@@ -203,7 +205,7 @@ export async function getFreeAdIdsForUsers(userIds: string[]): Promise<Set<strin
         .find(
           {
             userId: { $in: cleanIds },
-            status: { $nin: ["deleted", "suspended"] },
+            status: { $nin: ["deleted", "suspended", "inactive", "Inactive"] },
           },
           {
             projection: {
@@ -235,8 +237,7 @@ export async function getFreeAdIdsForUsers(userIds: string[]): Promise<Set<strin
       .filter(
         (ad) =>
           cleanIds.includes(String(ad.userId ?? "")) &&
-          (ad.status ?? "active") !== "deleted" &&
-          ad.status !== "suspended"
+          !INVISIBLE_STATUSES.has(String(ad.status ?? "active").toLowerCase().trim())
       )
       .sort(
         (a, b) =>
@@ -287,8 +288,8 @@ export async function filterVisibleCityAds(ads: Ad[]): Promise<Ad[]> {
 
 export const isAdVisiblePublicly = cache(async function (ad: Ad): Promise<boolean> {
   if (!ad._id) return false;
-  const status = ad.status ?? "active";
-  if (status === "deleted" || status === "suspended") {
+  const status = String(ad.status ?? "active").toLowerCase().trim();
+  if (INVISIBLE_STATUSES.has(status)) {
     return false;
   }
   if (isAdPromotionActive(ad)) {
@@ -313,12 +314,12 @@ export async function listAds(userId: string): Promise<PublicAd[]> {
   return allUserAds.map((a) => {
     const isPromoted = isAdPromotionActive(a);
     const isFreeAd = Boolean(a._id && freeAdId && String(a._id) === String(freeAdId));
-    const isDeletedOrSuspended =
-      (a.status ?? "active") === "deleted" || a.status === "suspended";
+    const statusLower = String(a.status ?? "active").toLowerCase().trim();
+    const isExcluded = INVISIBLE_STATUSES.has(statusLower);
     const isVisibleOnCityPage =
-      !isDeletedOrSuspended && (isPromoted || isFreeAd);
+      !isExcluded && (isPromoted || isFreeAd);
     const requiresPromotion =
-      !isDeletedOrSuspended && !isPromoted && !isFreeAd;
+      !isExcluded && !isPromoted && !isFreeAd;
 
     return toPublicAd({
       ...a,
@@ -402,7 +403,7 @@ export const listRelatedCityAds = cache(async function (
               ],
             },
             { _id: { $nin: excludeCandidates as import("mongodb").ObjectId[] } },
-            { status: { $nin: ["deleted", "suspended"] } },
+            { status: { $nin: ["deleted", "suspended", "inactive", "Inactive"] } },
           ],
         })
         .sort({ createdAt: -1 })
@@ -462,7 +463,7 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
     try {
       const docs = await collection
         .find(
-          { status: { $nin: ["deleted", "suspended"] } },
+          { status: { $nin: ["deleted", "suspended", "inactive", "Inactive"] } },
           {
             projection: {
               _id: 1,

@@ -6,14 +6,14 @@ import { serviceCards } from "@/lib/services";
 import { siteConfig } from "@/lib/config/site";
 
 export const metadata: Metadata = {
-  title: "Rojlo – Find Services, Places & Post Ads in Your City",
+  title: "Rojlo – Find Services, call girls,  Places & Post Ads in Your City",
   description:
     "Rojlo connects you with call girls, male escorts, wellness, and the best local spots and services across Indian cities. Post your ad today.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "Rojlo – Find Services, Places & Post Ads in Your City",
+    title: "Rojlo – Find Services, call girls, Places & Post Ads in Your City",
     description:
       "Rojlo connects you with call girls, male escorts, wellness, and the best local spots across Indian cities.",
     url: siteConfig.url,
@@ -75,6 +75,7 @@ export default function Home() {
             {serviceCards.map((item) => (
               <article
                 key={item.title}
+                id={`${item.id}-section`}
                 className="overflow-hidden rounded-[1.75rem] bg-white/90 shadow-md shadow-gray-200/30"
               >
                 <div className="relative h-56 overflow-hidden rounded-[1.25rem]">

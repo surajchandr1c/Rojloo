@@ -48,44 +48,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: toPublicUser(current) });
     }
 
-    let legacyUser: PublicUser | null = null;
-
-    try {
-      const parsed = JSON.parse(decodeURIComponent(raw)) as PublicUser;
-      if (parsed && parsed._id && parsed.email) {
-        legacyUser = parsed;
-      }
-    } catch {
-      // Legacy cookie format: fall through to a DB lookup by id.
-    }
-
-    if (legacyUser?._id) {
-      const freshUser = await findUserById(legacyUser._id);
-      if (freshUser) {
-        legacyUser = toPublicUser(freshUser);
+    const jwtPayload = verifyJWT(raw);
+    if (jwtPayload?._id) {
+      const user = await findUserById(jwtPayload._id);
+      if (user && user.sessionToken) {
+        return NextResponse.json({ user: toPublicUser(user) });
       }
     }
 
-    if (!legacyUser) {
-      const user = await findUserById(raw);
-      if (!user) {
-        return NextResponse.json({ user: null }, { status: 401 });
-      }
-      legacyUser = toPublicUser(user);
-    }
-
-    const issued = legacyUser._id ? await issueUserSession(legacyUser._id) : null;
-    const response = NextResponse.json({ user: legacyUser });
-    if (issued) {
-      response.cookies.set("rojlo_auth", issued, {
-        httpOnly: true,
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      });
-    }
-    return response;
+    return NextResponse.json({ user: null }, { status: 401 });
   } catch (error) {
     console.error("[auth/me] Authentication storage unavailable:", error);
     return NextResponse.json(

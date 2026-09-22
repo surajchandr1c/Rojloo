@@ -11,11 +11,6 @@ import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
 export async function GET(request: NextRequest) {
-  const ctx = await getAdminContext(request);
-  if (!ctx || !canAccess(ctx, "upi")) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
-
   try {
     if (request.nextUrl.searchParams.get("mode") === "payment") {
       const upi = await getNextUPIForPayment();
@@ -24,6 +19,11 @@ export async function GET(request: NextRequest) {
         upis: upi ? [upi] : [],
         success: true,
       });
+    }
+
+    const ctx = await getAdminContext(request);
+    if (!ctx || !canAccess(ctx, "upi")) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
     const upis = await listUPIs();

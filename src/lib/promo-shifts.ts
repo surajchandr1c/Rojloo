@@ -638,56 +638,64 @@ export function sortAdsWithPromotions<T extends {
   promoTier?: string;
   promoShift?: string;
 }>(ads: T[], now: Date = new Date()): T[] {
-  const platinumAds: T[] = [];
-  const goldAds: T[] = [];
-  const silverAds: T[] = [];
-  const bronzeAds: T[] = [];
-  const otherAds: T[] = [];
+  const platinumAds: { ad: T; time: number }[] = [];
+  const goldAds: { ad: T; time: number }[] = [];
+  const silverAds: { ad: T; time: number }[] = [];
+  const bronzeAds: { ad: T; time: number }[] = [];
+  const otherAds: { ad: T; time: number }[] = [];
 
   for (const ad of ads) {
+    const time =
+      typeof ad.createdAt === "number"
+        ? ad.createdAt
+        : ad.createdAt instanceof Date
+        ? ad.createdAt.getTime()
+        : new Date(ad.createdAt).getTime();
+
+    const item = { ad, time: Number.isNaN(time) ? 0 : time };
+
     // Only ads active in the current shift qualify for top placement!
     const isShiftActive = isAdActiveInCurrentShift(ad, now);
 
     if (isShiftActive) {
       const tier = normalizeTier(ad.promoTier, ad.promoPackage);
       if (tier === "platinum") {
-        platinumAds.push(ad);
+        platinumAds.push(item);
       } else if (tier === "gold") {
-        goldAds.push(ad);
+        goldAds.push(item);
       } else if (tier === "silver") {
-        silverAds.push(ad);
+        silverAds.push(item);
       } else {
-        bronzeAds.push(ad);
+        bronzeAds.push(item);
       }
       continue;
     }
 
-    // Ads outside their shift (resting between days on multi-day packages),
-    // future scheduled ads, expired ads, and standard free ads
-    otherAds.push(ad);
+    otherAds.push(item);
   }
 
-  // Sort within tiers by promotion recency or creation date
-  const sortByDate = (a: T, b: T) =>
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  // High-performance DSA optimization: O(1) primitive comparator with zero date parsing
+  const sortFast = (a: { ad: T; time: number }, b: { ad: T; time: number }) => b.time - a.time;
 
-  platinumAds.sort(sortByDate);
-  goldAds.sort(sortByDate);
-  silverAds.sort(sortByDate);
-  bronzeAds.sort(sortByDate);
-  otherAds.sort(sortByDate);
+  platinumAds.sort(sortFast);
+  goldAds.sort(sortFast);
+  silverAds.sort(sortFast);
+  bronzeAds.sort(sortFast);
+  otherAds.sort(sortFast);
+
+  const unpack = (list: { ad: T; time: number }[]) => list.map((i) => i.ad);
 
   // Apply 30-minute fair rotation when ads exceed tier slot capacity
-  const rotatedPlatinum = rotateTierAds(platinumAds, TIER_CAPACITIES.platinum, now);
-  const rotatedGold = rotateTierAds(goldAds, TIER_CAPACITIES.gold, now);
-  const rotatedSilver = rotateTierAds(silverAds, TIER_CAPACITIES.silver, now);
-  const rotatedBronze = rotateTierAds(bronzeAds, TIER_CAPACITIES.bronze, now);
+  const rotatedPlatinum = rotateTierAds(unpack(platinumAds), TIER_CAPACITIES.platinum, now);
+  const rotatedGold = rotateTierAds(unpack(goldAds), TIER_CAPACITIES.gold, now);
+  const rotatedSilver = rotateTierAds(unpack(silverAds), TIER_CAPACITIES.silver, now);
+  const rotatedBronze = rotateTierAds(unpack(bronzeAds), TIER_CAPACITIES.bronze, now);
 
   return [
     ...rotatedPlatinum,
     ...rotatedGold,
     ...rotatedSilver,
     ...rotatedBronze,
-    ...otherAds,
+    ...unpack(otherAds),
   ];
 }

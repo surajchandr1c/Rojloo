@@ -265,7 +265,12 @@ export async function updateUserCoins(
     }
 
     if (filters.length > 0) {
-      const query = filters.length === 1 ? filters[0] : { $or: filters };
+      const baseFilter = filters.length === 1 ? filters[0] : { $or: filters };
+      const query: Record<string, unknown> =
+        numericDelta < 0
+          ? { ...baseFilter, coins: { $gte: Math.abs(numericDelta) } }
+          : baseFilter;
+
       const result = await collection.findOneAndUpdate(
         query,
         {
@@ -275,6 +280,7 @@ export async function updateUserCoins(
         { returnDocument: "after" }
       );
       if (result) return true;
+      if (numericDelta < 0) return false;
     }
   }
 
@@ -287,6 +293,9 @@ export async function updateUserCoins(
   if (!user) return false;
 
   const currentCoins = Number(user.coins ?? 0);
+  if (numericDelta < 0 && currentCoins < Math.abs(numericDelta)) {
+    return false;
+  }
   const nextCoins = currentCoins + numericDelta;
   user.coins = nextCoins;
   user.updatedAt = new Date();
@@ -301,6 +310,12 @@ export async function deleteUser(id: string): Promise<boolean> {
     const index = store.users.findIndex((u) => u._id === id);
     if (index < 0) return false;
     store.users.splice(index, 1);
+    (store.ads ?? []).forEach((a) => {
+      if (a.userId === id) {
+        a.status = "deleted";
+        a.updatedAt = new Date();
+      }
+    });
     await writeStore(store);
     return true;
   }
@@ -313,7 +328,21 @@ export async function deleteUser(id: string): Promise<boolean> {
   }
 
   const result = await collection.deleteOne({ _id });
-  return result.deletedCount > 0;
+  if (result.deletedCount > 0) {
+    try {
+      const db = await getDb();
+      if (db) {
+        await db.collection("ads").updateMany(
+          { userId: id },
+          { $set: { status: "deleted", updatedAt: new Date() } }
+        );
+      }
+    } catch (e) {
+      console.error("[user] Cascade soft-delete ads failed:", e);
+    }
+    return true;
+  }
+  return false;
 }
 
 export function updateUserFields(
