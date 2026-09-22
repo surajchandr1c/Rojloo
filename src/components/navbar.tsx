@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 function ProfileIcon({ name }: { name?: string }) {
   const initial = name?.trim()?.charAt(0)?.toUpperCase();
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-black text-white">
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-black text-black">
       {initial || <PersonIcon />}
     </span>
   );
@@ -81,11 +81,11 @@ export default function NavBar() {
   }, [isLoading, isLoggedIn, refreshAuth]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[#7f1d1d] bg-[#450a0a] text-white shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-[] text-black shadow-sm">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-4 py-2.5 sm:py-3">
         <Link
           href="/"
-          className="flex items-center gap-2.5 text-xl font-black text-white shrink-0 hover:opacity-95 transition"
+          className="flex items-center gap-2.5 text-xl font-black text-black shrink-0 hover:opacity-95 transition"
         >
           <Image
             src="/rojlo.png"
@@ -98,11 +98,11 @@ export default function NavBar() {
           <span>rojlo</span>
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-1.5 md:gap-3 sm:flex">
+        <nav className="ml-auto hidden items-center gap-1.5 md:gap-3 md:flex">
           {isLoggedIn && (
             <Link
               href="/post-ad/buy-coin"
-              className="flex items-center gap-1 rounded-full border border-white/20 bg-[#7f1d1d]/70 px-2.5 py-1 md:px-3 md:py-1.5 text-xs md:text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#7f1d1d] shrink-0"
+              className="flex items-center gap-1 rounded-full border border-white/20 bg-[]/70 px-2.5 py-1 md:px-3 md:py-1.5 text-xs md:text-sm font-bold text-black shadow-sm transition-colors hover:bg-[] shrink-0"
             >
               <span aria-hidden="true">🪙</span>
               <span>{Number(user?.coins ?? 0)}</span>
@@ -118,8 +118,8 @@ export default function NavBar() {
                 href={link.href}
                 className={`rounded-full px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-colors shrink-0 ${
                   active
-                    ? "bg-[#7f1d1d] text-white"
-                    : "text-white hover:bg-[#7f1d1d] hover:text-white"
+                    ? "bg-[] text-black"
+                    : "text-black hover:bg-[] hover:text-black"
                 }`}
               >
                 {link.name}
@@ -131,7 +131,7 @@ export default function NavBar() {
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex items-center gap-2 rounded-full bg-[#7f1d1d] px-2 py-1 md:px-2.5 md:py-1.5 text-xs md:text-sm font-bold text-white transition-colors hover:bg-[#5c1212] shrink-0"
+              className="flex items-center gap-2 rounded-full bg-[] px-2 py-1 md:px-2.5 md:py-1.5 text-xs md:text-sm font-bold text-black transition-colors hover:bg-[] shrink-0"
             >
               <ProfileIcon name={user?.name} />
               <span className="hidden lg:inline">{user?.name}</span>
@@ -139,18 +139,18 @@ export default function NavBar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-[#7f1d1d] px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#5c1212] shrink-0"
+              className="rounded-full bg-[] px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-black shadow-sm transition-colors hover:bg-[] shrink-0"
             >
               Login
             </Link>
           )}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 sm:hidden">
+        <div className="ml-auto flex items-center gap-2 md:hidden">
           {isLoggedIn && (
             <Link
               href="/post-ad/buy-coin"
-              className="flex items-center gap-1 rounded-full border border-white/20 bg-[#7f1d1d]/70 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#7f1d1d]"
+              className="flex items-center gap-1 rounded-full border border-white/20 bg-[]/70 px-2.5 py-1 text-xs font-bold text-black shadow-sm transition-colors hover:bg-[]"
             >
               <span aria-hidden="true">🪙</span>
               <span>{Number(user?.coins ?? 0)}</span>
@@ -161,7 +161,7 @@ export default function NavBar() {
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7f1d1d] text-white transition-colors hover:bg-[#5c1212]"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[] text-black transition-colors hover:bg-[]"
             >
               <ProfileIcon name={user?.name} />
             </Link>
@@ -169,7 +169,7 @@ export default function NavBar() {
             <Link
               href="/login"
               aria-label="Login"
-              className="rounded-full bg-[#7f1d1d] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#5c1212]"
+              className="rounded-full bg-[] px-3 py-1.5 text-xs font-bold text-black transition-colors hover:bg-[]"
             >
               Login
             </Link>
@@ -178,7 +178,7 @@ export default function NavBar() {
           <button
             type="button"
             aria-label="Toggle menu"
-            className="rounded-full p-2 text-white hover:bg-[#7f1d1d] transition-colors"
+            className="rounded-full p-2 text-black hover:bg-[] transition-colors"
             onClick={() => setMenuOpen((v) => !v)}
           >
             <svg
@@ -201,7 +201,7 @@ export default function NavBar() {
       </div>
 
       {menuOpen && (
-        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1 border-b border-[#7f1d1d] bg-[#450a0a] px-4 py-3 shadow-xl sm:hidden">
+        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1 border-b border-gray-800 bg-black px-4 py-3 shadow-xl md:hidden">
           {navLinks.map((link) => {
             const active =
               pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -212,8 +212,8 @@ export default function NavBar() {
                 onClick={() => setMenuOpen(false)}
                 className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-[#7f1d1d] text-white"
-                    : "text-white hover:bg-[#7f1d1d] hover:text-white"
+                    ? "bg-gray-800 text-white"
+                    : "text-white hover:bg-gray-800 hover:text-white"
                 }`}
               >
                 {link.name}
