@@ -177,7 +177,7 @@ export default function PaymentHistoryPage() {
             <button
               type="button"
               onClick={() => setIsDeleteModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900 transition-colors shadow-xs cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold !text-white hover:bg-red-700 transition-colors shadow-xs cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -387,7 +387,7 @@ export default function PaymentHistoryPage() {
                 type="button"
                 disabled={deleting || (!deleteStartDate && !deleteEndDate)}
                 onClick={handleDeleteByRange}
-                className="mt-4 w-full rounded-lg bg-gray-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="mt-4 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold !text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {deleting ? "Deleting from database..." : "Delete History in Selected Date Range"}
               </button>
@@ -404,7 +404,7 @@ export default function PaymentHistoryPage() {
                 type="button"
                 disabled={deleting}
                 onClick={handleDeleteAll}
-                className="mt-3 w-full rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-bold text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="mt-3 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-bold !text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {deleting ? "Deleting from database..." : "Delete All Payment History"}
               </button>

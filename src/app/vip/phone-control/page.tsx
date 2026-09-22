@@ -393,9 +393,9 @@ export default function VipPhoneControlPage() {
                   <button
                     type="button"
                     onClick={() => handleDelete(item._id, item.city)}
-                    className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 transition"
+                    className="rounded-lg bg-red-600 !text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700 transition"
                   >
-                    Remove Override
+                    Delete Override
                   </button>
                 </div>
               </div>

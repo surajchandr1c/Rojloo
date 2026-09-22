@@ -402,7 +402,7 @@ export default function SetCoinsPage() {
                       type="button"
                       disabled={saving}
                       onClick={() => void handleDeletePackage(index)}
-                      className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-bold text-gray-700 hover:bg-gray-600 hover:text-white transition disabled:opacity-50"
+                      className="rounded-md border border-red-600 bg-red-600 px-2 py-0.5 text-xs font-bold !text-white hover:bg-red-700 transition disabled:opacity-50"
                       title="Remove package and save changes"
                     >
                       &times; Remove

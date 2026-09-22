@@ -368,10 +368,10 @@ export default function PromotionPackagesPage() {
                           type="button"
                           disabled={saving}
                           onClick={() => void handleDeletePackage(index)}
-                          className="shrink-0 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-bold text-gray-700 hover:bg-gray-600 hover:text-white transition disabled:opacity-50 cursor-pointer ml-auto sm:ml-0"
-                          title="Remove package"
+                          className="shrink-0 rounded-md bg-red-600 !text-white px-2.5 py-1 text-xs font-bold hover:bg-red-700 transition disabled:opacity-50 cursor-pointer ml-auto sm:ml-0"
+                          title="Delete package"
                         >
-                          &times; Remove
+                          &times; Delete
                         </button>
                       </div>
 

@@ -156,7 +156,7 @@ export default function AdminUsers() {
                       type="button"
                       disabled={deletingId === user._id}
                       onClick={() => remove(user._id)}
-                      className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5 cursor-pointer"
+                      className="rounded-full bg-red-600 !text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5 cursor-pointer transition"
                     >
                       {deletingId === user._id && (
                         <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">

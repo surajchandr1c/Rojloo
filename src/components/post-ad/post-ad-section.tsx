@@ -680,9 +680,9 @@ export default function PostAdSection({
                   type="button"
                   onClick={() => onRemoveImage(i)}
                   aria-label="Remove image"
-                  className="absolute right-1 top-1 rounded-full bg-gray-950/70 px-2 py-1 text-xs font-semibold !text-black"
+                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 !text-white hover:bg-red-700 font-bold text-xs shadow-md transition cursor-pointer"
                 >
-                  x
+                  &times;
                 </button>
               </div>
             ))}

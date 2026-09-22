@@ -522,7 +522,7 @@ export default function YourAdsSection({
                   <button
                     type="button"
                     onClick={() => onDelete(ad)}
-                    className="flex items-center justify-center gap-1 text-gray-700 hover:text-gray-950 transition py-1.5 px-1 sm:px-2.5 rounded-lg hover:bg-gray-100/60 text-[11px] sm:text-xs font-bold"
+                    className="flex items-center justify-center gap-1 bg-red-600 !text-white hover:bg-red-700 transition py-1.5 px-2 sm:px-2.5 rounded-lg text-[11px] sm:text-xs font-bold"
                   >
                     <span>🗑</span>
                     <span>DELETE</span>

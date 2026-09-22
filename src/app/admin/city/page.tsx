@@ -343,7 +343,7 @@ export default function AdminCities() {
             <button
               type="button"
               onClick={removeSelected}
-              className="rounded-full bg-[] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[]"
+              className="rounded-full bg-red-600 !text-white px-4 py-2.5 text-sm font-semibold hover:bg-red-700 transition"
             >
               Delete selected ({selectedIds.size})
             </button>
@@ -352,7 +352,7 @@ export default function AdminCities() {
             <button
               type="button"
               onClick={deleteAll}
-              className="rounded-full bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-950"
+              className="rounded-full bg-red-600 !text-white px-4 py-2.5 text-sm font-semibold hover:bg-red-700 transition"
             >
               Delete All ({allCities.length})
             </button>
@@ -481,9 +481,9 @@ export default function AdminCities() {
                         <button
                           type="button"
                           onClick={() => remove(cityIdentifier)}
-                          className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[]"
+                          className="rounded-full bg-red-600 !text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700 transition"
                         >
-                          Delete City
+                          Delete
                         </button>
                       </div>
                     </td>

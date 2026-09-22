@@ -1057,7 +1057,7 @@ function DynamicSeoContent() {
                           <button
                             type="button"
                             onClick={() => setEditContentBlocks((prev) => prev.filter((item) => item.id !== b.id))}
-                            className="text-red-600 hover:text-red-800"
+                            className="rounded px-2 py-0.5 text-[10px] font-bold bg-red-600 !text-white hover:bg-red-700 transition cursor-pointer"
                           >
                             Delete
                           </button>
@@ -1103,7 +1103,7 @@ function DynamicSeoContent() {
                           <button
                             type="button"
                             onClick={() => setEditFaqs((prev) => prev.filter((item) => item.id !== f.id))}
-                            className="text-red-600 hover:text-red-800"
+                            className="rounded px-2 py-0.5 text-[10px] font-bold bg-red-600 !text-white hover:bg-red-700 transition cursor-pointer"
                           >
                             Delete
                           </button>

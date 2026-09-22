@@ -1436,7 +1436,7 @@ function CitySeoContent() {
                     type="button"
                     onClick={() => removeBlock(block.id)}
                     aria-label="Delete block"
-                    className="rounded-lg bg-gray-700 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800 transition cursor-pointer"
+                    className="rounded-lg bg-red-600 !text-white px-3 py-2 text-xs font-semibold hover:bg-red-700 transition cursor-pointer"
                   >
                     Delete
                   </button>
@@ -1504,7 +1504,7 @@ function CitySeoContent() {
                       type="button"
                       onClick={() => removeFaq(faq.id)}
                       aria-label="Delete FAQ"
-                      className="rounded-lg bg-[] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[] cursor-pointer"
+                      className="rounded-lg bg-red-600 !text-white px-2.5 py-1 text-xs font-semibold hover:bg-red-700 transition cursor-pointer"
                     >
                       Delete
                     </button>

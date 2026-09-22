@@ -106,7 +106,7 @@ export default function SubAdminList() {
                     <button
                       type="button"
                       onClick={() => remove(admin._id)}
-                      className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[]"
+                      className="rounded-full bg-red-600 !text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700 transition"
                     >
                       Delete
                     </button>

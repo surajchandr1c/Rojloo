@@ -444,7 +444,7 @@ export default function VipPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(item._id)}
-                        className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-200"
+                        className="rounded-lg bg-red-600 !text-white px-3 py-2 text-xs font-semibold hover:bg-red-700 transition"
                       >
                         Delete
                       </button>

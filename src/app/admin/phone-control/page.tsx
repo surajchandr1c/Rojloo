@@ -726,9 +726,9 @@ export default function AdminPhoneControlPage() {
                             <button
                               type="button"
                               onClick={() => handleDelete(item._id, item.city)}
-                              className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-1 text-xs font-bold text-gray-800 hover:bg-gray-100 transition"
+                              className="rounded-lg bg-red-600 !text-white px-3 py-1 text-xs font-bold hover:bg-red-700 transition"
                             >
-                              Remove
+                              Delete
                             </button>
                           </div>
                         </td>

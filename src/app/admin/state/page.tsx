@@ -677,7 +677,7 @@ export default function AdminStates() {
               setShowDeleteAllModal(true);
               setDeleteAllConfirmed(false);
             }}
-            className="rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-xs font-bold text-gray-800 hover:bg-gray-100 hover:text-gray-950 transition-colors"
+            className="rounded-full bg-red-600 !text-white px-4 py-2 text-xs font-bold hover:bg-red-700 transition-colors"
           >
             Delete All Locations
           </button>
@@ -1076,7 +1076,7 @@ export default function AdminStates() {
                 type="button"
                 disabled={!deleteAllConfirmed || deletingAll}
                 onClick={handleDeleteAllLocations}
-                className="rounded-full bg-gray-700 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="rounded-full bg-red-600 !text-white px-5 py-2 text-sm font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {deletingAll ? "Deleting Everything..." : "Delete Everything"}
               </button>
@@ -1261,7 +1261,7 @@ function StateHierarchyCard({
         <button
           type="button"
           onClick={() => onRemoveState(state._id || state.slug || state.name)}
-          className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[]"
+          className="rounded-full bg-red-600 !text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700 transition"
         >
           Delete State
         </button>
@@ -1436,7 +1436,7 @@ function CityHierarchyItem({
         <button
           type="button"
           onClick={onDeleteCity}
-          className="rounded-full bg-[] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[]"
+          className="rounded-full bg-red-600 !text-white px-2.5 py-1 text-[11px] font-semibold hover:bg-red-700 transition"
         >
           Delete City
         </button>
@@ -1469,7 +1469,7 @@ function CityHierarchyItem({
                     <button
                       type="button"
                       onClick={() => onDeleteLocalArea(area._id)}
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 font-bold text-sm transition-colors"
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 !text-white hover:bg-red-700 font-bold text-xs transition-colors"
                       title={`Delete ${area.name}`}
                       aria-label={`Delete ${area.name}`}
                     >
