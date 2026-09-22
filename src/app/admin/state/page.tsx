@@ -967,8 +967,8 @@ export default function AdminStates() {
 
       {/* JSON Import Confirmation Modal */}
       {importSummary && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-modal-backdrop">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl animate-modal-content">
             <h3 className="text-xl font-black text-gray-950">Confirm JSON Import</h3>
             <p className="mt-2 text-sm text-gray-900">
               The JSON file was successfully validated. Review the detected locations below:
@@ -1017,8 +1017,8 @@ export default function AdminStates() {
 
       {/* Delete All Locations Double-Confirmation Modal */}
       {showDeleteAllModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border-2 border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-modal-backdrop">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border-2 border-gray-200 animate-modal-content">
             <div className="flex items-center gap-2 text-gray-700">
               <span className="text-xl">⚠️</span>
               <h3 className="text-xl font-black text-gray-950">Delete All Locations?</h3>

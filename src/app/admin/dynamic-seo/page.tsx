@@ -876,8 +876,8 @@ function DynamicSeoContent() {
 
       {/* SEO EDITOR MODAL / DIALOG */}
       {editingArea && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-          <div className="relative w-full max-w-3xl rounded-3xl bg-white p-6 sm:p-8 shadow-2xl my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto backdrop-blur-xs animate-modal-backdrop">
+          <div className="relative w-full max-w-3xl rounded-3xl bg-white p-6 sm:p-8 shadow-2xl my-8 animate-modal-content">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-gray-100 pb-4">
               <div>

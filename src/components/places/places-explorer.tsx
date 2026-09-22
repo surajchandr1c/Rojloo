@@ -437,7 +437,7 @@ export default function PlacesExplorer({
             <Link
               key={`${city.slug}-${city.state ?? ""}-${idx}`}
               href={`/places/${city.slug}`}
-              className="group flex w-full min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-3 sm:p-3.5 transition-all hover:border-gray-300 hover:shadow-md"
+              className="group flex w-full min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-3 sm:p-3.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md active:scale-[0.99]"
             >
               <div className="flex w-full min-w-0 items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -474,7 +474,7 @@ export default function PlacesExplorer({
               <Link
                 key={`${area.citySlug}-${area.slug}`}
                 href={`/places/${area.citySlug}/${area.slug}`}
-                className="group flex w-full min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-3 sm:p-3.5 transition-all hover:border-gray-300 hover:shadow-md"
+                className="group flex w-full min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-3 sm:p-3.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md active:scale-[0.99]"
               >
                 <h3 className="text-sm sm:text-base font-black text-gray-950 transition-colors group-hover:text-gray-700 break-words">
                   {area.name}

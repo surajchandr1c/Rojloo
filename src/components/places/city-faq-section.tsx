@@ -64,9 +64,9 @@ export default function CityFaqSection({
                   </span>
 
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black transition-all duration-200 ${
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black transition-transform duration-200 ease-out ${
                       isOpen
-                        ? "rotate-180 bg-[] text-white border-[]"
+                        ? "rotate-180 bg-gray-950 text-white border-gray-950"
                         : "border-gray-200 bg-gray-50 text-gray-900"
                     }`}
                     aria-hidden="true"
@@ -76,7 +76,7 @@ export default function CityFaqSection({
                 </button>
 
                 {isOpen && (
-                  <div className="border-t border-gray-200/70 px-4 pb-5 pt-3.5 sm:px-5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="border-t border-gray-200/70 px-4 pb-5 pt-3.5 sm:px-5 animate-dropdown">
                     <div className="flex items-start gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[11px] font-black text-gray-800 border border-gray-200 mt-0.5">
                         A

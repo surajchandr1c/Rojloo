@@ -72,9 +72,9 @@ export default function AgeGate() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="agegate-title"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 animate-modal-backdrop backdrop-blur-xs"
     >
-      <div className="w-full max-w-md rounded-[2rem] bg-white p-5 sm:p-8 text-center shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-[2rem] bg-white p-5 sm:p-8 text-center shadow-2xl max-h-[90vh] overflow-y-auto animate-modal-content">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-3xl">
           <span aria-hidden="true">🔞</span>
         </div>
@@ -91,14 +91,14 @@ export default function AgeGate() {
           <button
             type="button"
             onClick={acceptAge}
-            className="flex-1 rounded-full bg-gray-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-gray-700"
+            className="flex-1 rounded-full bg-gray-600 px-6 py-3 text-sm font-bold text-white transition-all hover:bg-gray-700 active:scale-[0.98] shadow-sm hover:shadow-md cursor-pointer"
           >
             Yes, I am 18+
           </button>
           <button
             type="button"
             onClick={declineAge}
-            className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-6 py-3 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-100"
+            className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-6 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-100 active:scale-[0.98] cursor-pointer"
           >
             No, I&apos;m under 18
           </button>

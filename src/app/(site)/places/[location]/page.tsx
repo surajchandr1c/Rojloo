@@ -296,7 +296,7 @@ async function CityContent({
               {ads.map((ad, idx) => (
                 <Card
                   key={ad._id}
-                  className="group relative min-h-[28rem] sm:min-h-[30rem] p-5 sm:p-7 transition-shadow hover:shadow-lg"
+                  className="group relative min-h-[28rem] sm:min-h-[30rem] p-5 sm:p-7 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl"
                 >
                   {ad._id && (
                     <Link
@@ -335,7 +335,7 @@ async function CityContent({
                           src={ad.images[0]}
                           alt={`${ad.name} - Services in ${city.name}`}
                           fill
-                          className="object-contain transition-transform duration-300 group-hover:scale-105"
+                          className="object-contain transition-transform duration-500 ease-out group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, 360px"
                           priority={idx === 0}
                         />

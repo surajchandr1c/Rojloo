@@ -76,14 +76,14 @@ export default function Home() {
               <article
                 key={item.title}
                 id={`${item.id}-section`}
-                className="overflow-hidden rounded-[1.75rem] bg-white/90 shadow-md shadow-gray-200/30"
+                className="group overflow-hidden rounded-[1.75rem] bg-white/90 shadow-md shadow-gray-200/30 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="relative h-56 overflow-hidden rounded-[1.25rem]">
                   <Image
                     src={item.image}
                     alt={item.title}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                     sizes="(max-width: 1024px) 50vw, 33vw"
                   />
                 </div>

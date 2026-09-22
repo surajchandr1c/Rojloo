@@ -331,8 +331,8 @@ export default function PaymentHistoryPage() {
       </div>
 
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-modal-backdrop">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-gray-200 animate-modal-content">
             <div className="flex items-start justify-between border-b border-gray-100 pb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-950">Delete Payment History</h2>

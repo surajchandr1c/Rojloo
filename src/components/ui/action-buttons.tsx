@@ -17,7 +17,7 @@ export function ActionButton({
   disabled = false,
   className = "",
 }: ActionButtonProps) {
-  const baseClasses = "rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60";
+  const baseClasses = "rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ease-out active:scale-95 disabled:opacity-60 cursor-pointer";
 
   const variantClasses = {
     edit: "bg-gray-100 text-gray-900 hover:bg-gray-200",

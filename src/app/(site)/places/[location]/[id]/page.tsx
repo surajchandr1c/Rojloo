@@ -552,7 +552,7 @@ async function AdContent({ location, id }: { location: string; id: string }) {
                 {relatedProfiles.slice(0, 6).map((profile) => (
                   <Card
                     key={profile._id}
-                    className="group relative overflow-hidden p-0 shadow-sm transition-shadow hover:shadow-md"
+                    className="group relative overflow-hidden p-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg"
                   >
                     <Link
                       href={`/places/${location}/${profile._id}`}
@@ -566,7 +566,7 @@ async function AdContent({ location, id }: { location: string; id: string }) {
                           src={profile.images[0]}
                           alt={`${profile.name} profile image`}
                           fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 360px"
                         />
                       ) : (
