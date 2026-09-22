@@ -183,9 +183,6 @@ async function LocalAreaContent({
               { label: area.name },
             ]}
           />
-          <div className="mt-4">
-            <Eyebrow>Local Area in {city.name}</Eyebrow>
-          </div>
           <h1 className="mt-3 text-2xl font-black text-gray-950 sm:text-3xl">
             Services posted in {area.name}, {city.name}
           </h1>
@@ -199,7 +196,7 @@ async function LocalAreaContent({
                   href={`/places/${city.slug}/${local.slug}`}
                   className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                     local.slug === area.slug
-                      ? "border-gray-900 bg-gray-900 text-white"
+                      ? "border-gray-900 bg-gray-900 !text-white"
                       : "border-gray-200 bg-gray-50 text-gray-900 hover:bg-gray-100"
                   }`}
                 >
