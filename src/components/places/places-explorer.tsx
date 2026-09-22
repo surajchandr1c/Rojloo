@@ -10,6 +10,14 @@ export type PlaceCityItem = {
   adCount: number;
 };
 
+export type PlaceLocalAreaItem = {
+  name: string;
+  slug: string;
+  cityName: string;
+  citySlug: string;
+  stateName?: string;
+};
+
 type FilterMode = "all" | "city" | "state";
 
 // Common aliases for Indian cities and states
@@ -265,9 +273,11 @@ function filterCities(
 
 export default function PlacesExplorer({
   initialCities,
+  initialLocalAreas,
   initialQuery = "",
 }: {
   initialCities: PlaceCityItem[];
+  initialLocalAreas: PlaceLocalAreaItem[];
   initialQuery?: string;
 }) {
   const [search, setSearch] = useState(initialQuery);
@@ -293,7 +303,7 @@ export default function PlacesExplorer({
     <div className="mt-4 space-y-5">
       {/* Search Bar */}
       <div className="relative max-w-xl">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-red-400">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -316,14 +326,14 @@ export default function PlacesExplorer({
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search by state (e.g. Gujarat) or city (e.g. Mumbai)..."
-          className="w-full rounded-2xl border-2 border-red-200 bg-white py-3.5 pl-11 pr-11 text-base text-red-950 shadow-sm placeholder:text-red-300 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100 sm:text-sm"
+          className="w-full rounded-2xl border-2 border-gray-200 bg-white py-3.5 pl-11 pr-11 text-base text-gray-950 shadow-sm placeholder:text-gray-300 focus:border-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-100 sm:text-sm"
         />
 
         {search && (
           <button
             type="button"
             onClick={() => handleSearchChange("")}
-            className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-red-400 hover:text-red-700"
+            className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-700"
             aria-label="Clear search"
           >
             <svg
@@ -347,13 +357,13 @@ export default function PlacesExplorer({
       {/* Suggested Quick Filters */}
       {!search.trim() && (
         <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-          <span className="font-semibold text-red-900">Popular:</span>
+          <span className="font-semibold text-gray-900">Popular:</span>
           {SUGGESTED_SEARCHES.map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => handleSearchChange(item)}
-              className="rounded-full border border-red-200 bg-pink-50/70 px-3 py-1 font-medium text-red-950 transition-colors hover:bg-red-800 hover:text-white"
+              className="rounded-full border border-gray-200 bg-gray-50/70 px-3 py-1 font-medium text-gray-950 transition-colors hover:bg-gray-800 hover:text-white"
             >
               {item}
             </button>
@@ -363,14 +373,14 @@ export default function PlacesExplorer({
 
       {/* Filter Status */}
       {search.trim() && (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-red-900">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-gray-900">
           {mode === "state" && matchedTarget ? (
             <p>
               Showing all {filtered.length}{" "}
               {filtered.length === 1 ? "city" : "cities"} in{" "}
-              <span className="font-bold text-red-950">{matchedTarget}</span>
+              <span className="font-bold text-gray-950">{matchedTarget}</span>
               {matchedTarget.toLowerCase() !== search.trim().toLowerCase() && (
-                <span className="ml-1 text-xs text-red-600">
+                <span className="ml-1 text-xs text-gray-600">
                   (matched &ldquo;{search.trim()}&rdquo;)
                 </span>
               )}
@@ -379,9 +389,9 @@ export default function PlacesExplorer({
             <p>
               Showing {filtered.length}{" "}
               {filtered.length === 1 ? "city" : "cities"} matching{" "}
-              <span className="font-bold text-red-950">{matchedTarget}</span>
+              <span className="font-bold text-gray-950">{matchedTarget}</span>
               {matchedTarget.toLowerCase() !== search.trim().toLowerCase() && (
-                <span className="ml-1 text-xs text-red-600">
+                <span className="ml-1 text-xs text-gray-600">
                   (matched &ldquo;{search.trim()}&rdquo;)
                 </span>
               )}
@@ -396,7 +406,7 @@ export default function PlacesExplorer({
           <button
             type="button"
             onClick={() => handleSearchChange("")}
-            className="font-medium text-red-700 underline hover:text-red-900"
+            className="font-medium text-gray-700 underline hover:text-gray-900"
           >
             Reset filter
           </button>
@@ -405,18 +415,18 @@ export default function PlacesExplorer({
 
       {/* Cities Grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-red-100 bg-pink-50/50 p-8 text-center">
-          <p className="text-base font-semibold text-red-950">
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-8 text-center">
+          <p className="text-base font-semibold text-gray-950">
             No cities found matching &ldquo;{search.trim()}&rdquo;
           </p>
-          <p className="mt-1 text-sm text-red-800">
+          <p className="mt-1 text-sm text-gray-800">
             Try searching by state name (e.g. &ldquo;Gujarat&rdquo;) or city name
             (e.g. &ldquo;Mumbai&rdquo;).
           </p>
           <button
             type="button"
             onClick={() => handleSearchChange("")}
-            className="mt-4 inline-flex items-center rounded-full bg-red-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-900"
+            className="mt-4 inline-flex items-center rounded-full bg-gray-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-900"
           >
             View all cities
           </button>
@@ -427,26 +437,56 @@ export default function PlacesExplorer({
             <Link
               key={`${city.slug}-${city.state ?? ""}-${idx}`}
               href={`/places/${city.slug}`}
-              className="group flex w-full min-w-0 flex-col rounded-xl border border-red-100 bg-white p-3 sm:p-3.5 transition-all hover:border-red-300 hover:shadow-md"
+              className="group flex w-full min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-3 sm:p-3.5 transition-all hover:border-gray-300 hover:shadow-md"
             >
               <div className="flex w-full min-w-0 items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-sm sm:text-base font-black text-red-950 transition-colors group-hover:text-red-700 break-words">
+                  <h2 className="text-sm sm:text-base font-black text-gray-950 transition-colors group-hover:text-gray-700 break-words">
                     {city.name}
                   </h2>
                   {city.state && (
-                    <p className="mt-0.5 text-xs font-medium text-red-700 truncate">
+                    <p className="mt-0.5 text-xs font-medium text-gray-700 truncate">
                       {city.state}
                     </p>
                   )}
                 </div>
-                <span className="inline-flex shrink-0 items-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-red-800 whitespace-nowrap">
+                <span className="inline-flex shrink-0 items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-800 whitespace-nowrap">
                   {city.adCount} {city.adCount === 1 ? "ad" : "ads"}
                 </span>
               </div>
             </Link>
           ))}
         </div>
+      )}
+
+      {initialLocalAreas.length > 0 && (
+        <section className="space-y-3 pt-2">
+          <div>
+            <h2 className="text-xl font-black text-gray-950 sm:text-2xl">
+              Local Areas
+            </h2>
+            <p className="mt-1 text-sm text-gray-700">
+              Explore services by city and local area.
+            </p>
+          </div>
+          <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {initialLocalAreas.map((area) => (
+              <Link
+                key={`${area.citySlug}-${area.slug}`}
+                href={`/places/${area.citySlug}/${area.slug}`}
+                className="group flex w-full min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-3 sm:p-3.5 transition-all hover:border-gray-300 hover:shadow-md"
+              >
+                <h3 className="text-sm sm:text-base font-black text-gray-950 transition-colors group-hover:text-gray-700 break-words">
+                  {area.name}
+                </h3>
+                <p className="mt-1 text-xs font-medium text-gray-700 truncate">
+                  {area.cityName}
+                  {area.stateName ? `, ${area.stateName}` : ""}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

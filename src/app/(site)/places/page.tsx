@@ -4,6 +4,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { listAllCities } from "@/lib/models/city";
 import { getAdCountsByCity } from "@/lib/models/ad";
+import { listLocalAreas } from "@/lib/models/localArea";
 import PlacesExplorer from "@/components/places/places-explorer";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -51,9 +52,10 @@ export default async function Places({
   const query = Array.isArray(q) ? q[0] : q;
   const initialQuery = query?.trim() ?? "";
 
-  const [allCities, adCounts] = await Promise.all([
+  const [allCities, adCounts, allLocalAreas] = await Promise.all([
     listAllCities(),
     getAdCountsByCity(),
+    listLocalAreas(),
   ]);
 
   const citiesWithAds = allCities.map((city) => ({
@@ -108,12 +110,19 @@ export default async function Places({
         <div className="mt-4">
           <Eyebrow>Places</Eyebrow>
         </div>
-        <h1 className="mt-2 text-3xl font-black text-red-950 sm:text-4xl">
+        <h1 className="mt-2 text-3xl font-black text-gray-950 sm:text-4xl">
           Places
         </h1>
 
         <PlacesExplorer
           initialCities={citiesWithAds}
+          initialLocalAreas={allLocalAreas.map((area) => ({
+            name: area.name,
+            slug: area.slug,
+            cityName: area.cityName,
+            citySlug: area.citySlug,
+            stateName: area.stateName,
+          }))}
           initialQuery={initialQuery}
         />
       </SectionPanel>
