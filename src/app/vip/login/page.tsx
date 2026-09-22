@@ -49,7 +49,7 @@ function VipLoginContent() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
-      <SectionPanel className="w-full max-w-md">
+      <SectionPanel className="w-full max-w-md animate-modal-content shadow-xl transition-all duration-300">
         <Eyebrow>VIP Portal</Eyebrow>
         <h1 className="mt-3 text-3xl font-black text-gray-950">VIP Login</h1>
         <p className="mt-2 text-gray-900">

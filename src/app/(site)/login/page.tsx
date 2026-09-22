@@ -337,45 +337,54 @@ function AuthPage() {
 
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4 py-8 sm:py-10">
-      <section className="w-full max-w-md rounded-[2rem] bg-gray-100/85 p-5 sm:p-8 shadow-lg shadow-gray-200/40">
-        <div className="mb-6 flex gap-2">
-          <Button
-            variant="soft"
-            active={mode === "login"}
+      <section className="w-full max-w-md rounded-[2rem] bg-gray-100/85 p-5 sm:p-8 shadow-lg shadow-gray-200/40 animate-modal-content transition-all duration-300">
+        <div className="relative mb-6 flex rounded-full bg-gray-200/80 p-1">
+          {/* Animated sliding background pill */}
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-gray-900 shadow-sm transition-all duration-300 ease-out ${
+              mode === "login" ? "left-1" : "left-[calc(50%+2px)]"
+            }`}
+          />
+          <button
+            type="button"
             onClick={() => switchMode("login")}
-            className={mode === "login" ? "!text-white" : "!text-black"}
+            className={`relative z-10 flex-1 rounded-full py-2.5 text-center text-sm font-bold transition-colors duration-200 cursor-pointer ${
+              mode === "login" ? "!text-white" : "text-gray-700 hover:text-gray-950"
+            }`}
           >
             Login
-          </Button>
-          <Button
-            variant="soft"
-            active={mode === "signup"}
+          </button>
+          <button
+            type="button"
             onClick={() => switchMode("signup")}
-            className={mode === "signup" ? "!text-white" : "!text-black"}
+            className={`relative z-10 flex-1 rounded-full py-2.5 text-center text-sm font-bold transition-colors duration-200 cursor-pointer ${
+              mode === "signup" ? "!text-white" : "text-gray-700 hover:text-gray-950"
+            }`}
           >
             Sign up
-          </Button>
+          </button>
         </div>
 
-        <h1 className="text-2xl font-black text-gray-950">
-          {mode === "login" ? "Welcome back" : "Create your account"}
-        </h1>
-        <p className="mt-2 text-sm text-gray-900">
-          {mode === "login"
-            ? "Log in to manage your ads and profile."
-            : "Enter your details, verify your email, and create your account."}
-        </p>
+        <div key={mode} className="animate-tab-switch">
+          <h1 className="text-2xl font-black text-gray-950">
+            {mode === "login" ? "Welcome back" : "Create your account"}
+          </h1>
+          <p className="mt-2 text-sm text-gray-900">
+            {mode === "login"
+              ? "Log in to manage your ads and profile."
+              : "Enter your details, verify your email, and create your account."}
+          </p>
 
-        <form
-          onSubmit={
-            mode === "signup"
-              ? handleSignup
-              : loginMethod === "otp"
-              ? handleOtpLogin
-              : handleLogin
-          }
-          className="mt-6 space-y-4"
-        >
+          <form
+            onSubmit={
+              mode === "signup"
+                ? handleSignup
+                : loginMethod === "otp"
+                ? handleOtpLogin
+                : handleLogin
+            }
+            className="mt-6 space-y-4"
+          >
           {mode === "signup" && (
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-900">
@@ -446,7 +455,7 @@ function AuthPage() {
           </div>
 
           {(mode === "signup" || loginMethod === "otp") && (
-            <div>
+            <div className="animate-tab-switch">
               <label className="mb-2 block text-sm font-medium text-gray-900">
                 Enter verification code
               </label>
@@ -502,7 +511,7 @@ function AuthPage() {
           )}
 
           {(mode === "signup" || (mode === "login" && loginMethod === "password")) && (
-            <div>
+            <div className="animate-tab-switch">
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-900">
                   Password
@@ -543,7 +552,7 @@ function AuthPage() {
           )}
 
           {mode === "login" && loginMethod === "otp" && (
-            <div className="text-right">
+            <div className="text-right animate-tab-switch">
               <button
                 type="button"
                 onClick={() => {
@@ -672,6 +681,7 @@ function AuthPage() {
               : "Create account"}
           </Button>
         </form>
+        </div>
       </section>
     </main>
   );

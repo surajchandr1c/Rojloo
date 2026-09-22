@@ -130,6 +130,21 @@ textarea {
   animation: dropdownSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes tabSwitch {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tab-switch {
+  animation: tabSwitch 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .hover-lift {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }

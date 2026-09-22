@@ -43,7 +43,7 @@ export default function AdminLogin() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
-      <SectionPanel className="w-full max-w-md">
+      <SectionPanel className="w-full max-w-md animate-modal-content shadow-xl transition-all duration-300">
         <Eyebrow>Admin</Eyebrow>
         <h1 className="mt-3 text-3xl font-black text-gray-950">Admin Login</h1>
         <p className="mt-2 text-gray-900">Sign in with your admin credentials.</p>
