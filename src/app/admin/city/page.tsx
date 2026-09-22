@@ -85,6 +85,7 @@ function fuzzyMatch(target: string, query: string): boolean {
 export default function AdminCities() {
   const [allCities, setAllCities] = useState<DynamicCity[]>([]);
   const [seoMap, setSeoMap] = useState<Record<string, SeoInfo>>({});
+  const [localAreaSeoMap, setLocalAreaSeoMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -129,9 +130,10 @@ export default function AdminCities() {
     const loadId = ++loadRef.current;
     setLoading(true);
     try {
-      const [citiesRes, seoRes] = await Promise.all([
+      const [citiesRes, seoRes, localAreaSeoRes] = await Promise.all([
         fetch("/api/admin/cities", { credentials: "include" }),
         fetch("/api/admin/city-seo", { credentials: "include" }),
+        fetch("/api/admin/local-area-seo", { credentials: "include" }),
       ]);
 
       if (loadId !== loadRef.current) return;
@@ -163,6 +165,19 @@ export default function AdminCities() {
           }
         );
         setSeoMap(map);
+      }
+
+      if (localAreaSeoRes.ok) {
+        const localAreaSeoData = await localAreaSeoRes.json();
+        const counts: Record<string, number> = {};
+        (localAreaSeoData.seo ?? []).forEach(
+          (item: { citySlug: string; mode?: string }) => {
+            if (item.mode === "individual") {
+              counts[item.citySlug] = (counts[item.citySlug] ?? 0) + 1;
+            }
+          }
+        );
+        setLocalAreaSeoMap(counts);
       }
     } finally {
       if (loadRef.current === loadId) setLoading(false);
@@ -279,12 +294,12 @@ export default function AdminCities() {
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Cities</h1>
-          <p className="mt-2 text-red-900">
+          <h1 className="text-3xl font-black text-gray-950">Cities</h1>
+          <p className="mt-2 text-gray-900">
             Manage cities available on the platform.
           </p>
         </div>
-        <span className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white">
+        <span className="rounded-full bg-gray-600 px-4 py-2 text-sm font-semibold text-white">
           Total Cities: {allCities.length}
         </span>
       </div>
@@ -292,7 +307,7 @@ export default function AdminCities() {
       <div className="mt-4">
         <div className="flex flex-wrap items-center gap-3">
           <input
-            className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500 sm:w-72"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500 sm:w-72"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by city name"
@@ -301,7 +316,7 @@ export default function AdminCities() {
             <button
               type="button"
               onClick={removeSelected}
-              className="rounded-full bg-[#450a0a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#7f1d1d]"
+              className="rounded-full bg-[] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[]"
             >
               Delete selected ({selectedIds.size})
             </button>
@@ -310,7 +325,7 @@ export default function AdminCities() {
             <button
               type="button"
               onClick={deleteAll}
-              className="rounded-full bg-red-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-950"
+              className="rounded-full bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-950"
             >
               Delete All ({allCities.length})
             </button>
@@ -331,11 +346,11 @@ export default function AdminCities() {
           minWidth="min-w-[640px]"
         />
       ) : filteredCities.length === 0 ? (
-        <p className="mt-6 text-red-900">No cities found.</p>
+        <p className="mt-6 text-gray-900">No cities found.</p>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-100 bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-gray-50 text-gray-950">
               <tr>
                 <th className="w-12 px-4 py-3 font-semibold">
                   <input
@@ -356,10 +371,11 @@ export default function AdminCities() {
               {filteredCities.map((city) => {
                 const cityIdentifier = city._id || city.slug;
                 const seo = seoMap[city.slug];
+                const localAreaSeoCount = localAreaSeoMap[city.slug] ?? 0;
                 return (
                   <tr
                     key={`${city.source}-${cityIdentifier}`}
-                    className="border-t border-red-50"
+                    className="border-t border-gray-50"
                   >
                     <td className="px-4 py-3">
                       {cityIdentifier && (
@@ -376,24 +392,32 @@ export default function AdminCities() {
                         href={`/admin/city-seo?city=${encodeURIComponent(
                           city.slug
                         )}`}
-                        className="text-red-950 underline-offset-2 hover:underline"
+                        className="text-gray-950 underline-offset-2 hover:underline"
                       >
-                        {city.name}
+                        <span className="inline-flex items-center gap-2">
+                          {city.name}
+                          {localAreaSeoCount > 0 && (
+                            <span
+                              className="h-2.5 w-2.5 rounded-full bg-green-500"
+                              title={`${localAreaSeoCount} local area with individual SEO`}
+                            />
+                          )}
+                        </span>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-red-900">
+                    <td className="px-4 py-3 text-gray-900">
                       {city.state || "—"}
                     </td>
-                    <td className="px-4 py-3 text-red-900">
+                    <td className="px-4 py-3 text-gray-900">
                       {city.country || "—"}
                     </td>
-                    <td className="px-4 py-3 text-red-900">
+                    <td className="px-4 py-3 text-gray-900">
                       {seo?.hasSeo ? (
-                        <span className="text-xs text-red-400">
+                        <span className="text-xs text-gray-400">
                           {seo.updatedAt ? formatDisplayDate(seo.updatedAt) : "—"}
                         </span>
                       ) : (
-                        <span className="text-xs text-red-400">Not set</span>
+                        <span className="text-xs text-gray-400">Not set</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -402,7 +426,7 @@ export default function AdminCities() {
                           <button
                             type="button"
                             onClick={() => router.push(`/places/${city.slug}`)}
-                            className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-emerald-700"
+                            className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-gray-700"
                           >
                             View
                           </button>
@@ -411,14 +435,14 @@ export default function AdminCities() {
                           href={`/admin/city-seo?city=${encodeURIComponent(
                             city.slug
                           )}`}
-                          className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-red-700"
+                          className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-gray-700"
                         >
                           Edit SEO
                         </Link>
                         <button
                           type="button"
                           onClick={() => remove(cityIdentifier)}
-                          className="rounded-full bg-[#450a0a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#7f1d1d]"
+                          className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[]"
                         >
                           Delete City
                         </button>

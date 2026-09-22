@@ -38,6 +38,7 @@ type StoreData = {
     requestCount: number;
   };
   localAreas: StoreRecord[];
+  localAreaSeo: StoreRecord[];
   notFoundLogs: StoreRecord[];
   vipUsers?: StoreRecord[];
   vipPhoneOverrides?: StoreRecord[];
@@ -80,6 +81,7 @@ function defaults(): StoreData {
       requestCount: 0,
     },
     localAreas: [],
+    localAreaSeo: [],
     notFoundLogs: [],
     vipUsers: [],
     vipPhoneOverrides: [],
@@ -113,6 +115,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
       requestCount: 0,
     },
     localAreas: raw.localAreas ?? [],
+    localAreaSeo: raw.localAreaSeo ?? [],
     notFoundLogs: raw.notFoundLogs ?? [],
     vipUsers: raw.vipUsers ?? [],
     vipPhoneOverrides: raw.vipPhoneOverrides ?? [],

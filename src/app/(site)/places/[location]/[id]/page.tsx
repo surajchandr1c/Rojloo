@@ -17,6 +17,9 @@ import {
 } from "@/lib/models/ad";
 import { getCityBySlug } from "@/lib/models/city";
 import { getLocalAreaBySlug, listLocalAreas } from "@/lib/models/localArea";
+import { getLocalAreaSeo } from "@/lib/models/local-area-seo";
+import { getCitySeo } from "@/lib/models/city-seo";
+import CityFaqSection from "@/components/places/city-faq-section";
 import { DEFAULT_SERVICE_RATES } from "@/components/post-ad/types";
 import { AdDetailSkeleton } from "@/components/skeletons/places-skeletons";
 import { siteConfig } from "@/lib/config/site";
@@ -34,14 +37,17 @@ export async function generateMetadata({
   const { location, id } = await params;
   const ad = await getPublicAdById(id);
   if (!ad) {
-    const [city, area] = await Promise.all([
+    const [city, area, localSeo, citySeo] = await Promise.all([
       getCityBySlug(location),
       getLocalAreaBySlug(location, id),
+      getLocalAreaSeo(location, id),
+      getCitySeo(location),
     ]);
 
     if (city && area) {
-      const title = `Services in ${area.name}, ${city.name} | Rojlo`;
-      const description = `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`;
+      const seo = localSeo?.mode === "individual" ? localSeo : citySeo;
+      const title = seo?.title?.trim() || `Services in ${area.name}, ${city.name} | Rojlo`;
+      const description = seo?.description?.trim() || `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`;
       const canonical = `${siteConfig.url}/places/${city.slug}/${area.slug}`;
       return {
         title,
@@ -146,10 +152,14 @@ async function LocalAreaContent({
 
   if (!city || !area) notFound();
 
-  const [ads, localAreas] = await Promise.all([
+  const [ads, localAreas, localSeo, citySeo] = await Promise.all([
     listAdsByLocalArea(city.name, area.slug),
     listLocalAreas({ citySlug: city.slug }),
+    getLocalAreaSeo(city.slug, area.slug),
+    getCitySeo(city.slug),
   ]);
+  const seo = localSeo?.mode === "individual" ? localSeo : citySeo;
+  const showSeoContent = seo?.status === "published" && Boolean(seo.content?.length);
   const canonical = `${siteConfig.url}/places/${city.slug}/${area.slug}`;
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -165,7 +175,7 @@ async function LocalAreaContent({
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: `Services in ${area.name}, ${city.name}`,
-    description: `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`,
+    description: seo?.description?.trim() || `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`,
     url: canonical,
     about: { "@type": "Place", name: area.name, containedInPlace: { "@type": "City", name: city.name } },
   };
@@ -251,6 +261,22 @@ async function LocalAreaContent({
           )}
         </SectionPanel>
       </section>
+      {showSeoContent && seo?.content && (
+        <section className="px-4 py-10 sm:px-6">
+          <SectionPanel>
+            {seo.content.map((block) => {
+              const className = "mt-4 text-gray-950";
+              if (block.type === "h1") return <h2 key={block.id} className={`text-3xl font-black ${className}`}>{block.text}</h2>;
+              if (block.type === "h2") return <h2 key={block.id} className={`text-2xl font-bold ${className}`}>{block.text}</h2>;
+              if (block.type === "h3") return <h3 key={block.id} className={`text-xl font-semibold ${className}`}>{block.text}</h3>;
+              return <p key={block.id} className="mt-3 leading-7 text-gray-900">{block.text}</p>;
+            })}
+          </SectionPanel>
+        </section>
+      )}
+      {showSeoContent && seo?.faqs && seo.faqs.length > 0 && (
+        <CityFaqSection faqs={seo.faqs} cityName={`${area.name}, ${city.name}`} />
+      )}
     </main>
   );
 }

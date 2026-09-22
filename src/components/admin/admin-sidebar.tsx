@@ -39,6 +39,12 @@ export const adminNavItems: NavItem[] = [
     icon: "M11 3H5a2 2 0 00-2 2v14a2 2 0 002 2h6M9 12h12M9 8h12M9 16h12M19 4v16",
   },
   {
+    name: "Local Area SEO",
+    href: "/admin/local-area-seo",
+    key: "local-area-seo",
+    icon: "M12 21s7-4.35 7-10a7 7 0 10-14 0c0 5.65 7 10 7 10zM12 13a2 2 0 100-4 2 2 0 000 4z",
+  },
+  {
     name: "Ads",
     href: "/admin/ads",
     key: "ads",
@@ -159,7 +165,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-none flex-col border-r border-red-200 bg-[#450a0a] text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-none flex-col border-r border-gray-800 bg-black text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -169,7 +175,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#7f1d1d] transition-colors"
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-white hover:bg-gray-800 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -201,8 +207,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-[#7f1d1d] text-white"
-                    : "text-white hover:bg-[#7f1d1d] hover:text-white"
+                    ? "bg-gray-800 text-white"
+                    : "text-white hover:bg-gray-900 hover:text-white"
                 }`}
               >
                 <svg
@@ -225,11 +231,11 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </nav>
 
         {/* Logout Button */}
-        <div className="border-t border-[#7f1d1d] p-3">
+        <div className="border-t border-gray-800 p-3">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#7f1d1d] hover:text-white"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 hover:text-white"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

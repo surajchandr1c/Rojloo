@@ -38,7 +38,7 @@ function Counter({ value, min, max }: { value: number; min: number; max: number 
   return (
     <span
       className={`text-xs font-medium ${
-        ok ? "text-green-700" : over ? "text-red-700" : "text-amber-600"
+        ok ? "text-gray-700" : over ? "text-gray-700" : "text-gray-600"
       }`}
     >
       {value} / {min}-{max} chars
@@ -77,12 +77,12 @@ function TagInput({
 
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-red-900">{label}</span>
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-pink-200 bg-pink-50 px-2 py-2">
+      <span className="mb-1 block text-sm font-medium text-gray-900">{label}</span>
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-2 py-2">
         {tags.map((t, i) => (
           <span
             key={t}
-            className="inline-flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white"
+            className="inline-flex items-center gap-1 rounded-full bg-gray-600 px-3 py-1 text-xs font-semibold text-white"
           >
             {t}
             <button
@@ -96,7 +96,7 @@ function TagInput({
           </span>
         ))}
         <input
-          className="min-w-[8rem] flex-1 bg-transparent px-1 py-1 text-red-950 outline-none"
+          className="min-w-[8rem] flex-1 bg-transparent px-1 py-1 text-gray-950 outline-none"
           value={val}
           placeholder={placeholder}
           onChange={(e) => setVal(e.target.value)}
@@ -109,7 +109,7 @@ function TagInput({
           onBlur={add}
         />
       </div>
-      {hint && <span className="mt-1 block text-xs text-red-700">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-gray-700">{hint}</span>}
     </label>
   );
 }
@@ -125,15 +125,15 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-red-900">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-gray-900">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-red-700">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-gray-700">{hint}</span>}
     </label>
   );
 }
 
 const inputClass =
-  "w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500";
+  "w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500";
 
 function CitySeoContent() {
   const params = useSearchParams();
@@ -144,6 +144,12 @@ function CitySeoContent() {
 
   const [allCities, setAllCities] = useState<
     { name: string; slug: string; state?: string }[]
+  >([]);
+  const [allLocalAreas, setAllLocalAreas] = useState<
+    { name: string; slug: string; cityName: string; citySlug: string }[]
+  >([]);
+  const [localAreaSeo, setLocalAreaSeo] = useState<
+    { citySlug: string; areaSlug: string; mode?: string }[]
   >([]);
   const [activeSlug, setActiveSlug] = useState(editSlug || "");
   const [stateName, setStateName] = useState("");
@@ -181,11 +187,17 @@ function CitySeoContent() {
     (async () => {
       setLoading(true);
       try {
-        const [citiesRes, seoRes] = await Promise.all([
+        const [citiesRes, seoRes, localAreasRes, localAreaSeoRes] = await Promise.all([
           fetch("/api/admin/cities", { credentials: "include" }).then((r) =>
             r.json()
           ),
           fetch("/api/admin/city-seo", { credentials: "include" }).then((r) =>
+            r.json()
+          ),
+          fetch("/api/admin/local-areas", { credentials: "include" }).then((r) =>
+            r.json()
+          ),
+          fetch("/api/admin/local-area-seo", { credentials: "include" }).then((r) =>
             r.json()
           ),
         ]);
@@ -204,6 +216,8 @@ function CitySeoContent() {
           return true;
         });
         setAllCities(uniqueCities);
+        setAllLocalAreas(localAreasRes.localAreas ?? []);
+        setLocalAreaSeo(localAreaSeoRes.seo ?? []);
 
         const targetSlug = editSlug || activeSlug;
         if (targetSlug) {
@@ -884,17 +898,17 @@ function CitySeoContent() {
     <main className="p-4 sm:p-6 lg:p-8 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black text-red-950">
+          <h1 className="text-3xl font-black text-gray-950">
             {isEdit ? `SEO Editor — ${name || editSlug}` : "Add New City & SEO"}
           </h1>
-          <p className="mt-2 text-red-900">
+          <p className="mt-2 text-gray-900">
             Write and optimise SEO content for the city page.
           </p>
           <span
             className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
               status === "published"
-                ? "bg-green-100 text-green-700"
-                : "bg-amber-100 text-amber-700"
+                ? "bg-gray-100 text-gray-700"
+                : "bg-gray-100 text-gray-700"
             }`}
           >
             {status === "published" ? "Published" : "Draft"}
@@ -911,7 +925,7 @@ function CitySeoContent() {
           <button
             type="button"
             onClick={() => jsonInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-full border border-pink-300 bg-pink-50 px-4 py-2 text-sm font-semibold text-red-800 hover:bg-pink-100 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 transition cursor-pointer"
             title="Upload a .json file to automatically fill all SEO fields, content blocks, and FAQs"
           >
             <span>📁</span> Upload JSON
@@ -919,7 +933,7 @@ function CitySeoContent() {
           <button
             type="button"
             onClick={downloadSampleJson}
-            className="inline-flex items-center gap-1 rounded-full border border-pink-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-pink-50 transition cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
             title="Download an example JSON format template"
           >
             <span>⬇</span> Sample JSON
@@ -928,7 +942,7 @@ function CitySeoContent() {
             type="button"
             onClick={() => save(false)}
             disabled={saving}
-            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 transition cursor-pointer"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 transition cursor-pointer"
           >
             {saving ? "Saving..." : "Save Draft"}
           </button>
@@ -936,7 +950,7 @@ function CitySeoContent() {
             type="button"
             onClick={preview}
             disabled={saving || (!activeSlug && !editSlug && !urlSlug && !name.trim())}
-            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 transition cursor-pointer"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 transition cursor-pointer"
           >
             Preview
           </button>
@@ -944,7 +958,7 @@ function CitySeoContent() {
             type="button"
             onClick={() => save(true)}
             disabled={saving}
-            className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition cursor-pointer"
+            className="rounded-full bg-gray-600 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-60 transition cursor-pointer"
           >
             {saving ? "Publishing..." : "Publish"}
           </button>
@@ -954,19 +968,63 @@ function CitySeoContent() {
       {isEdit && (
         <Link
           href="/admin/city"
-          className="mt-3 inline-block text-sm font-semibold text-red-700 underline-offset-2 hover:underline"
+          className="mt-3 inline-block text-sm font-semibold text-gray-700 underline-offset-2 hover:underline"
         >
           ← Back to Cities
         </Link>
       )}
 
+      {allLocalAreas.length > 0 && (
+        <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-gray-950">Local Area SEO</h2>
+              <p className="mt-1 text-sm text-gray-700">
+                Edit local-area SEO or let an area inherit its parent city content.
+              </p>
+            </div>
+            <Link
+              href="/admin/local-area-seo"
+              className="rounded-full bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900"
+            >
+              Open Dynamic SEO
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {allLocalAreas.map((area) => {
+              const hasIndividualSeo = localAreaSeo.some(
+                (item) =>
+                  item.citySlug === area.citySlug &&
+                  item.areaSlug === area.slug &&
+                  item.mode === "individual"
+              );
+              return (
+                <Link
+                  key={`${area.citySlug}-${area.slug}`}
+                  href={`/admin/local-area-seo?city=${encodeURIComponent(area.citySlug)}&area=${encodeURIComponent(area.slug)}`}
+                  className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+                >
+                  <span className="min-w-0 truncate">
+                    {area.name} <span className="font-normal text-gray-600">({area.cityName})</span>
+                  </span>
+                  <span className="ml-2 flex shrink-0 items-center gap-2">
+                    {hasIndividualSeo && <span className="h-2.5 w-2.5 rounded-full bg-green-500" title="Individual SEO saved" />}
+                    <span className="text-xs text-gray-600">Edit SEO</span>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {error && (
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2 text-sm font-medium text-red-700" role="alert">
+        <p className="mt-4 rounded-xl bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700" role="alert">
           {error}
         </p>
       )}
       {success && (
-        <p className="mt-4 rounded-xl bg-green-50 px-4 py-2 text-sm font-medium text-green-700" role="status">
+        <p className="mt-4 rounded-xl bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700" role="status">
           {success}
         </p>
       )}
@@ -975,16 +1033,16 @@ function CitySeoContent() {
         {/* LEFT COLUMN */}
         <div className="space-y-6">
           {/* JSON Paste & Auto-Fill Section */}
-          <section className="rounded-2xl border border-red-200 bg-gradient-to-b from-pink-50/70 via-white to-white p-4 sm:p-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-pink-100 pb-3 mb-3">
+          <section className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50/70 via-white to-white p-4 sm:p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 pb-3 mb-3">
               <div>
-                <h2 className="text-lg font-bold text-red-950 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-950 flex items-center gap-2">
                   <span>Paste SEO JSON Content</span>
-                  <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-800">
                     Fast Fill
                   </span>
                 </h2>
-                <p className="text-xs text-red-900 mt-0.5">
+                <p className="text-xs text-gray-900 mt-0.5">
                   Paste JSON file text here to automatically arrange and fill the full SEO form below.
                 </p>
               </div>
@@ -992,7 +1050,7 @@ function CitySeoContent() {
                 <button
                   type="button"
                   onClick={handleLoadSampleJson}
-                  className="rounded-lg border border-pink-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-pink-50 transition cursor-pointer"
+                  className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
                   title="Insert sample JSON format into textarea"
                 >
                   Load Sample
@@ -1027,7 +1085,7 @@ function CitySeoContent() {
                     }
                   }}
                   placeholder={`Paste your JSON file text here...\nExample:\n{\n  "name": "Mumbai",\n  "state": "Maharashtra",\n  "title": "Best Escort & Call Girl Services in Mumbai | Rojlo",\n  "description": "Find top verified escorts and independent call girls in Mumbai...",\n  "primaryKeyword": "call girls in mumbai",\n  "popularSearches": ["escorts in mumbai", "mumbai call girls", "vip escort service in mumbai"],\n  "content": [\n    { "type": "h1", "text": "Top Escort Services in Mumbai" },\n    { "type": "p", "text": "Mumbai offers unmatched nightlife..." }\n  ],\n  "faqs": [\n    { "question": "How do I contact providers in Mumbai?", "answer": "Browse verified profiles..." }\n  ]\n}`}
-                  className="w-full font-mono text-xs sm:text-sm rounded-xl border border-pink-200 bg-pink-50/60 p-3 text-red-950 placeholder-red-300 focus:border-red-500 focus:bg-white focus:outline-none transition resize-y leading-relaxed"
+                  className="w-full font-mono text-xs sm:text-sm rounded-xl border border-gray-200 bg-gray-50/60 p-3 text-gray-950 placeholder-gray-300 focus:border-gray-500 focus:bg-white focus:outline-none transition resize-y leading-relaxed"
                   spellCheck={false}
                 />
               </div>
@@ -1037,12 +1095,12 @@ function CitySeoContent() {
                   type="button"
                   onClick={handleApplyPastedJson}
                   disabled={!jsonPasteText.trim()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2 text-sm font-bold text-white shadow-xs hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-600 px-5 py-2 text-sm font-bold text-white shadow-xs hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
                 >
                   <span>Apply JSON to Form</span>
                 </button>
 
-                <p className="text-[11px] text-red-700">
+                <p className="text-[11px] text-gray-700">
                   Tip: Pasting valid JSON will auto-arrange and fill all fields on the page.
                 </p>
               </div>
@@ -1051,8 +1109,8 @@ function CitySeoContent() {
                 <div
                   className={`rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium animate-in fade-in ${
                     jsonStatusMsg.type === "success"
-                      ? "bg-green-50 text-green-800 border border-green-200"
-                      : "bg-red-50 text-red-800 border border-red-200"
+                      ? "bg-gray-50 text-gray-800 border border-gray-200"
+                      : "bg-gray-50 text-gray-800 border border-gray-200"
                   }`}
                 >
                   {jsonStatusMsg.text}
@@ -1061,11 +1119,11 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-red-950">City Information</h2>
+              <h2 className="text-lg font-bold text-gray-950">City Information</h2>
               {allCities.some((c) => c.name.toLowerCase() === name.trim().toLowerCase()) && (
-                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">
                   ✓ Existing City Linked
                 </span>
               )}
@@ -1099,12 +1157,12 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-            <h2 className="mb-4 text-lg font-bold text-red-950">SEO Settings</h2>
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
+            <h2 className="mb-4 text-lg font-bold text-gray-950">SEO Settings</h2>
             <div className="space-y-4">
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-medium text-red-900">SEO Title</span>
+                  <span className="text-sm font-medium text-gray-900">SEO Title</span>
                   <Counter value={titleLen} min={50} max={60} />
                 </div>
                 <input
@@ -1117,7 +1175,7 @@ function CitySeoContent() {
 
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-medium text-red-900">Meta Description</span>
+                  <span className="text-sm font-medium text-gray-900">Meta Description</span>
                   <Counter value={descLen} min={140} max={160} />
                 </div>
                 <textarea
@@ -1168,7 +1226,7 @@ function CitySeoContent() {
               </Field>
 
               <div>
-                <span className="mb-1 block text-sm font-medium text-red-900">Featured Image</span>
+                <span className="mb-1 block text-sm font-medium text-gray-900">Featured Image</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -1177,16 +1235,16 @@ function CitySeoContent() {
                     const file = e.target.files?.[0];
                     if (file) handleImage(file);
                   }}
-                  className="block w-full text-sm text-red-900"
+                  className="block w-full text-sm text-gray-900"
                 />
-                {uploading && <span className="text-xs text-red-700">Uploading...</span>}
+                {uploading && <span className="text-xs text-gray-700">Uploading...</span>}
                 {featuredImage && (
                   <div className="mt-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={featuredImage}
                       alt={imageAlt || "Featured preview"}
-                      className="h-32 w-auto rounded-xl border border-red-100 object-cover"
+                      className="h-32 w-auto rounded-xl border border-gray-100 object-cover"
                     />
                   </div>
                 )}
@@ -1203,21 +1261,21 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-lg font-bold text-red-950">Content Editor</h2>
+              <h2 className="text-lg font-bold text-gray-950">Content Editor</h2>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => addBlock("h2")}
-                  className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   + Add Heading
                 </button>
                 <button
                   type="button"
                   onClick={() => addBlock("p")}
-                  className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   + Add Paragraph
                 </button>
@@ -1225,7 +1283,7 @@ function CitySeoContent() {
             </div>
 
             {h1Count > 1 && (
-              <p className="mb-3 rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
+              <p className="mb-3 rounded-xl bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                 You already have an H1. SEO best practice is to use one primary H1 per page.
               </p>
             )}
@@ -1242,11 +1300,11 @@ function CitySeoContent() {
                     setDragIndex(null);
                   }}
                   onDragEnd={() => setDragIndex(null)}
-                  className={`flex gap-2 rounded-xl border border-pink-200 bg-pink-50 p-2 ${
+                  className={`flex gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2 ${
                     dragIndex === i ? "opacity-50" : ""
                   }`}
                 >
-                  <span className="flex cursor-grab items-center px-1 text-red-400" title="Drag to reorder">
+                  <span className="flex cursor-grab items-center px-1 text-gray-400" title="Drag to reorder">
                     ⠿
                   </span>
                   <select
@@ -1254,7 +1312,7 @@ function CitySeoContent() {
                     onChange={(e) =>
                       updateBlock(block.id, { type: e.target.value as BlockType })
                     }
-                    className="rounded-lg border border-pink-200 bg-white px-2 py-2 text-sm text-red-950 outline-none"
+                    className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-gray-950 outline-none"
                   >
                     <option value="h1">H1 — Heading 1</option>
                     <option value="h2">H2 — Heading 2</option>
@@ -1266,7 +1324,7 @@ function CitySeoContent() {
                     onChange={(e) => updateBlock(block.id, { text: e.target.value })}
                     placeholder="Write your content here..."
                     rows={block.type === "p" ? 3 : 1}
-                    className={`flex-1 rounded-lg border border-pink-200 bg-white px-3 py-2 text-red-950 outline-none focus:border-red-500 ${
+                    className={`flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-950 outline-none focus:border-gray-500 ${
                       block.type === "h1"
                         ? "text-2xl font-black"
                         : block.type === "h2"
@@ -1280,14 +1338,14 @@ function CitySeoContent() {
                     type="button"
                     onClick={() => removeBlock(block.id)}
                     aria-label="Delete block"
-                    className="rounded-lg bg-[#450a0a] px-3 py-2 text-xs font-semibold text-white hover:bg-[#7f1d1d]"
+                    className="rounded-lg bg-[] px-3 py-2 text-xs font-semibold text-white hover:bg-[]"
                   >
                     Delete
                   </button>
                 </div>
               ))}
               {content.length === 0 && (
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-gray-700">
                   No content blocks yet. Use “Add Heading” or “Add Paragraph”.
                 </p>
               )}
@@ -1295,20 +1353,20 @@ function CitySeoContent() {
           </section>
 
           {/* FAQ Editor Section */}
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-lg font-bold text-red-950">
+                <h2 className="text-lg font-bold text-gray-950">
                   FAQ Editor (Frequently Asked Questions)
                 </h2>
-                <p className="text-xs text-red-800">
+                <p className="text-xs text-gray-800">
                   Add questions &amp; solutions for this city page. Users can click questions to expand solutions in an accordion.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={addFaq}
-                className="rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition cursor-pointer"
+                className="rounded-full bg-gray-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-gray-700 transition cursor-pointer"
               >
                 + Add FAQ
               </button>
@@ -1328,19 +1386,19 @@ function CitySeoContent() {
                     setFaqDragIndex(null);
                   }}
                   onDragEnd={() => setFaqDragIndex(null)}
-                  className={`flex flex-col gap-2.5 rounded-xl border border-pink-200 bg-pink-50/70 p-3 sm:p-4 ${
+                  className={`flex flex-col gap-2.5 rounded-xl border border-gray-200 bg-gray-50/70 p-3 sm:p-4 ${
                     faqDragIndex === i ? "opacity-50" : ""
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2 border-b border-pink-200/70 pb-2">
+                  <div className="flex items-center justify-between gap-2 border-b border-gray-200/70 pb-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className="flex cursor-grab items-center px-1 text-red-400 font-mono text-sm"
+                        className="flex cursor-grab items-center px-1 text-gray-400 font-mono text-sm"
                         title="Drag to reorder"
                       >
                         ⠿
                       </span>
-                      <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-black text-red-900 border border-red-200">
+                      <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-black text-gray-900 border border-gray-200">
                         Q#{i + 1}
                       </span>
                     </div>
@@ -1348,14 +1406,14 @@ function CitySeoContent() {
                       type="button"
                       onClick={() => removeFaq(faq.id)}
                       aria-label="Delete FAQ"
-                      className="rounded-lg bg-[#450a0a] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#7f1d1d] cursor-pointer"
+                      className="rounded-lg bg-[] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[] cursor-pointer"
                     >
                       Delete
                     </button>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-red-900 mb-1">
+                    <label className="block text-xs font-bold text-gray-900 mb-1">
                       Question:
                     </label>
                     <input
@@ -1365,12 +1423,12 @@ function CitySeoContent() {
                         updateFaq(faq.id, { question: e.target.value })
                       }
                       placeholder="e.g. How do I contact service providers in this city?"
-                      className="w-full rounded-lg border border-pink-200 bg-white px-3 py-2 text-sm font-semibold text-red-950 outline-none focus:border-red-500"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-950 outline-none focus:border-gray-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-red-900 mb-1">
+                    <label className="block text-xs font-bold text-gray-900 mb-1">
                       Solution / Answer:
                     </label>
                     <textarea
@@ -1380,15 +1438,15 @@ function CitySeoContent() {
                       }
                       placeholder="Write the detailed solution or answer here..."
                       rows={3}
-                      className="w-full rounded-lg border border-pink-200 bg-white px-3 py-2 text-sm text-red-950 outline-none focus:border-red-500 leading-relaxed"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-gray-500 leading-relaxed"
                     />
                   </div>
                 </div>
               ))}
 
               {faqs.length === 0 && (
-                <div className="rounded-xl border border-dashed border-pink-300 bg-pink-50/30 p-6 text-center">
-                  <p className="text-sm font-medium text-red-800">
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/30 p-6 text-center">
+                  <p className="text-sm font-medium text-gray-800">
                     No FAQs added yet. Click &ldquo;+ Add FAQ&rdquo; above to add questions and solutions.
                   </p>
                 </div>
@@ -1399,47 +1457,47 @@ function CitySeoContent() {
 
         {/* RIGHT COLUMN */}
         <div className="space-y-6">
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20">
                 <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#fecdd3" strokeWidth="3.5" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="" strokeWidth="3.5" />
                   <circle
                     cx="18"
                     cy="18"
                     r="15.9"
                     fill="none"
-                    stroke="#dc2626"
+                    stroke=""
                     strokeWidth="3.5"
                     strokeDasharray={`${(score / 100) * 100} 100`}
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-red-950">
+                <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-gray-950">
                   {score}
                 </span>
               </div>
               <div>
-                <p className="text-sm font-medium text-red-900">SEO Score</p>
-                <p className="text-xs text-red-700">
+                <p className="text-sm font-medium text-gray-900">SEO Score</p>
+                <p className="text-xs text-gray-700">
                   {passed} of {checks.length} checks passed
                 </p>
               </div>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-            <h2 className="mb-3 text-lg font-bold text-red-950">Google Preview</h2>
-            <div className="rounded-xl border border-red-100 bg-white p-4">
-              <p className="text-xs text-green-700">{`example.com/${urlSlug || "url-slug"}`}</p>
-              <p className="mt-1 text-lg font-medium text-blue-800">
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
+            <h2 className="mb-3 text-lg font-bold text-gray-950">Google Preview</h2>
+            <div className="rounded-xl border border-gray-100 bg-white p-4">
+              <p className="text-xs text-gray-700">{`example.com/${urlSlug || "url-slug"}`}</p>
+              <p className="mt-1 text-lg font-medium text-gray-800">
                 {title || "Your SEO title will appear here"}
               </p>
-              <p className="mt-1 text-sm text-red-900">
+              <p className="mt-1 text-sm text-gray-900">
                 {description || "Your meta description will appear here as a snippet in search results."}
               </p>
             </div>
-            <div className="mt-3 space-y-1 text-xs text-red-700">
+            <div className="mt-3 space-y-1 text-xs text-gray-700">
               <p>Title: {titleLen} chars</p>
               <p>Meta description: {descLen} chars</p>
               <p>Primary keyword usage: {keywordUsage} times</p>
@@ -1448,19 +1506,19 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-            <h2 className="mb-3 text-lg font-bold text-red-950">SEO Checklist</h2>
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
+            <h2 className="mb-3 text-lg font-bold text-gray-950">SEO Checklist</h2>
             <ul className="space-y-2">
               {checks.map((c) => (
                 <li key={c.label} className="flex items-start gap-2 text-sm">
                   <span
                     className={`mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full text-xs font-bold ${
-                      c.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      c.ok ? "bg-gray-100 text-gray-700" : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     {c.ok ? "✓" : "!"}
                   </span>
-                  <span className={c.ok ? "text-red-900" : "text-red-700"}>{c.label}</span>
+                  <span className={c.ok ? "text-gray-900" : "text-gray-700"}>{c.label}</span>
                 </li>
               ))}
             </ul>
