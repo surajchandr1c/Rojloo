@@ -15,10 +15,16 @@ type NavItem = {
 
 export const adminNavItems: NavItem[] = [
   {
+    name: "Home Page",
+    href: "/",
+    key: "home",
+    icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+  },
+  {
     name: "Dashboard",
     href: "/admin",
     key: "dashboard",
-    icon: "M3 12l9-9 9 9M5 10v10h14V10",
+    icon: "M4 4h6v8H4V4zm10 0h6v5h-6V4zm-10 12h6v4H4v-4zm10-3h6v7h-6v-7z",
   },
   {
     name: "State",
@@ -148,6 +154,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
   const visibleItems = adminNavItems.filter((item) => {
     if (!me || !me.authenticated) return false;
+    if (item.key === "home") return true;
     if (item.mainOnly) return me.role === "main";
     if (me.role === "main") return true;
     return (me.permissions ?? []).includes(item.key);
@@ -197,7 +204,9 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         <nav className="flex flex-1 flex-col gap-1 px-3 overflow-y-auto scrollbar-hide">
           {visibleItems.map((item) => {
             const active =
-              item.href === "/admin"
+              item.href === "/"
+                ? pathname === "/"
+                : item.href === "/admin"
                 ? pathname === "/admin"
                 : pathname === item.href || pathname.startsWith(item.href + "/");
             return (
