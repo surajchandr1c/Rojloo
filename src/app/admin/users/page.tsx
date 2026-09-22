@@ -88,14 +88,14 @@ export default function AdminUsers() {
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Users</h1>
-          <p className="mt-2 text-red-900">Manage registered users.</p>
+          <h1 className="text-3xl font-black text-gray-950">Users</h1>
+          <p className="mt-2 text-gray-900">Manage registered users.</p>
         </div>
         <button
           type="button"
           disabled={downloading}
           onClick={handleDownloadData}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-xs cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-xs cursor-pointer"
         >
           {downloading ? (
             <>
@@ -122,11 +122,11 @@ export default function AdminUsers() {
           minWidth="min-w-[600px]"
         />
       ) : users.length === 0 ? (
-        <p className="mt-6 text-red-900">No users found.</p>
+        <p className="mt-6 text-gray-900">No users found.</p>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-100 bg-white">
           <table className="w-full min-w-[600px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-gray-50 text-gray-950">
               <tr>
                 <th className="px-4 py-4 font-semibold">Name</th>
                 <th className="px-4 py-4 font-semibold">Email</th>
@@ -138,16 +138,16 @@ export default function AdminUsers() {
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user._id} className="border-t border-red-50">
-                  <td className="px-4 py-4 font-medium text-red-950">
+                <tr key={user._id} className="border-t border-gray-50">
+                  <td className="px-4 py-4 font-medium text-gray-950">
                     {user.name}
                   </td>
-                  <td className="px-4 py-4 text-red-900">{user.email}</td>
-                  <td className="px-4 py-4 text-red-900">
+                  <td className="px-4 py-4 text-gray-900">{user.email}</td>
+                  <td className="px-4 py-4 text-gray-900">
                     {user.phone ?? "—"}
                   </td>
                   <td className="px-4 py-4">
-                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-900">
                       {Number(user.coins ?? 0)}
                     </span>
                   </td>
@@ -156,7 +156,7 @@ export default function AdminUsers() {
                       type="button"
                       disabled={deletingId === user._id}
                       onClick={() => remove(user._id)}
-                      className="rounded-full bg-[#450a0a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#7f1d1d] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5 cursor-pointer"
+                      className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       {deletingId === user._id && (
                         <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -168,7 +168,7 @@ export default function AdminUsers() {
                     </button>
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <span className="rounded-full bg-pink-100 px-2.5 py-1 text-xs font-semibold text-red-700">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
                       {user.adCount ?? 0} ads
                     </span>
                   </td>

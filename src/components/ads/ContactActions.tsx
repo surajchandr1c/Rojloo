@@ -33,7 +33,7 @@ export default function ContactActions({
           href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
           variant="solid"
           size="sm"
-          className="!bg-green-600 !text-white hover:!bg-green-700"
+          className="!bg-gray-600 !text-white hover:!bg-gray-700"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -45,7 +45,7 @@ export default function ContactActions({
           href={`https://t.me/${telegram.replace(/^@/, "")}`}
           variant="solid"
           size="sm"
-          className="!bg-sky-500 !text-white hover:!bg-sky-600"
+          className="!bg-gray-500 !text-white hover:!bg-gray-600"
           target="_blank"
           rel="noopener noreferrer"
         >

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function AdminStatSkeleton({ className = "h-8 w-16 sm:h-9 sm:w-20" }: { className?: string }) {
   return (
     <span
-      className={`inline-block animate-pulse motion-reduce:animate-none rounded-md bg-pink-200/60 ${className}`}
+      className={`inline-block animate-pulse motion-reduce:animate-none rounded-md bg-gray-200/60 ${className}`}
       aria-hidden="true"
     />
   );
@@ -20,12 +20,12 @@ export function AdminTableSkeleton({
 }) {
   return (
     <div
-      className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white"
+      className="mt-6 overflow-x-auto rounded-2xl border border-gray-100 bg-white"
       aria-busy="true"
       aria-label="Loading table data"
     >
       <table className={`w-full ${minWidth} text-left text-sm`}>
-        <thead className="bg-pink-50 text-red-950">
+        <thead className="bg-gray-50 text-gray-950">
           <tr>
             {headers.map((h, i) => (
               <th key={i} className="px-4 py-3 sm:py-4 font-semibold">
@@ -36,7 +36,7 @@ export function AdminTableSkeleton({
         </thead>
         <tbody>
           {Array.from({ length: rowCount }).map((_, rIdx) => (
-            <tr key={rIdx} className="border-t border-red-50">
+            <tr key={rIdx} className="border-t border-gray-50">
               {headers.map((_, cIdx) => (
                 <td key={cIdx} className="px-4 py-3 sm:py-4">
                   <Skeleton
@@ -64,7 +64,7 @@ export function AdminCouponCardsSkeleton({ count = 3 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
+          className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6"
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1 space-y-3 min-w-0">
@@ -104,7 +104,7 @@ export function AdminPaymentRequestCardsSkeleton({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
+          className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6"
         >
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div className="flex-1 space-y-3 min-w-0">
@@ -144,22 +144,22 @@ export function AdminPaymentHistoryCardsSkeleton({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6 shadow-sm"
+          className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm"
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl bg-red-50 p-4 space-y-2">
+            <div className="rounded-xl bg-gray-50 p-4 space-y-2">
               <Skeleton className="h-3 w-16 rounded-md" />
               <Skeleton className="h-5 w-36 rounded-md" />
             </div>
-            <div className="rounded-xl bg-orange-50 p-4 space-y-2">
+            <div className="rounded-xl bg-gray-50 p-4 space-y-2">
               <Skeleton className="h-3 w-20 rounded-md" />
               <Skeleton className="h-5 w-28 rounded-md" />
             </div>
-            <div className="rounded-xl bg-red-50 p-4 space-y-2">
+            <div className="rounded-xl bg-gray-50 p-4 space-y-2">
               <Skeleton className="h-3 w-16 rounded-md" />
               <Skeleton className="h-5 w-32 rounded-md" />
             </div>
-            <div className="rounded-xl bg-green-50 p-4 space-y-2">
+            <div className="rounded-xl bg-gray-50 p-4 space-y-2">
               <Skeleton className="h-3 w-24 rounded-md" />
               <Skeleton className="h-6 w-20 rounded-md" />
             </div>
@@ -176,7 +176,7 @@ export function AdminUpiCardsSkeleton({ count = 2 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-white p-4 sm:p-6 sm:flex-row sm:items-start sm:justify-between"
+          className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 sm:flex-row sm:items-start sm:justify-between"
         >
           <div className="flex-1 space-y-2 min-w-0">
             <Skeleton className="h-5 w-36 rounded-md" />
@@ -200,7 +200,7 @@ export function AdminStateHierarchySkeleton({ count = 4 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-2xl border border-red-100 bg-white p-4 sm:p-5 shadow-sm"
+          className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -233,13 +233,13 @@ export function AdminCitySeoSkeleton() {
       </div>
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <div className="rounded-2xl border border-red-100 bg-white p-6 space-y-4">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 space-y-4">
             <Skeleton className="h-6 w-32 rounded-md" />
             <Skeleton className="h-10 w-full rounded-xl" />
             <Skeleton className="h-20 w-full rounded-xl" />
           </div>
         </div>
-        <div className="rounded-2xl border border-red-100 bg-white p-6 space-y-4">
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 space-y-4">
           <Skeleton className="h-6 w-28 rounded-md" />
           <Skeleton className="h-24 w-full rounded-xl" />
         </div>

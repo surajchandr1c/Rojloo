@@ -23,7 +23,7 @@ const POPULAR_CITIES = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-red-950/30 bg-red-950 px-3 sm:px-6 lg:px-8 py-8 text-white w-full">
+    <footer className="border-t border-gray-950/30 bg-gray-950 px-3 sm:px-6 lg:px-8 py-8 text-white w-full">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
         <div className="flex items-center gap-3.5 sm:gap-5 sm:col-span-2 -ml-2 sm:-ml-3">
           <Link href="/" className="shrink-0 hover:opacity-90 transition">
@@ -38,7 +38,7 @@ export default function Footer() {
           </Link>
           <div className="min-w-0">
             <p className="text-2xl sm:text-3xl font-black tracking-tight !text-white">rojlo</p>
-            <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-red-100 max-w-[280px]">
+            <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-gray-100 max-w-[280px]">
               Find services, explore places,<br />
               and post ads in one simple<br />
               local marketplace.
@@ -79,8 +79,8 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto mt-8 w-full max-w-6xl border-t border-red-900/60 pt-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-red-200">
+      <div className="mx-auto mt-8 w-full max-w-6xl border-t border-gray-900/60 pt-6">
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-200">
           Popular Locations
         </p>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
@@ -88,21 +88,21 @@ export default function Footer() {
             <Link
               key={city.slug}
               href={`/places/${city.slug}`}
-              className="text-red-200 transition-colors hover:text-white"
+              className="text-gray-200 transition-colors hover:text-white"
             >
               {city.name}
             </Link>
           ))}
           <Link
             href="/places"
-            className="text-red-300 underline underline-offset-2 hover:text-white"
+            className="text-gray-300 underline underline-offset-2 hover:text-white"
           >
             View all cities →
           </Link>
         </div>
       </div>
 
-      <div className="mx-auto mt-6 w-full max-w-6xl border-t border-red-900 pt-5 text-sm !text-white">
+      <div className="mx-auto mt-6 w-full max-w-6xl border-t border-gray-900 pt-5 text-sm !text-white">
         <p>© {new Date().getFullYear()} rojlo. All rights reserved.</p>
       </div>
     </footer>

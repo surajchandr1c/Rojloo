@@ -54,10 +54,10 @@ export default function Services() {
       <JsonLd data={breadcrumbSchema} />
       <SectionPanel>
         <Eyebrow>Services</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950 sm:text-4xl">
+        <h1 className="mt-3 text-3xl font-black text-gray-950 sm:text-4xl">
           Our Services
         </h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-red-900">
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-gray-900">
           Explore the three main service categories on Rojlo. Each section below
           shows what the service is about, with the image and text arranged to
           keep the page easy to scan.
@@ -70,7 +70,7 @@ export default function Services() {
             return (
               <Card
                 key={item.title}
-                className="overflow-hidden p-0 shadow-md shadow-pink-200/30"
+                className="overflow-hidden p-0 shadow-md shadow-gray-200/30"
               >
                 <div
                   className={`grid items-center gap-0 lg:grid-cols-2 ${
@@ -83,13 +83,13 @@ export default function Services() {
                     }`}
                   >
                     <Eyebrow className="tracking-[0.25em]">{item.title}</Eyebrow>
-                    <h2 className="mt-3 text-2xl font-black text-red-950 sm:text-3xl">
+                    <h2 className="mt-3 text-2xl font-black text-gray-950 sm:text-3xl">
                       {item.title}
                     </h2>
-                    <p className="mt-4 text-base leading-7 text-red-900">
+                    <p className="mt-4 text-base leading-7 text-gray-900">
                       {item.description}
                     </p>
-                    <p className="mt-4 text-sm leading-7 text-red-800">
+                    <p className="mt-4 text-sm leading-7 text-gray-800">
                       {index === 0 &&
                         "Call girls offer companionship and personalized meetups in your city."}
                       {index === 1 &&

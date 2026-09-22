@@ -59,12 +59,12 @@ export default function VipAdsPage() {
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Ads</h1>
-          <p className="mt-2 text-red-900">
+          <h1 className="text-3xl font-black text-gray-950">Ads</h1>
+          <p className="mt-2 text-gray-900">
             Advertisements listed in your assigned areas (Read-Only Access).
           </p>
         </div>
-        <span className="rounded-full bg-pink-100 px-3.5 py-1.5 text-xs font-bold text-red-900 border border-red-200">
+        <span className="rounded-full bg-gray-100 px-3.5 py-1.5 text-xs font-bold text-gray-900 border border-gray-200">
           {ads.length} {ads.length === 1 ? "Ad" : "Ads"}
         </span>
       </div>
@@ -76,7 +76,7 @@ export default function VipAdsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter ads by title, category, city, or phone..."
-          className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
         />
       </div>
 
@@ -89,13 +89,13 @@ export default function VipAdsPage() {
           />
         </div>
       ) : filteredAds.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-red-200 bg-white p-8 text-center text-red-900">
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-900">
           {search ? "No ads match your filter." : "No ads found in your assigned areas."}
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-100 bg-white">
           <table className="w-full min-w-[650px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-gray-50 text-gray-950">
               <tr>
                 <th className="px-5 py-4 font-semibold">Title</th>
                 <th className="px-5 py-4 font-semibold">Category</th>
@@ -107,20 +107,20 @@ export default function VipAdsPage() {
             </thead>
             <tbody>
               {filteredAds.map((ad) => (
-                <tr key={ad._id} className="border-t border-red-50">
-                  <td className="px-5 py-4 font-bold text-red-950 max-w-[200px] truncate">
+                <tr key={ad._id} className="border-t border-gray-50">
+                  <td className="px-5 py-4 font-bold text-gray-950 max-w-[200px] truncate">
                     {ad.title || ad.name}
                   </td>
-                  <td className="px-5 py-4 text-red-900 capitalize">{ad.category || "General"}</td>
-                  <td className="px-5 py-4 text-red-950 font-medium">{ad.city}</td>
-                  <td className="px-5 py-4 text-red-900">{ad.state || "—"}</td>
-                  <td className="px-5 py-4 text-red-900 font-mono text-xs">{ad.phone || "—"}</td>
+                  <td className="px-5 py-4 text-gray-900 capitalize">{ad.category || "General"}</td>
+                  <td className="px-5 py-4 text-gray-950 font-medium">{ad.city}</td>
+                  <td className="px-5 py-4 text-gray-900">{ad.state || "—"}</td>
+                  <td className="px-5 py-4 text-gray-900 font-mono text-xs">{ad.phone || "—"}</td>
                   <td className="px-5 py-4 text-right">
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
                         ad.status === "active"
-                          ? "bg-green-100 text-green-900"
-                          : "bg-yellow-100 text-yellow-900"
+                          ? "bg-gray-100 text-gray-900"
+                          : "bg-gray-100 text-gray-900"
                       }`}
                     >
                       {ad.status === "active" ? "Active" : ad.status || "Pending"}

@@ -516,7 +516,6 @@ export interface ExportUserData {
   name: string;
   email: string;
   phone: string;
-  password: string;
   coins: number;
   service?: string;
   emailVerified?: boolean;
@@ -534,7 +533,6 @@ export async function exportAllUsers(): Promise<ExportUserData[]> {
         name: String(doc.name || ""),
         email: String(doc.email || ""),
         phone: String(doc.phone || ""),
-        password: String(doc.passwordHash || ""),
         coins: Number(doc.coins || 0),
         service: doc.service ? String(doc.service) : undefined,
         emailVerified: Boolean(doc.emailVerified),
@@ -554,7 +552,6 @@ export async function exportAllUsers(): Promise<ExportUserData[]> {
       name: String(user.name || ""),
       email: String(user.email || ""),
       phone: String(user.phone || ""),
-      password: String(user.passwordHash || ""),
       coins: Number(user.coins || 0),
       service: user.service ? String(user.service) : undefined,
       emailVerified: Boolean(user.emailVerified),

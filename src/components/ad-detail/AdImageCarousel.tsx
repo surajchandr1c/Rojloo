@@ -55,7 +55,7 @@ export default function AdImageCarousel({
 
   return (
     <section aria-label={`${adName} images`}>
-      <div className="relative overflow-hidden rounded-[1.5rem] bg-pink-50">
+      <div className="relative overflow-hidden rounded-[1.5rem] bg-gray-50">
         <div
           className={`flex h-72 ${isTransitioning ? "transition-transform duration-700 ease-in-out" : ""} sm:h-96`}
           style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -80,18 +80,18 @@ export default function AdImageCarousel({
             <button
               type="button"
               onClick={showPrevious}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-red-950/80 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-white"
+              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-gray-950/80 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-950 focus:outline-none focus:ring-2 focus:ring-white"
             >
               Previous
             </button>
             <button
               type="button"
               onClick={showNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-red-950/80 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-gray-950/80 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-950 focus:outline-none focus:ring-2 focus:ring-white"
             >
               Next
             </button>
-            <p className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-red-950/80 px-3 py-1 text-xs font-semibold text-white">
+            <p className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-gray-950/80 px-3 py-1 text-xs font-semibold text-white">
               {(activeIndex % images.length) + 1} / {images.length}
             </p>
           </>

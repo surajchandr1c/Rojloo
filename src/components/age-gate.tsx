@@ -75,14 +75,14 @@ export default function AgeGate() {
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4"
     >
       <div className="w-full max-w-md rounded-[2rem] bg-white p-5 sm:p-8 text-center shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-3xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-3xl">
           <span aria-hidden="true">🔞</span>
         </div>
 
-        <h2 id="agegate-title" className="mt-5 text-2xl font-black text-red-950">
+        <h2 id="agegate-title" className="mt-5 text-2xl font-black text-gray-950">
           Are you 18+?
         </h2>
-        <p className="mt-3 text-sm leading-6 text-red-900">
+        <p className="mt-3 text-sm leading-6 text-gray-900">
           This website contains adult content and is intended for individuals
           who are 18 years of age or older. Please confirm your age to continue.
         </p>
@@ -91,14 +91,14 @@ export default function AgeGate() {
           <button
             type="button"
             onClick={acceptAge}
-            className="flex-1 rounded-full bg-red-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700"
+            className="flex-1 rounded-full bg-gray-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-gray-700"
           >
             Yes, I am 18+
           </button>
           <button
             type="button"
             onClick={declineAge}
-            className="flex-1 rounded-full border border-red-200 bg-pink-50 px-6 py-3 text-sm font-bold text-red-700 transition-colors hover:bg-pink-100"
+            className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-6 py-3 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-100"
           >
             No, I&apos;m under 18
           </button>

@@ -56,12 +56,12 @@ export default function VipUsersPage() {
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Users</h1>
-          <p className="mt-2 text-red-900">
+          <h1 className="text-3xl font-black text-gray-950">Users</h1>
+          <p className="mt-2 text-gray-900">
             Registered users associated with your assigned areas (Read-Only Access).
           </p>
         </div>
-        <span className="rounded-full bg-pink-100 px-3.5 py-1.5 text-xs font-bold text-red-900 border border-red-200">
+        <span className="rounded-full bg-gray-100 px-3.5 py-1.5 text-xs font-bold text-gray-900 border border-gray-200">
           {users.length} {users.length === 1 ? "User" : "Users"}
         </span>
       </div>
@@ -73,7 +73,7 @@ export default function VipUsersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter users by name, email, or phone..."
-          className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
         />
       </div>
 
@@ -86,13 +86,13 @@ export default function VipUsersPage() {
           />
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-red-200 bg-white p-8 text-center text-red-900">
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-900">
           {search ? "No users match your filter." : "No users found in your assigned jurisdiction."}
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-100 bg-white">
           <table className="w-full min-w-[600px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-gray-50 text-gray-950">
               <tr>
                 <th className="px-5 py-4 font-semibold">Name</th>
                 <th className="px-5 py-4 font-semibold">Email</th>
@@ -103,17 +103,17 @@ export default function VipUsersPage() {
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user._id || user.email} className="border-t border-red-50">
-                  <td className="px-5 py-4 font-bold text-red-950">{user.name}</td>
-                  <td className="px-5 py-4 text-red-900">{user.email}</td>
-                  <td className="px-5 py-4 text-red-900">{user.phone ?? "—"}</td>
+                <tr key={user._id || user.email} className="border-t border-gray-50">
+                  <td className="px-5 py-4 font-bold text-gray-950">{user.name}</td>
+                  <td className="px-5 py-4 text-gray-900">{user.email}</td>
+                  <td className="px-5 py-4 text-gray-900">{user.phone ?? "—"}</td>
                   <td className="px-5 py-4">
-                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-900">
                       {Number(user.coins ?? 0)}
                     </span>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <span className="rounded-full bg-pink-100 px-2.5 py-1 text-xs font-semibold text-red-700">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
                       {user.adCount ?? 0} ads
                     </span>
                   </td>

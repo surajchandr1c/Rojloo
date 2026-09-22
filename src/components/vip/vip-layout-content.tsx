@@ -19,7 +19,7 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
   const isAuthenticated = me?.authenticated;
 
   if (isAuthPage) {
-    return <div className="min-h-screen bg-pink-50 text-red-950">{children}</div>;
+    return <div className="min-h-screen bg-gray-50 text-gray-950">{children}</div>;
   }
 
   if (!isAuthenticated) {
@@ -27,7 +27,7 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-pink-50 text-red-950">
+    <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-950">
       {/* Desktop Sidebar - visible on md+ screens when authenticated */}
       {isAuthenticated && (
         <div className="hidden md:flex">
@@ -46,11 +46,11 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header with Hamburger */}
         {isAuthenticated && (
-          <header className="md:hidden flex items-center justify-between h-16 bg-[#450a0a] text-white px-4 border-b border-red-200 z-20">
+          <header className="md:hidden flex items-center justify-between h-16 bg-[] text-white px-4 border-b border-gray-200 z-20">
             <div className="text-lg font-bold">VIP Panel</div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-[#7f1d1d] transition-colors"
+              className="p-2 rounded-lg hover:bg-[] transition-colors"
               aria-label="Toggle menu"
             >
               <svg

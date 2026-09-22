@@ -49,7 +49,7 @@ export default function Dashboard() {
   return (
     <main className="px-4 py-10 sm:px-6 lg:px-8">
       <SectionPanel>
-        <h1 className="text-3xl font-black text-red-950 sm:text-4xl">
+        <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">
           Manage Your Account
         </h1>
 
@@ -66,11 +66,11 @@ export default function Dashboard() {
             <Link
               key={c.href}
               href={c.href}
-              className="group block rounded-[1.5rem] border border-red-100 bg-white p-6 shadow-sm transition hover:border-red-300 hover:bg-pink-50"
+              className="group block rounded-[1.5rem] border border-gray-100 bg-white p-6 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
             >
-              <h2 className="text-xl font-black text-red-950">{c.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-red-900">{c.desc}</p>
-              <span className="mt-4 inline-block text-sm font-semibold text-red-700 group-hover:underline">
+              <h2 className="text-xl font-black text-gray-950">{c.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-900">{c.desc}</p>
+              <span className="mt-4 inline-block text-sm font-semibold text-gray-700 group-hover:underline">
                 Open →
               </span>
             </Link>

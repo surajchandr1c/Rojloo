@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/admin-access";
-import { findUserById, findUserBySessionToken } from "@/lib/models/user";
+import { getAuthenticatedUser } from "@/lib/auth-user";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 
@@ -27,21 +27,8 @@ async function isAuthorizedUploader(request: NextRequest): Promise<boolean> {
   const admin = await getAdminContext(request);
   if (admin) return true;
 
-  const raw = request.cookies.get("rojlo_auth")?.value;
-  if (!raw) return false;
-
-  if (await findUserBySessionToken(raw)) return true;
-
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw));
-    if (parsed && parsed._id) {
-      return Boolean(await findUserById(String(parsed._id)));
-    }
-  } catch {
-    if (await findUserById(raw)) return true;
-  }
-
-  return false;
+  const user = await getAuthenticatedUser(request);
+  return Boolean(user);
 }
 
 export async function POST(request: NextRequest) {

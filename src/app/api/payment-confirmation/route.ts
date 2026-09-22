@@ -1,76 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  findUserById,
-  findUserByEmail,
-  findUserBySessionToken,
-  type User,
-} from "@/lib/models/user";
-import { extractJWTFromHeader, verifyJWT } from "@/lib/jwt";
+import { getAuthenticatedUser } from "@/lib/auth-user";
 import {
   createPaymentRequest,
   findPaymentRequestByTransactionId,
   listPaymentRequestsByUser,
   checkCoinPurchaseEligibility,
 } from "@/lib/models/payment-request";
+import { getCoinPackages } from "@/lib/models/coin-package";
+import { calculateDiscount } from "@/lib/models/coupon";
 import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
-
-async function getAuthUser(req: NextRequest): Promise<User | null> {
-  // 1. Try Authorization header
-  const authHeader = req.headers.get("Authorization");
-  if (authHeader) {
-    const token = extractJWTFromHeader(authHeader);
-    if (token) {
-      const payload = verifyJWT(token);
-      if (payload?._id) {
-        const user = await findUserById(payload._id);
-        if (user) return user;
-      }
-      if (payload?.email) {
-        const user = await findUserByEmail(payload.email);
-        if (user) return user;
-      }
-    }
-  }
-
-  // 2. Try cookie
-  const raw = req.cookies.get("rojlo_auth")?.value;
-  if (!raw) return null;
-
-  const sessionUser = await findUserBySessionToken(raw);
-  if (sessionUser) return sessionUser;
-
-  // Might be stored JWT in cookie
-  const jwtPayload = verifyJWT(raw);
-  if (jwtPayload?._id) {
-    const user = await findUserById(jwtPayload._id);
-    if (user) return user;
-  }
-  if (jwtPayload?.email) {
-    const user = await findUserByEmail(jwtPayload.email);
-    if (user) return user;
-  }
-
-  // Legacy JSON cookie
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw));
-    if (parsed?._id) {
-      const user = await findUserById(parsed._id);
-      if (user) return user;
-    }
-    if (parsed?.email) {
-      const user = await findUserByEmail(parsed.email);
-      if (user) return user;
-    }
-  } catch {
-    // Non-JSON
-  }
-
-  return findUserById(raw);
-}
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getAuthUser(req);
+    const user = await getAuthenticatedUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -98,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await getAuthUser(req);
+    const user = await getAuthenticatedUser(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -108,7 +50,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    const { coins, amount, transactionId, couponCode, discount } = body;
+    const { coins, amount, transactionId, couponCode } = body;
 
     if (!transactionId || !coins || !amount) {
       return NextResponse.json(
@@ -120,7 +62,6 @@ export async function POST(req: NextRequest) {
     const coinCount = Number(coins);
     const amountValue = Number(amount);
 
-    // Basic sanity validation to prevent negative/zero/abusive values.
     if (!Number.isFinite(coinCount) || coinCount <= 0) {
       return NextResponse.json(
         { error: "Invalid coins value" },
@@ -130,6 +71,36 @@ export async function POST(req: NextRequest) {
     if (!Number.isFinite(amountValue) || amountValue <= 0) {
       return NextResponse.json(
         { error: "Invalid amount value" },
+        { status: 400 }
+      );
+    }
+
+    // Validate that the requested coins match an official configured package
+    const packages = await getCoinPackages();
+    const matchedPkg = packages.find((p) => Number(p.coins) === coinCount);
+    if (!matchedPkg) {
+      return NextResponse.json(
+        { error: "Invalid coin package selected." },
+        { status: 400 }
+      );
+    }
+
+    const expectedBaseAmount = Number(matchedPkg.price);
+    let expectedFinalAmount = expectedBaseAmount;
+    let expectedDiscount = 0;
+
+    if (couponCode && typeof couponCode === "string" && couponCode.trim()) {
+      const discountCalc = await calculateDiscount(couponCode.trim(), expectedBaseAmount);
+      if (discountCalc) {
+        expectedFinalAmount = discountCalc.finalAmount;
+        expectedDiscount = discountCalc.discount;
+      }
+    }
+
+    // Verify payment amount matches (allowing up to 1 INR margin for rounding)
+    if (Math.abs(amountValue - expectedFinalAmount) > 1) {
+      return NextResponse.json(
+        { error: "Payment amount does not match package price." },
         { status: 400 }
       );
     }
@@ -161,9 +132,9 @@ export async function POST(req: NextRequest) {
       userEmail: user.email.toLowerCase(),
       userId: String(user._id || ""),
       transactionId: String(transactionId).trim(),
-      coins: coinCount,
-      amount: amountValue,
-      discount: discount ? Number(discount) : undefined,
+      coins: matchedPkg.coins,
+      amount: expectedFinalAmount,
+      discount: expectedDiscount > 0 ? expectedDiscount : undefined,
       couponCode: couponCode ? String(couponCode).trim() : undefined,
     });
 

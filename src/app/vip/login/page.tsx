@@ -51,14 +51,14 @@ function VipLoginContent() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <SectionPanel className="w-full max-w-md">
         <Eyebrow>VIP Portal</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950">VIP Login</h1>
-        <p className="mt-2 text-red-900">
+        <h1 className="mt-3 text-3xl font-black text-gray-950">VIP Login</h1>
+        <p className="mt-2 text-gray-900">
           Sign in with your credentials to access your VIP control panel.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Email
             </label>
             <TextInput
@@ -71,7 +71,7 @@ function VipLoginContent() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Password
             </label>
             <div className="relative">
@@ -88,7 +88,7 @@ function VipLoginContent() {
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute inset-y-0 right-0 flex items-center px-4 text-red-500 transition hover:text-red-700"
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 transition hover:text-gray-700"
               >
                 {showPassword ? (
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -104,7 +104,7 @@ function VipLoginContent() {
             </div>
           </div>
 
-          {error && <p className="text-sm font-medium text-red-700">{error}</p>}
+          {error && <p className="text-sm font-medium text-gray-700">{error}</p>}
 
           <Button
             type="submit"
@@ -126,7 +126,7 @@ export default function VipLoginPage() {
       fallback={
         <main className="flex min-h-screen items-center justify-center px-4 py-10">
           <SectionPanel className="w-full max-w-md">
-            <p className="text-center text-sm text-red-800">Loading login...</p>
+            <p className="text-center text-sm text-gray-800">Loading login...</p>
           </SectionPanel>
         </main>
       }

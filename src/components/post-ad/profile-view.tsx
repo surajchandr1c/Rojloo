@@ -18,7 +18,7 @@ export default function ProfileView() {
     <main className="px-4 py-10 sm:px-6 lg:px-8">
       <SectionPanel>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-red-950 sm:text-4xl">
+          <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">
             Profile
           </h1>
           <Button

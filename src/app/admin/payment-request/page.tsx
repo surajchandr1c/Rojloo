@@ -339,11 +339,11 @@ export default function PaymentRequestPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-900";
+        return "bg-gray-100 text-gray-900";
       case "confirmed":
-        return "bg-green-100 text-green-900";
+        return "bg-gray-100 text-gray-900";
       case "declined":
-        return "bg-red-100 text-red-900";
+        return "bg-gray-100 text-gray-900";
       default:
         return "bg-gray-100 text-gray-900";
     }
@@ -352,14 +352,14 @@ export default function PaymentRequestPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
+    <main className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-red-950">Payment Requests</h1>
+          <h1 className="text-3xl font-black text-gray-950">Payment Requests</h1>
           <button
             type="button"
             onClick={() => setIsDeleteModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2 text-sm font-semibold text-white hover:bg-red-900 transition-colors shadow-xs cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900 transition-colors shadow-xs cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -372,8 +372,8 @@ export default function PaymentRequestPage() {
           <div
             className={`mt-4 rounded-lg p-4 font-semibold text-sm transition-all shadow-xs ${
               feedback.type === "success"
-                ? "bg-green-100 text-green-950 border border-green-300"
-                : "bg-red-100 text-red-950 border border-red-300"
+                ? "bg-gray-100 text-gray-950 border border-gray-300"
+                : "bg-gray-100 text-gray-950 border border-gray-300"
             }`}
           >
             {feedback.message}
@@ -381,7 +381,7 @@ export default function PaymentRequestPage() {
         )}
 
         {error && (
-          <div className="mt-4 rounded-lg bg-red-100 p-4 text-red-900 border border-red-200">
+          <div className="mt-4 rounded-lg bg-gray-100 p-4 text-gray-900 border border-gray-200">
             {error}
           </div>
         )}
@@ -393,8 +393,8 @@ export default function PaymentRequestPage() {
               onClick={() => setFilter(tab)}
               className={`rounded-lg px-4 py-2 font-semibold capitalize transition-colors ${
                 filter === tab
-                  ? "bg-red-600 text-white"
-                  : "bg-white text-red-950 border border-red-200 hover:bg-red-50"
+                  ? "bg-gray-600 text-white"
+                  : "bg-white text-gray-950 border border-gray-200 hover:bg-gray-50"
               }`}
             >
               {tab}
@@ -409,7 +409,7 @@ export default function PaymentRequestPage() {
           {loading ? (
             <AdminPaymentRequestCardsSkeleton />
           ) : filteredRequests.length === 0 ? (
-            <p className="text-red-900">
+            <p className="text-gray-900">
               No payment requests found for {filter} status.
             </p>
           ) : (
@@ -417,12 +417,12 @@ export default function PaymentRequestPage() {
               {filteredRequests.map((request) => (
                 <div
                   key={request._id}
-                  className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
+                  className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6"
                 >
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div className="flex-1 min-w-0">
                       <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
-                        <h3 className="text-lg font-bold text-red-950 break-all">
+                        <h3 className="text-lg font-bold text-gray-950 break-all">
                           {request.userEmail}
                         </h3>
                         <span
@@ -436,64 +436,64 @@ export default function PaymentRequestPage() {
 
                       <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                         <div>
-                          <span className="font-semibold text-red-700">
+                          <span className="font-semibold text-gray-700">
                             Transaction ID:
                           </span>{" "}
-                          <span className="break-all text-red-900">
+                          <span className="break-all text-gray-900">
                             {request.transactionId}
                           </span>
                         </div>
                         <div>
-                          <span className="font-semibold text-red-700">
+                          <span className="font-semibold text-gray-700">
                             Coins:
                           </span>{" "}
-                          <span className="text-red-900">{request.coins}</span>
+                          <span className="text-gray-900">{request.coins}</span>
                         </div>
                         <div>
-                          <span className="font-semibold text-red-700">
+                          <span className="font-semibold text-gray-700">
                             Amount:
                           </span>{" "}
-                          <span className="text-red-900">₹{request.amount}</span>
+                          <span className="text-gray-900">₹{request.amount}</span>
                         </div>
                         {request.discount && (
                           <div>
-                            <span className="font-semibold text-red-700">
+                            <span className="font-semibold text-gray-700">
                               Discount:
                             </span>{" "}
-                            <span className="text-red-900">₹{request.discount}</span>
+                            <span className="text-gray-900">₹{request.discount}</span>
                           </div>
                         )}
                         {request.couponCode && (
                           <div>
-                            <span className="font-semibold text-red-700">
+                            <span className="font-semibold text-gray-700">
                               Coupon:
                             </span>{" "}
-                            <span className="text-red-900">{request.couponCode}</span>
+                            <span className="text-gray-900">{request.couponCode}</span>
                           </div>
                         )}
                         <div>
-                          <span className="font-semibold text-red-700">
+                          <span className="font-semibold text-gray-700">
                             Submitted:
                           </span>{" "}
-                          <span className="text-red-900">
+                          <span className="text-gray-900">
                             {formatDisplayDateTime(request.createdAt)}
                           </span>
                         </div>
                       </div>
 
                       {request.status === "declined" && (
-                        <div className="mt-3 rounded-lg bg-red-50 p-3">
-                          <p className="text-xs font-semibold text-red-700">
+                        <div className="mt-3 rounded-lg bg-gray-50 p-3">
+                          <p className="text-xs font-semibold text-gray-700">
                             Decline Reason:
                           </p>
-                          <p className="mt-1 text-sm text-red-900">
+                          <p className="mt-1 text-sm text-gray-900">
                             {request.declinedReason || "Wrong Transaction ID"}
                           </p>
                         </div>
                       )}
 
                       {request.status === "confirmed" && request.confirmedAt && (
-                        <div className="mt-3 text-xs text-green-700">
+                        <div className="mt-3 text-xs text-gray-700">
                           Confirmed on {formatDisplayDateTime(request.confirmedAt)}
                         </div>
                       )}
@@ -505,7 +505,7 @@ export default function PaymentRequestPage() {
                           type="button"
                           onClick={() => handleConfirm(request)}
                           disabled={Boolean(request._id && processingIds[request._id])}
-                          className="whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="whitespace-nowrap rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           {request._id && processingIds[request._id] === "confirm" && (
                             <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -519,7 +519,7 @@ export default function PaymentRequestPage() {
                           type="button"
                           onClick={() => handleDecline(request)}
                           disabled={Boolean(request._id && processingIds[request._id])}
-                          className="whitespace-nowrap rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="whitespace-nowrap rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           {request._id && processingIds[request._id] === "decline" && (
                             <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -542,11 +542,11 @@ export default function PaymentRequestPage() {
 
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-red-200">
-            <div className="flex items-start justify-between border-b border-red-100 pb-4">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-gray-200">
+            <div className="flex items-start justify-between border-b border-gray-100 pb-4">
               <div>
-                <h2 className="text-xl font-bold text-red-950">Delete Payment Requests</h2>
-                <p className="mt-1 text-xs text-red-700">Permanently remove records from the database.</p>
+                <h2 className="text-xl font-bold text-gray-950">Delete Payment Requests</h2>
+                <p className="mt-1 text-xs text-gray-700">Permanently remove records from the database.</p>
               </div>
               <button
                 type="button"
@@ -560,35 +560,35 @@ export default function PaymentRequestPage() {
             </div>
 
             {deleteError && (
-              <div className="mt-4 rounded-lg bg-red-100 p-3 text-xs font-semibold text-red-900 border border-red-200">
+              <div className="mt-4 rounded-lg bg-gray-100 p-3 text-xs font-semibold text-gray-900 border border-gray-200">
                 {deleteError}
               </div>
             )}
 
             {/* Option 1: Date Range Deletion */}
-            <div className="mt-5 rounded-xl border border-red-100 bg-red-50/50 p-4">
-              <h3 className="text-sm font-bold text-red-950">Option 1: Delete by Date Range</h3>
-              <p className="mt-1 text-xs text-red-700">
+            <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+              <h3 className="text-sm font-bold text-gray-950">Option 1: Delete by Date Range</h3>
+              <p className="mt-1 text-xs text-gray-700">
                 Select from which date to date to delete payment requests.
               </p>
 
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-red-900 mb-1">From Date</label>
+                  <label className="block text-xs font-semibold text-gray-900 mb-1">From Date</label>
                   <input
                     type="date"
                     value={deleteStartDate}
                     onChange={(e) => setDeleteStartDate(e.target.value)}
-                    className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-950 focus:border-red-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 focus:border-gray-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-red-900 mb-1">To Date</label>
+                  <label className="block text-xs font-semibold text-gray-900 mb-1">To Date</label>
                   <input
                     type="date"
                     value={deleteEndDate}
                     onChange={(e) => setDeleteEndDate(e.target.value)}
-                    className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-950 focus:border-red-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 focus:border-gray-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -597,16 +597,16 @@ export default function PaymentRequestPage() {
                 type="button"
                 disabled={deleting || (!deleteStartDate && !deleteEndDate)}
                 onClick={handleDeleteByRange}
-                className="mt-4 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="mt-4 w-full rounded-lg bg-gray-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {deleting ? "Deleting from database..." : "Delete History in Selected Date Range"}
               </button>
             </div>
 
             {/* Option 2: Delete All */}
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-100/60 p-4">
-              <h3 className="text-sm font-bold text-red-950">Option 2: Delete All Payment History</h3>
-              <p className="mt-1 text-xs text-red-800">
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-100/60 p-4">
+              <h3 className="text-sm font-bold text-gray-950">Option 2: Delete All Payment History</h3>
+              <p className="mt-1 text-xs text-gray-800">
                 ⚠️ This will permanently delete <strong>all payment requests</strong> from the database.
               </p>
 
@@ -614,7 +614,7 @@ export default function PaymentRequestPage() {
                 type="button"
                 disabled={deleting}
                 onClick={handleDeleteAll}
-                className="mt-3 w-full rounded-lg bg-red-950 px-4 py-2.5 text-sm font-bold text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="mt-3 w-full rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-bold text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {deleting ? "Deleting from database..." : "Delete All Payment History"}
               </button>

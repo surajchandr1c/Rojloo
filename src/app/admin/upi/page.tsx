@@ -207,24 +207,24 @@ export default function AdminUPI() {
     <main className="flex-1 overflow-auto min-w-0">
       <div className="p-4 sm:p-6 lg:p-8">
         <Eyebrow>Management</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950">UPI Management</h1>
+        <h1 className="mt-3 text-3xl font-black text-gray-950">UPI Management</h1>
 
         {error && (
-          <div className="mt-6 rounded-lg bg-red-100 p-4 text-red-900">
+          <div className="mt-6 rounded-lg bg-gray-100 p-4 text-gray-900">
             {error}
           </div>
         )}
 
         <div className="mt-8 space-y-8">
           {/* Add New UPI Form */}
-          <div className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
-            <h2 className="text-xl font-bold text-red-950">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+            <h2 className="text-xl font-bold text-gray-950">
               {editingId ? "Edit UPI" : "Add New UPI"}
             </h2>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   UPI ID
                 </label>
                 <input
@@ -232,13 +232,13 @@ export default function AdminUPI() {
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value)}
                   placeholder="e.g., yourname@upi"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 placeholder-gray-300 focus:border-gray-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   UPI Name/Label
                 </label>
                 <input
@@ -246,20 +246,20 @@ export default function AdminUPI() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., Main Account"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 placeholder-gray-300 focus:border-gray-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   QR Code Image {editingId ? "(Leave empty to keep existing)" : ""}
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleQrCodeChange}
-                  className="mt-2 block w-full text-sm text-red-950 file:mr-4 file:rounded-lg file:border-0 file:bg-red-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-red-950"
+                  className="mt-2 block w-full text-sm text-gray-950 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-gray-950"
                   required={!editingId}
                 />
                 {qrCodePreview && (
@@ -269,7 +269,7 @@ export default function AdminUPI() {
                       alt="QR Code Preview"
                       width={160}
                       height={160}
-                      className="h-40 w-40 rounded-lg border border-red-200 object-contain"
+                      className="h-40 w-40 rounded-lg border border-gray-200 object-contain"
                     />
                   </div>
                 )}
@@ -279,7 +279,7 @@ export default function AdminUPI() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-6 rounded-lg bg-red-600 px-6 py-2.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                  className="mt-6 rounded-lg bg-gray-600 px-6 py-2.5 font-semibold text-white hover:bg-gray-700 disabled:opacity-50"
                 >
                   {submitting ? "Saving..." : editingId ? "Update UPI" : "Add UPI"}
                 </button>
@@ -287,7 +287,7 @@ export default function AdminUPI() {
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="mt-6 rounded-lg bg-red-100 px-6 py-2.5 font-semibold text-red-950 hover:bg-red-200"
+                    className="mt-6 rounded-lg bg-gray-100 px-6 py-2.5 font-semibold text-gray-950 hover:bg-gray-200"
                   >
                     Cancel
                   </button>
@@ -298,29 +298,29 @@ export default function AdminUPI() {
 
           {/* Existing UPIs */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-red-950">Existing UPIs</h2>
+            <h2 className="text-xl font-bold text-gray-950">Existing UPIs</h2>
 
             {loading ? (
               <AdminUpiCardsSkeleton />
             ) : upis.length === 0 ? (
-              <p className="text-red-900">No UPIs added yet.</p>
+              <p className="text-gray-900">No UPIs added yet.</p>
             ) : (
               <div className="grid gap-4">
                 {upis.map((upi) => (
                   <div
                     key={upi._id}
-                    className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-white p-4 sm:p-6 sm:flex-row sm:items-start sm:justify-between"
+                    className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 sm:flex-row sm:items-start sm:justify-between"
                   >
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-red-950">{upi.name}</h3>
-                      <p className="mt-1 text-sm text-red-900 break-all">{upi.upiId}</p>
+                      <h3 className="font-bold text-gray-950">{upi.name}</h3>
+                      <p className="mt-1 text-sm text-gray-900 break-all">{upi.upiId}</p>
                       {upi.qrCode && (
                         <Image
                           src={upi.qrCode}
                           alt={`QR Code for ${upi.upiId}`}
                           width={128}
                           height={128}
-                          className="mt-3 h-32 w-32 rounded-lg border border-red-200 object-contain"
+                          className="mt-3 h-32 w-32 rounded-lg border border-gray-200 object-contain"
                         />
                       )}
                     </div>
@@ -334,8 +334,8 @@ export default function AdminUPI() {
                         onClick={() => handleToggleActive(upi)}
                         className={`rounded-lg px-4 py-2 text-sm font-semibold ${
                           upi.active !== false
-                            ? "bg-green-100 text-green-900 hover:bg-green-200"
-                            : "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
+                            ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                            : "bg-gray-100 text-gray-900 hover:bg-gray-200"
                         }`}
                       >
                         {upi.active !== false ? "Active" : "Inactive"}

@@ -29,9 +29,9 @@ export function GoBackButton() {
           window.history.back();
         }
       }}
-      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-5 py-3.5 text-sm font-bold text-red-950 shadow-sm transition hover:bg-red-50 active:scale-95"
+      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-950 shadow-sm transition hover:bg-gray-50 active:scale-95"
     >
-      <svg className="h-4 w-4 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="h-4 w-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
       </svg>
       Go Back

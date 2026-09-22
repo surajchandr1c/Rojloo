@@ -39,10 +39,10 @@ export const adminNavItems: NavItem[] = [
     icon: "M11 3H5a2 2 0 00-2 2v14a2 2 0 002 2h6M9 12h12M9 8h12M9 16h12M19 4v16",
   },
   {
-    name: "Local Area SEO",
-    href: "/admin/local-area-seo",
-    key: "local-area-seo",
-    icon: "M12 21s7-4.35 7-10a7 7 0 10-14 0c0 5.65 7 10 7 10zM12 13a2 2 0 100-4 2 2 0 000 4z",
+    name: "Dynamic SEO",
+    href: "/admin/dynamic-seo",
+    key: "dynamic-seo",
+    icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
   },
   {
     name: "Ads",

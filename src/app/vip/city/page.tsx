@@ -52,12 +52,12 @@ export default function VipCityPage() {
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Assigned Cities</h1>
-          <p className="mt-2 text-red-900">
+          <h1 className="text-3xl font-black text-gray-950">Assigned Cities</h1>
+          <p className="mt-2 text-gray-900">
             Cities under your VIP control jurisdiction (Read-Only Access).
           </p>
         </div>
-        <span className="rounded-full bg-pink-100 px-3.5 py-1.5 text-xs font-bold text-red-900 border border-red-200">
+        <span className="rounded-full bg-gray-100 px-3.5 py-1.5 text-xs font-bold text-gray-900 border border-gray-200">
           {cities.length} {cities.length === 1 ? "City" : "Cities"}
         </span>
       </div>
@@ -69,7 +69,7 @@ export default function VipCityPage() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Filter cities by name or state..."
-          className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
         />
       </div>
 
@@ -82,13 +82,13 @@ export default function VipCityPage() {
           />
         </div>
       ) : filteredCities.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-red-200 bg-white p-8 text-center text-red-900">
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-900">
           {searchTerm ? "No cities match your search." : "No cities assigned to your account."}
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-100 bg-white">
           <table className="w-full min-w-[500px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-gray-50 text-gray-950">
               <tr>
                 <th className="px-5 py-4 font-semibold">City Name</th>
                 <th className="px-5 py-4 font-semibold">State</th>
@@ -98,16 +98,16 @@ export default function VipCityPage() {
             </thead>
             <tbody>
               {filteredCities.map((city) => (
-                <tr key={city.slug || city.name} className="border-t border-red-50">
-                  <td className="px-5 py-4 font-bold text-red-950">{city.name}</td>
-                  <td className="px-5 py-4 text-red-900">{city.state || "—"}</td>
+                <tr key={city.slug || city.name} className="border-t border-gray-50">
+                  <td className="px-5 py-4 font-bold text-gray-950">{city.name}</td>
+                  <td className="px-5 py-4 text-gray-900">{city.state || "—"}</td>
                   <td className="px-5 py-4">
-                    <span className="rounded-full bg-pink-100 px-2.5 py-1 text-xs font-semibold text-red-800">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-800">
                       {city.adCount ?? 0} ads
                     </span>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <span className="inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-900">
+                    <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-900">
                       Controlled
                     </span>
                   </td>

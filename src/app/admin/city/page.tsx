@@ -85,7 +85,7 @@ function fuzzyMatch(target: string, query: string): boolean {
 export default function AdminCities() {
   const [allCities, setAllCities] = useState<DynamicCity[]>([]);
   const [seoMap, setSeoMap] = useState<Record<string, SeoInfo>>({});
-  const [localAreaSeoMap, setLocalAreaSeoMap] = useState<Record<string, number>>({});
+  const [individualCities, setIndividualCities] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -109,8 +109,8 @@ export default function AdminCities() {
       (c) =>
         fuzzyMatch(c.name, q) ||
         (c.state && fuzzyMatch(c.state, q)) ||
-        (c.slug && fuzzyMatch(c.slug, q)) ||
-        (c.region && fuzzyMatch(c.region, q)) ||
+        fuzzyMatch(c.slug, q) ||
+        fuzzyMatch(c.region, q) ||
         (c.country && fuzzyMatch(c.country, q))
     );
   }, [allCities, debouncedSearch]);
@@ -130,10 +130,10 @@ export default function AdminCities() {
     const loadId = ++loadRef.current;
     setLoading(true);
     try {
-      const [citiesRes, seoRes, localAreaSeoRes] = await Promise.all([
+      const [citiesRes, seoRes, dynamicSeoRes] = await Promise.all([
         fetch("/api/admin/cities", { credentials: "include" }),
         fetch("/api/admin/city-seo", { credentials: "include" }),
-        fetch("/api/admin/local-area-seo", { credentials: "include" }),
+        fetch("/api/admin/dynamic-seo", { credentials: "include" }),
       ]);
 
       if (loadId !== loadRef.current) return;
@@ -167,17 +167,15 @@ export default function AdminCities() {
         setSeoMap(map);
       }
 
-      if (localAreaSeoRes.ok) {
-        const localAreaSeoData = await localAreaSeoRes.json();
-        const counts: Record<string, number> = {};
-        (localAreaSeoData.seo ?? []).forEach(
-          (item: { citySlug: string; mode?: string }) => {
-            if (item.mode === "individual") {
-              counts[item.citySlug] = (counts[item.citySlug] ?? 0) + 1;
-            }
+      if (dynamicSeoRes.ok) {
+        const dynData = await dynamicSeoRes.json();
+        const ind = new Set<string>();
+        (dynData.seo ?? []).forEach((s: { citySlug: string; mode: string }) => {
+          if (s.mode === "individual") {
+            ind.add(s.citySlug.toLowerCase());
           }
-        );
-        setLocalAreaSeoMap(counts);
+        });
+        setIndividualCities(ind);
       }
     } finally {
       if (loadRef.current === loadId) setLoading(false);
@@ -292,11 +290,40 @@ export default function AdminCities() {
 
   return (
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      {/* Top Navigation Tabs */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
           <h1 className="text-3xl font-black text-gray-950">Cities</h1>
-          <p className="mt-2 text-gray-900">
-            Manage cities available on the platform.
+          <p className="mt-1 text-sm text-gray-600">
+            Manage cities available on the platform and monitor local area SEO status.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/city"
+            className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition shadow-sm"
+          >
+            City List
+          </Link>
+          <Link
+            href="/admin/city-seo"
+            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+          >
+            City SEO
+          </Link>
+          <Link
+            href="/admin/dynamic-seo"
+            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+          >
+            Dynamic SEO
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs text-gray-500">
+            Cities with a <span className="inline-flex items-center gap-1 font-semibold text-green-700"><span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>green dot</span> contain local areas with individual SEO content.
           </p>
         </div>
         <span className="rounded-full bg-gray-600 px-4 py-2 text-sm font-semibold text-white">
@@ -371,7 +398,6 @@ export default function AdminCities() {
               {filteredCities.map((city) => {
                 const cityIdentifier = city._id || city.slug;
                 const seo = seoMap[city.slug];
-                const localAreaSeoCount = localAreaSeoMap[city.slug] ?? 0;
                 return (
                   <tr
                     key={`${city.source}-${cityIdentifier}`}
@@ -388,22 +414,27 @@ export default function AdminCities() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-medium">
-                      <Link
-                        href={`/admin/city-seo?city=${encodeURIComponent(
-                          city.slug
-                        )}`}
-                        className="text-gray-950 underline-offset-2 hover:underline"
-                      >
-                        <span className="inline-flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        {individualCities.has(city.slug.toLowerCase()) ? (
+                          <span
+                            className="h-2.5 w-2.5 flex-none rounded-full bg-green-500 ring-4 ring-green-100 shadow-xs"
+                            title="This city contains local areas with custom individual SEO content"
+                          />
+                        ) : (
+                          <span
+                            className="h-2.5 w-2.5 flex-none rounded-full bg-gray-200"
+                            title="All local areas inherit from city"
+                          />
+                        )}
+                        <Link
+                          href={`/admin/city-seo?city=${encodeURIComponent(
+                            city.slug
+                          )}`}
+                          className="text-gray-950 underline-offset-2 hover:underline"
+                        >
                           {city.name}
-                          {localAreaSeoCount > 0 && (
-                            <span
-                              className="h-2.5 w-2.5 rounded-full bg-green-500"
-                              title={`${localAreaSeoCount} local area with individual SEO`}
-                            />
-                          )}
-                        </span>
-                      </Link>
+                        </Link>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-900">
                       {city.state || "—"}
@@ -438,6 +469,14 @@ export default function AdminCities() {
                           className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-gray-700"
                         >
                           Edit SEO
+                        </Link>
+                        <Link
+                          href={`/admin/dynamic-seo?city=${encodeURIComponent(
+                            city.slug
+                          )}`}
+                          className="rounded-full bg-green-700 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-green-800 transition shadow-xs"
+                        >
+                          Dynamic SEO
                         </Link>
                         <button
                           type="button"

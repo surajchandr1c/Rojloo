@@ -291,7 +291,7 @@ function AuthPage() {
 
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4 py-8 sm:py-10">
-      <section className="w-full max-w-md rounded-[2rem] bg-pink-100/85 p-5 sm:p-8 shadow-lg shadow-pink-200/40">
+      <section className="w-full max-w-md rounded-[2rem] bg-gray-100/85 p-5 sm:p-8 shadow-lg shadow-gray-200/40">
         <div className="mb-6 flex gap-2">
           <Button
             variant="soft"
@@ -311,10 +311,10 @@ function AuthPage() {
           </Button>
         </div>
 
-        <h1 className="text-2xl font-black text-red-950">
+        <h1 className="text-2xl font-black text-gray-950">
           {mode === "login" ? "Welcome back" : "Create your account"}
         </h1>
-        <p className="mt-2 text-sm text-red-900">
+        <p className="mt-2 text-sm text-gray-900">
           {mode === "login"
             ? "Log in to manage your ads and profile."
             : "Enter your details, verify your email, and create your account."}
@@ -326,7 +326,7 @@ function AuthPage() {
         >
           {mode === "signup" && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-red-900">
+              <label className="mb-1 block text-sm font-medium text-gray-900">
                 Name
               </label>
               <TextInput
@@ -339,7 +339,7 @@ function AuthPage() {
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-red-900">
+            <label className="mb-1 block text-sm font-medium text-gray-900">
               Email
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -376,16 +376,16 @@ function AuthPage() {
             {mode === "signup" && (
               <div className="mt-1.5">
                 {otpSent ? (
-                  <p className="text-xs font-semibold text-green-700">
+                  <p className="text-xs font-semibold text-gray-700">
                     ✓ Code sent to {otpEmail}. Check your inbox or spam folder.
                   </p>
                 ) : (
-                  <p className="text-xs text-red-800">
+                  <p className="text-xs text-gray-800">
                     Click <strong>&quot;Send Code&quot;</strong> to receive your 6-digit verification code.
                   </p>
                 )}
                 {otpError && (
-                  <p className="mt-1 text-xs font-semibold text-red-600">
+                  <p className="mt-1 text-xs font-semibold text-gray-600">
                     {otpError}
                   </p>
                 )}
@@ -395,7 +395,7 @@ function AuthPage() {
 
           {mode === "signup" && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-red-900">
+              <label className="mb-2 block text-sm font-medium text-gray-900">
                 Enter verification code
               </label>
               <div className="flex justify-between gap-1 sm:gap-2">
@@ -414,11 +414,11 @@ function AuthPage() {
                     onKeyDown={(e) => handleDigitKeyDown(index, e)}
                     onPaste={(e) => handleDigitPaste(index, e)}
                     aria-label={`Digit ${index + 1}`}
-                    className="h-12 w-9 sm:h-14 sm:w-12 rounded-xl sm:rounded-[20px] border border-pink-200 bg-pink-50 text-center text-xl sm:text-2xl font-bold text-red-950 outline-none placeholder:text-red-300 focus:border-red-500"
+                    className="h-12 w-9 sm:h-14 sm:w-12 rounded-xl sm:rounded-[20px] border border-gray-200 bg-gray-50 text-center text-xl sm:text-2xl font-bold text-gray-950 outline-none placeholder:text-gray-300 focus:border-gray-500"
                   />
                 ))}
               </div>
-              <div className="mt-2 flex items-center justify-center gap-2 text-sm text-red-900">
+              <div className="mt-2 flex items-center justify-center gap-2 text-sm text-gray-900">
                 {expiresIn > 0 ? (
                   <span>
                     Code expires in:{" "}
@@ -427,7 +427,7 @@ function AuthPage() {
                     </span>
                   </span>
                 ) : (
-                  <span className="font-medium text-red-700">
+                  <span className="font-medium text-gray-700">
                     This code has expired.
                   </span>
                 )}
@@ -440,7 +440,7 @@ function AuthPage() {
                   <button
                     type="button"
                     onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                    className="font-semibold text-red-600 underline underline-offset-2 hover:text-red-700"
+                    className="font-semibold text-gray-600 underline underline-offset-2 hover:text-gray-700"
                   >
                     Resend code
                   </button>
@@ -450,7 +450,7 @@ function AuthPage() {
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-red-900">
+            <label className="mb-1 block text-sm font-medium text-gray-900">
               Password
             </label>
             <div className="relative">
@@ -466,7 +466,7 @@ function AuthPage() {
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-red-900 hover:text-red-700"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-900 hover:text-gray-700"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -475,7 +475,7 @@ function AuthPage() {
 
           {mode === "signup" && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-red-900">
+              <label className="mb-1 block text-sm font-medium text-gray-900">
                 Confirm Password
               </label>
               <div className="relative">
@@ -491,7 +491,7 @@ function AuthPage() {
                   type="button"
                   onClick={() => setShowConfirmPassword((v) => !v)}
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-red-900 hover:text-red-700"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-900 hover:text-gray-700"
                 >
                   {showConfirmPassword ? "Hide" : "Show"}
                 </button>
@@ -501,7 +501,7 @@ function AuthPage() {
 
           {mode === "signup" && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-red-900">
+              <label className="mb-1 block text-sm font-medium text-gray-900">
                 Service
               </label>
               <div ref={serviceRef} className="relative">
@@ -510,11 +510,11 @@ function AuthPage() {
                   onClick={() => setServiceOpen((v) => !v)}
                   aria-haspopup="listbox"
                   aria-expanded={serviceOpen}
-                  className="flex w-full items-center justify-between rounded-[20px] border border-pink-200 bg-pink-50 px-4 py-3 text-left text-red-950 outline-none focus:border-red-500"
+                  className="flex w-full items-center justify-between rounded-[20px] border border-gray-200 bg-gray-50 px-4 py-3 text-left text-gray-950 outline-none focus:border-gray-500"
                 >
                   <span>{service}</span>
                   <span
-                    className={`text-red-700 transition-transform ${
+                    className={`text-gray-700 transition-transform ${
                       serviceOpen ? "rotate-180" : ""
                     }`}
                     aria-hidden="true"
@@ -525,7 +525,7 @@ function AuthPage() {
                 {serviceOpen && (
                   <ul
                     role="listbox"
-                    className="absolute z-20 mt-1 w-full overflow-hidden rounded-[20px] border border-pink-200 bg-white shadow-lg"
+                    className="absolute z-20 mt-1 w-full overflow-hidden rounded-[20px] border border-gray-200 bg-white shadow-lg"
                   >
                     {serviceOptions.map((name) => (
                       <li
@@ -541,8 +541,8 @@ function AuthPage() {
                           setService(name);
                           setServiceOpen(false);
                         }}
-                        className={`cursor-pointer px-4 py-3 text-red-950 hover:bg-pink-100 ${
-                          service === name ? "bg-pink-50 font-semibold" : ""
+                        className={`cursor-pointer px-4 py-3 text-gray-950 hover:bg-gray-100 ${
+                          service === name ? "bg-gray-50 font-semibold" : ""
                         }`}
                       >
                         {name}
@@ -555,12 +555,12 @@ function AuthPage() {
           )}
 
           {otpSent && otpError && (
-            <p className="text-sm font-medium text-red-700" role="alert">
+            <p className="text-sm font-medium text-gray-700" role="alert">
               {otpError}
             </p>
           )}
           {error && (
-            <p className="text-sm font-medium text-red-700" role="alert">
+            <p className="text-sm font-medium text-gray-700" role="alert">
               {error}
             </p>
           )}

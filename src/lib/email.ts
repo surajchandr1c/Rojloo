@@ -15,9 +15,6 @@ export type EmailResult =
   | { sent: true }
   | { sent: false; reason: string; error?: string };
 
-const FALLBACK_USER = "rojloofficial@gmail.com";
-const FALLBACK_PASS = "svsgsykzenlxtpmw";
-
 const transporterCache = new Map<string, nodemailer.Transporter>();
 
 function getPooledTransporter(
@@ -70,12 +67,8 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   const cleanTo = to.trim().toLowerCase();
   const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
   const port = Number(cleanEnv(process.env.SMTP_PORT) || "465");
-  const rawUser = cleanEnv(process.env.SMTP_USER);
-  const rawPass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
-
-  // Safe fallback to verified official Gmail credentials so Vercel can always send emails
-  const user = (rawUser && rawUser !== "suraj@gmail.com") ? rawUser : FALLBACK_USER;
-  const pass = (rawPass && rawPass !== "vanni12") ? rawPass : FALLBACK_PASS;
+  const user = cleanEnv(process.env.SMTP_USER);
+  const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
 
   const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "Rojlo";
   const customFrom = cleanEnv(process.env.SMTP_FROM);
@@ -86,7 +79,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     return {
       sent: false,
       reason: "missing-smtp-config",
-      error: "SMTP credentials are not configured on the server.",
+      error: "SMTP credentials are not configured on the server. Please configure SMTP_USER and SMTP_PASS in environment variables.",
     };
   }
 
@@ -94,7 +87,6 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     host.toLowerCase().includes("gmail") ||
     user.toLowerCase().endsWith("@gmail.com");
 
-  // Attempt 1: Send using primary credentials
   const primaryCacheKey = `${host}:${port}:${user}`;
   try {
     const transporter = getPooledTransporter(host, port, user, pass, isGmail);
@@ -111,7 +103,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     return { sent: true };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error(`[email] Attempt with primary credentials failed for ${cleanTo}:`, errMsg);
+    console.error(`[email] Attempt with SMTP credentials failed for ${cleanTo}:`, errMsg);
 
     transporterCache.delete(primaryCacheKey);
 
@@ -120,35 +112,6 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       errMsg.includes("BadCredentials") ||
       errMsg.includes("EAUTH") ||
       (typeof error === "object" && error !== null && (error as { code?: string }).code === "EAUTH");
-
-    // Attempt 2: If primary credentials failed and they differ from verified fallback, retry with fallback
-    if (isAuthError && (user !== FALLBACK_USER || pass !== FALLBACK_PASS)) {
-      console.warn("[email] Primary credentials rejected. Retrying with official verified fallback credentials...");
-      const fallbackCacheKey = `smtp.gmail.com:465:${FALLBACK_USER}`;
-      try {
-        const fallbackTransporter = getPooledTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
-        await fallbackTransporter.sendMail({
-          from: `"${siteName}" <${FALLBACK_USER}>`,
-          to: cleanTo,
-          replyTo: FALLBACK_USER,
-          subject,
-          text,
-          html: html ?? text,
-        });
-
-        console.log(`[email] Email sent successfully using fallback credentials to ${cleanTo}`);
-        return { sent: true };
-      } catch (fallbackError: unknown) {
-        transporterCache.delete(fallbackCacheKey);
-        const fbErrMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-        console.error("[email] Fallback credentials attempt also failed:", fbErrMsg);
-        return {
-          sent: false,
-          reason: "gmail-auth-failed",
-          error: "Gmail login rejected. Please verify SMTP_PASS is a 16-character Google App Password.",
-        };
-      }
-    }
 
     return {
       sent: false,
@@ -191,23 +154,23 @@ export function sendOtpEmail({
     `<!DOCTYPE html>`,
     `<html lang="en">`,
     `<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${otp} is your verification code</title></head>`,
-    `<body style="margin:0;padding:24px 12px;background-color:#fff1f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
+    `<body style="margin:0;padding:24px 12px;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
     `<!-- Preheader text visible in email previews / push notifications -->`,
     `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;mso-hide:all;">`,
     `${otp} is your ${siteName} verification code. Valid for ${expiresInMinutes} minutes.`,
     `</div>`,
     `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">`,
     `<tr><td align="center">`,
-    `<table role="presentation" style="max-width:480px;width:100%;background:#ffffff;border:1px solid #fecdd3;border-radius:24px;padding:32px 24px;box-shadow:0 4px 12px rgba(244,63,94,0.06);" border="0" cellpadding="0" cellspacing="0">`,
+    `<table role="presentation" style="max-width:480px;width:100%;background:#ffffff;border:1px solid #d1d5db;border-radius:24px;padding:32px 24px;box-shadow:0 4px 12px rgba(17,24,39,0.06);" border="0" cellpadding="0" cellspacing="0">`,
     `<tr><td style="text-align:center;">`,
-    `<h1 style="color:#881337;font-size:24px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;">${siteName}</h1>`,
-    `<p style="color:#4c0519;font-size:16px;line-height:24px;margin:0 0 20px;">Use the verification code below to verify your email address and continue.</p>`,
-    `<div style="background:#fff1f2;border:2px dashed #fb7185;border-radius:16px;padding:18px;margin:0 auto 20px;text-align:center;">`,
-    `<span style="font-size:36px;font-weight:800;letter-spacing:10px;color:#e11d48;font-family:monospace;display:inline-block;padding-left:10px;">${otp}</span>`,
+    `<h1 style="color:#111827;font-size:24px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;">${siteName}</h1>`,
+    `<p style="color:#374151;font-size:16px;line-height:24px;margin:0 0 20px;">Use the verification code below to verify your email address and continue.</p>`,
+    `<div style="background:#f3f4f6;border:2px dashed #9ca3af;border-radius:16px;padding:18px;margin:0 auto 20px;text-align:center;">`,
+    `<span style="font-size:36px;font-weight:800;letter-spacing:10px;color:#1f2937;font-family:monospace;display:inline-block;padding-left:10px;">${otp}</span>`,
     `</div>`,
-    `<p style="color:#881337;font-size:14px;line-height:20px;margin:0 0 8px;">Valid for <strong>${expiresInMinutes} minutes</strong>. Please do not share this code.</p>`,
-    `<p style="color:#9f1239;font-size:13px;line-height:18px;margin:0;">If you didn't request this code, you can safely ignore this email.</p>`,
-    `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #ffe4e6;font-size:12px;color:#9ca3af;text-align:center;">`,
+    `<p style="color:#111827;font-size:14px;line-height:20px;margin:0 0 8px;">Valid for <strong>${expiresInMinutes} minutes</strong>. Please do not share this code.</p>`,
+    `<p style="color:#4b5563;font-size:13px;line-height:18px;margin:0;">If you didn't request this code, you can safely ignore this email.</p>`,
+    `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">`,
     `This is an automated security verification message from ${siteName}.`,
     `</div>`,
     `</td></tr>`,
@@ -271,29 +234,29 @@ export function sendVipInviteEmail({
     `<!DOCTYPE html>`,
     `<html lang="en">`,
     `<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>VIP Access Granted</title></head>`,
-    `<body style="margin:0;padding:24px 12px;background-color:#fff1f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
+    `<body style="margin:0;padding:24px 12px;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
     `<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">`,
     `<tr><td align="center">`,
-    `<table role="presentation" style="max-width:520px;width:100%;background:#ffffff;border:1px solid #fecdd3;border-radius:24px;padding:36px 24px;box-shadow:0 4px 12px rgba(244,63,94,0.06);" border="0" cellpadding="0" cellspacing="0">`,
+    `<table role="presentation" style="max-width:520px;width:100%;background:#ffffff;border:1px solid #d1d5db;border-radius:24px;padding:36px 24px;box-shadow:0 4px 12px rgba(17,24,39,0.06);" border="0" cellpadding="0" cellspacing="0">`,
     `<tr><td style="text-align:center;">`,
-    `<h1 style="color:#881337;font-size:24px;font-weight:900;margin:0 0 8px;letter-spacing:-0.5px;">${siteName} VIP Portal</h1>`,
-    `<p style="color:#4c0519;font-size:15px;line-height:22px;margin:0 0 20px;">You have been assigned VIP access control for:</p>`,
-    `<div style="background:#fff1f2;border:2px solid #fb7185;border-radius:16px;padding:16px;margin:0 auto 20px;text-align:center;">`,
-    `<span style="font-size:20px;font-weight:800;color:#9f1239;display:block;">${areaLabel}</span>`,
-    `<span style="font-size:12px;color:#e11d48;font-weight:600;display:block;margin-top:4px;">Valid until ${expiryFormatted}</span>`,
+    `<h1 style="color:#111827;font-size:24px;font-weight:900;margin:0 0 8px;letter-spacing:-0.5px;">${siteName} VIP Portal</h1>`,
+    `<p style="color:#374151;font-size:15px;line-height:22px;margin:0 0 20px;">You have been assigned VIP access control for:</p>`,
+    `<div style="background:#f3f4f6;border:2px solid #9ca3af;border-radius:16px;padding:16px;margin:0 auto 20px;text-align:center;">`,
+    `<span style="font-size:20px;font-weight:800;color:#1f2937;display:block;">${areaLabel}</span>`,
+    `<span style="font-size:12px;color:#4b5563;font-weight:600;display:block;margin-top:4px;">Valid until ${expiryFormatted}</span>`,
     `</div>`,
-    `<div style="background:#fef2f2;border:1.5px solid #f87171;border-radius:14px;padding:18px 20px;margin:0 auto 24px;text-align:left;">`,
-    `<h3 style="margin:0 0 12px;font-size:14px;font-weight:800;color:#991b1b;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #fecaca;padding-bottom:8px;">Your VIP Login Details</h3>`,
-    `<p style="margin:6px 0;font-size:13px;color:#450a0a;"><strong>Email:</strong> <span style="font-family:monospace;font-size:14px;color:#1e1e1e;font-weight:600;">${to}</span></p>`,
-    `<p style="margin:6px 0;font-size:13px;color:#450a0a;"><strong>Password:</strong> <span style="font-family:monospace;font-size:14px;color:#991b1b;font-weight:700;">${phone}</span></p>`,
-    `<p style="margin:6px 0;font-size:13px;color:#450a0a;"><strong>VIP Page URL:</strong> <a href="${effectiveLoginUrl}" style="font-family:monospace;font-size:13px;color:#be123c;font-weight:600;word-break:break-all;">${effectiveLoginUrl}</a></p>`,
+    `<div style="background:#f9fafb;border:1.5px solid #9ca3af;border-radius:14px;padding:18px 20px;margin:0 auto 24px;text-align:left;">`,
+    `<h3 style="margin:0 0 12px;font-size:14px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #d1d5db;padding-bottom:8px;">Your VIP Login Details</h3>`,
+    `<p style="margin:6px 0;font-size:13px;color:#111827;"><strong>Email:</strong> <span style="font-family:monospace;font-size:14px;color:#1e1e1e;font-weight:600;">${to}</span></p>`,
+    `<p style="margin:6px 0;font-size:13px;color:#111827;"><strong>Password:</strong> <span style="font-family:monospace;font-size:14px;color:#374151;font-weight:700;">${phone}</span></p>`,
+    `<p style="margin:6px 0;font-size:13px;color:#111827;"><strong>VIP Page URL:</strong> <a href="${effectiveLoginUrl}" style="font-family:monospace;font-size:13px;color:#4b5563;font-weight:600;word-break:break-all;">${effectiveLoginUrl}</a></p>`,
     `</div>`,
     `<div style="margin:24px 0;">`,
-    `<a href="${effectiveLoginUrl}" style="background-color:#450a0a;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:14px;font-weight:700;font-size:15px;display:inline-block;box-shadow:0 4px 10px rgba(69,10,10,0.25);">Login to VIP Panel &rarr;</a>`,
+    `<a href="${effectiveLoginUrl}" style="background-color:#111827;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:14px;font-weight:700;font-size:15px;display:inline-block;box-shadow:0 4px 10px rgba(17,24,39,0.25);">Login to VIP Panel &rarr;</a>`,
     `</div>`,
-    `<p style="color:#881337;font-size:13px;line-height:20px;margin:20px 0 8px;">Or copy and paste this link in your browser:</p>`,
-    `<p style="margin:0 0 20px;"><a href="${effectiveLoginUrl}" style="color:#be123c;font-weight:600;font-size:13px;word-break:break-all;">${effectiveLoginUrl}</a></p>`,
-    `<div style="margin-top:28px;padding-top:16px;border-top:1px solid #ffe4e6;font-size:12px;color:#9ca3af;text-align:center;">`,
+    `<p style="color:#374151;font-size:13px;line-height:20px;margin:20px 0 8px;">Or copy and paste this link in your browser:</p>`,
+    `<p style="margin:0 0 20px;"><a href="${effectiveLoginUrl}" style="color:#4b5563;font-weight:600;font-size:13px;word-break:break-all;">${effectiveLoginUrl}</a></p>`,
+    `<div style="margin-top:28px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">`,
     `This is an automated VIP notification from ${siteName}. If you were not expecting this, please contact support.`,
     `</div>`,
     `</td></tr>`,

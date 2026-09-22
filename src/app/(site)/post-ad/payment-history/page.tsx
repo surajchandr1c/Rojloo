@@ -93,7 +93,7 @@ export default function Page() {
     <main className="px-4 py-10 sm:px-6 lg:px-8">
       <SectionPanel>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-red-950 sm:text-4xl">
+          <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">
             Payment History
           </h1>
           <Button
@@ -108,7 +108,7 @@ export default function Page() {
         {loading ? (
           <PaymentHistorySkeleton />
         ) : history.length === 0 ? (
-          <p className="mt-6 rounded-[1.5rem] bg-pink-50 p-5 text-red-900">
+          <p className="mt-6 rounded-[1.5rem] bg-gray-50 p-5 text-gray-900">
             You have no payments yet.
           </p>
         ) : (
@@ -116,10 +116,10 @@ export default function Page() {
             {history.map((item) => (
               <div
                 key={item._id || item.transactionId}
-                className="rounded-[1.5rem] border border-red-200 bg-pink-50 p-5"
+                className="rounded-[1.5rem] border border-gray-200 bg-gray-50 p-5"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2 text-sm text-red-900 min-w-0 flex-1">
+                  <div className="space-y-2 text-sm text-gray-900 min-w-0 flex-1">
                     <p className="break-all">
                       <span className="font-semibold">Transaction ID:</span> {item.transactionId}
                     </p>
@@ -134,10 +134,10 @@ export default function Page() {
                       <span
                         className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
                           item.status === "confirmed"
-                            ? "bg-green-200 text-green-950 ring-1 ring-green-300"
+                            ? "bg-gray-200 text-gray-950 ring-1 ring-gray-300"
                             : item.status === "declined"
-                              ? "bg-red-200 text-red-950 ring-1 ring-red-300"
-                              : "bg-amber-200 text-amber-950 ring-1 ring-amber-300"
+                              ? "bg-gray-200 text-gray-950 ring-1 ring-gray-300"
+                              : "bg-gray-200 text-gray-950 ring-1 ring-gray-300"
                         }`}
                       >
                         {item.status === "confirmed"
@@ -148,14 +148,14 @@ export default function Page() {
                       </span>
                     </p>
                     {item.status === "declined" && (
-                      <div className="mt-2 rounded-xl border border-red-200 bg-red-100/70 px-3 py-2 text-xs text-red-900">
-                        <span className="font-bold text-red-950">Message: </span>
+                      <div className="mt-2 rounded-xl border border-gray-200 bg-gray-100/70 px-3 py-2 text-xs text-gray-900">
+                        <span className="font-bold text-gray-950">Message: </span>
                         {item.declinedReason || "Wrong Transaction ID"}
                       </div>
                     )}
                   </div>
 
-                  <div className="text-sm text-red-700">
+                  <div className="text-sm text-gray-700">
                     <p>
                       <span className="font-semibold">Date:</span>{" "}
                       {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "—"}

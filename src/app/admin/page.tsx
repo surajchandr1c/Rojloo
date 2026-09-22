@@ -94,20 +94,20 @@ export default function AdminDashboard() {
 
   return (
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <h1 className="text-3xl font-black text-red-950">Dashboard</h1>
-      <p className="mt-2 text-red-900">Overview of your platform and payment activity.</p>
+      <h1 className="text-3xl font-black text-gray-950">Dashboard</h1>
+      <p className="mt-2 text-gray-900">Overview of your platform and payment activity.</p>
 
       <div className="mt-8">
-        <h2 className="mb-4 text-xl font-bold text-red-950">Platform Summary</h2>
+        <h2 className="mb-4 text-xl font-bold text-gray-950">Platform Summary</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {baseCards.map((card) => (
             <Link
               key={card.label}
               href={card.href}
-              className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-red-200"
+              className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-gray-200"
             >
-              <p className="text-sm font-medium text-red-900">{card.label}</p>
-              <div className="mt-2 text-3xl sm:text-4xl font-black text-red-950 break-words">
+              <p className="text-sm font-medium text-gray-900">{card.label}</p>
+              <div className="mt-2 text-3xl sm:text-4xl font-black text-gray-950 break-words">
                 {loading ? <AdminStatSkeleton /> : card.value}
               </div>
             </Link>
@@ -116,15 +116,15 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-10">
-        <h2 className="mb-4 text-xl font-bold text-red-950">Payment Summary</h2>
+        <h2 className="mb-4 text-xl font-bold text-gray-950">Payment Summary</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paymentCards.map((card) => (
             <div
               key={card.label}
-              className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-red-200"
+              className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-gray-200"
             >
-              <p className="text-sm font-medium text-red-900">{card.label}</p>
-              <div className="mt-3 text-2xl sm:text-3xl font-black text-red-950 break-words">
+              <p className="text-sm font-medium text-gray-900">{card.label}</p>
+              <div className="mt-3 text-2xl sm:text-3xl font-black text-gray-950 break-words">
                 {loading ? <AdminStatSkeleton /> : card.value}
               </div>
             </div>

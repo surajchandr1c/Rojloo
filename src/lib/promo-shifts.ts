@@ -294,7 +294,7 @@ export const TIER_RANK_MAP: Record<PromoTier, TierRankInfo> = {
     minRank: 1,
     maxRank: 3,
     badge: "👑 Top 1-3 VIP",
-    badgeClass: "bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 text-white border-purple-300",
+    badgeClass: "bg-gradient-to-r from-gray-700 via-gray-700 to-gray-700 text-white border-gray-300",
   },
   gold: {
     tier: "gold",
@@ -303,7 +303,7 @@ export const TIER_RANK_MAP: Record<PromoTier, TierRankInfo> = {
     minRank: 4,
     maxRank: 6,
     badge: "🥇 Top 4-6 VIP",
-    badgeClass: "bg-gradient-to-r from-amber-500 to-yellow-600 text-white border-amber-300",
+    badgeClass: "bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-300",
   },
   silver: {
     tier: "silver",
@@ -321,7 +321,7 @@ export const TIER_RANK_MAP: Record<PromoTier, TierRankInfo> = {
     minRank: 10,
     maxRank: 15,
     badge: "🥉 Top 10-15 VIP",
-    badgeClass: "bg-gradient-to-r from-amber-800 to-yellow-900 text-white border-amber-600",
+    badgeClass: "bg-gradient-to-r from-gray-800 to-gray-900 text-white border-gray-600",
   },
 };
 

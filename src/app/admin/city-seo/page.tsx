@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
@@ -145,12 +145,6 @@ function CitySeoContent() {
   const [allCities, setAllCities] = useState<
     { name: string; slug: string; state?: string }[]
   >([]);
-  const [allLocalAreas, setAllLocalAreas] = useState<
-    { name: string; slug: string; cityName: string; citySlug: string }[]
-  >([]);
-  const [localAreaSeo, setLocalAreaSeo] = useState<
-    { citySlug: string; areaSlug: string; mode?: string }[]
-  >([]);
   const [activeSlug, setActiveSlug] = useState(editSlug || "");
   const [stateName, setStateName] = useState("");
 
@@ -181,13 +175,20 @@ function CitySeoContent() {
     text: string;
   } | null>(null);
 
+  const [localAreas, setLocalAreas] = useState<
+    { name: string; slug: string; cityName: string; citySlug: string }[]
+  >([]);
+  const [localSeoList, setLocalSeoList] = useState<
+    { citySlug: string; areaSlug: string; mode: "inherit" | "individual" }[]
+  >([]);
+
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       setLoading(true);
       try {
-        const [citiesRes, seoRes, localAreasRes, localAreaSeoRes] = await Promise.all([
+        const [citiesRes, seoRes, areasRes, localSeoRes] = await Promise.all([
           fetch("/api/admin/cities", { credentials: "include" }).then((r) =>
             r.json()
           ),
@@ -197,11 +198,14 @@ function CitySeoContent() {
           fetch("/api/admin/local-areas", { credentials: "include" }).then((r) =>
             r.json()
           ),
-          fetch("/api/admin/local-area-seo", { credentials: "include" }).then((r) =>
+          fetch("/api/admin/dynamic-seo", { credentials: "include" }).then((r) =>
             r.json()
           ),
         ]);
         if (cancelled) return;
+
+        setLocalAreas((areasRes.localAreas ?? []) as { name: string; slug: string; cityName: string; citySlug: string }[]);
+        setLocalSeoList((localSeoRes.seo ?? []) as { citySlug: string; areaSlug: string; mode: "inherit" | "individual" }[]);
 
         const fetchedCities = (citiesRes.cities ?? []) as {
           name: string;
@@ -216,8 +220,6 @@ function CitySeoContent() {
           return true;
         });
         setAllCities(uniqueCities);
-        setAllLocalAreas(localAreasRes.localAreas ?? []);
-        setLocalAreaSeo(localAreaSeoRes.seo ?? []);
 
         const targetSlug = editSlug || activeSlug;
         if (targetSlug) {
@@ -890,22 +892,64 @@ function CitySeoContent() {
   const passed = checks.filter((c) => c.ok).length;
   const score = Math.round((passed / checks.length) * 100);
 
+  const currentCitySlug = (
+    activeSlug ||
+    editSlug ||
+    urlSlug ||
+    slugify(name)
+  ).toLowerCase();
+
+  const currentCityLocalAreas = useMemo(() => {
+    if (!currentCitySlug) return [];
+    return localAreas.filter(
+      (a) =>
+        a.citySlug.toLowerCase() === currentCitySlug ||
+        a.cityName.toLowerCase() === name.trim().toLowerCase()
+    );
+  }, [localAreas, currentCitySlug, name]);
+
   if (loading) {
     return <AdminCitySeoSkeleton />;
   }
 
   return (
     <main className="p-4 sm:p-6 lg:p-8 min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Top Navigation Bar */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
           <h1 className="text-3xl font-black text-gray-950">
             {isEdit ? `SEO Editor — ${name || editSlug}` : "Add New City & SEO"}
           </h1>
-          <p className="mt-2 text-gray-900">
-            Write and optimise SEO content for the city page.
+          <p className="mt-1 text-sm text-gray-600">
+            Write and optimise SEO content for the city page and configure local area inheritance.
           </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/city"
+            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+          >
+            City List
+          </Link>
+          <Link
+            href="/admin/city-seo"
+            className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition shadow-sm"
+          >
+            City SEO
+          </Link>
+          <Link
+            href="/admin/dynamic-seo"
+            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
+          >
+            Dynamic SEO
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
           <span
-            className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
               status === "published"
                 ? "bg-gray-100 text-gray-700"
                 : "bg-gray-100 text-gray-700"
@@ -972,50 +1016,6 @@ function CitySeoContent() {
         >
           ← Back to Cities
         </Link>
-      )}
-
-      {allLocalAreas.length > 0 && (
-        <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold text-gray-950">Local Area SEO</h2>
-              <p className="mt-1 text-sm text-gray-700">
-                Edit local-area SEO or let an area inherit its parent city content.
-              </p>
-            </div>
-            <Link
-              href="/admin/local-area-seo"
-              className="rounded-full bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900"
-            >
-              Open Dynamic SEO
-            </Link>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {allLocalAreas.map((area) => {
-              const hasIndividualSeo = localAreaSeo.some(
-                (item) =>
-                  item.citySlug === area.citySlug &&
-                  item.areaSlug === area.slug &&
-                  item.mode === "individual"
-              );
-              return (
-                <Link
-                  key={`${area.citySlug}-${area.slug}`}
-                  href={`/admin/local-area-seo?city=${encodeURIComponent(area.citySlug)}&area=${encodeURIComponent(area.slug)}`}
-                  className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
-                >
-                  <span className="min-w-0 truncate">
-                    {area.name} <span className="font-normal text-gray-600">({area.cityName})</span>
-                  </span>
-                  <span className="ml-2 flex shrink-0 items-center gap-2">
-                    {hasIndividualSeo && <span className="h-2.5 w-2.5 rounded-full bg-green-500" title="Individual SEO saved" />}
-                    <span className="text-xs text-gray-600">Edit SEO</span>
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
       )}
 
       {error && (
@@ -1155,6 +1155,112 @@ function CitySeoContent() {
                 />
               </Field>
             </div>
+          </section>
+
+          {/* Local Area List Section */}
+          <section className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3 mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-950 flex items-center gap-2">
+                  <span>Local Areas in {name || activeSlug || "This City"}</span>
+                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">
+                    {currentCityLocalAreas.length} {currentCityLocalAreas.length === 1 ? "area" : "areas"}
+                  </span>
+                </h2>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Manage individual SEO or city inheritance for each local area. Areas with individual custom SEO show a{" "}
+                  <span className="inline-flex items-center gap-1 font-semibold text-green-700">
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    green dot
+                  </span>
+                  .
+                </p>
+              </div>
+              <Link
+                href={`/admin/dynamic-seo?city=${encodeURIComponent(currentCitySlug || "")}`}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 hover:bg-gray-50 transition shadow-xs"
+              >
+                Manage in Dynamic SEO →
+              </Link>
+            </div>
+
+            {currentCityLocalAreas.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-6 text-center">
+                <p className="text-xs text-gray-600">
+                  No local areas found for {name || activeSlug || "this city"}. You can add local areas under City List or configure Dynamic SEO.
+                </p>
+                <Link
+                  href="/admin/dynamic-seo"
+                  className="mt-2 inline-block text-xs font-semibold text-blue-600 hover:underline"
+                >
+                  Go to Dynamic SEO →
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {currentCityLocalAreas.map((area) => {
+                  const isInd = localSeoList.some(
+                    (s) =>
+                      s.citySlug.toLowerCase() === area.citySlug.toLowerCase() &&
+                      s.areaSlug.toLowerCase() === area.slug.toLowerCase() &&
+                      s.mode === "individual"
+                  );
+                  const cityNameDisplay = name || area.cityName || activeSlug;
+
+                  return (
+                    <div
+                      key={`${area.citySlug}-${area.slug}`}
+                      className="flex flex-wrap items-center justify-between gap-3 py-3"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {isInd ? (
+                          <span
+                            className="h-2.5 w-2.5 flex-none rounded-full bg-green-500 ring-2 ring-green-200 shadow-xs"
+                            title="Individual SEO content active"
+                          />
+                        ) : (
+                          <span
+                            className="h-2 w-2 flex-none rounded-full bg-gray-300"
+                            title="Inheriting parent city SEO"
+                          />
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {area.name}{" "}
+                            <span className="text-xs font-normal text-gray-500">
+                              ({cityNameDisplay})
+                            </span>
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Status:{" "}
+                            {isInd ? (
+                              <span className="text-green-700 font-semibold">
+                                Individual Custom SEO
+                              </span>
+                            ) : (
+                              <span className="text-gray-600">
+                                Inherits from {cityNameDisplay}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/dynamic-seo?city=${encodeURIComponent(
+                            area.citySlug
+                          )}&area=${encodeURIComponent(area.slug)}`}
+                          className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-gray-800 transition shadow-xs"
+                        >
+                          Edit SEO
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">

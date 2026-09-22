@@ -9,9 +9,15 @@ function cleanEnv(val?: string): string {
 function getJwtSecret(): string {
   const secret = cleanEnv(process.env.JWT_SECRET);
   if (secret) {
+    if (secret.length < 32 && process.env.NODE_ENV === "production") {
+      console.warn("[jwt] WARNING: JWT_SECRET should be at least 32 characters long for production security.");
+    }
     return secret;
   }
-  return "rojlo-jwt-auth-session-secret-key-32-chars-minimum-fallback";
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[jwt] CRITICAL: JWT_SECRET is not configured in environment variables. Please configure a strong random secret.");
+  }
+  return "rojlo-dev-local-jwt-secret-key-do-not-use-in-production-32c";
 }
 
 const expiresIn = process.env.JWT_TOKEN_EXPIRY || "30d";

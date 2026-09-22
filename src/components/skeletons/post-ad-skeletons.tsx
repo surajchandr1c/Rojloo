@@ -6,7 +6,7 @@ export function YourAdsListSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <article
           key={i}
-          className="flex flex-col justify-between gap-4 rounded-[1.5rem] bg-pink-50 p-5 sm:flex-row sm:items-center"
+          className="flex flex-col justify-between gap-4 rounded-[1.5rem] bg-gray-50 p-5 sm:flex-row sm:items-center"
         >
           <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-6 w-48 rounded-md sm:w-64" />
@@ -33,7 +33,7 @@ export function PaymentHistorySkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-[1.5rem] border border-red-200 bg-pink-50 p-5"
+          className="rounded-[1.5rem] border border-gray-200 bg-gray-50 p-5"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1 space-y-2">
@@ -65,7 +65,7 @@ export function PaymentHistorySkeleton() {
 export function PaymentOptionsSkeleton() {
   return (
     <div
-      className="mt-6 rounded-xl bg-red-50 p-6"
+      className="mt-6 rounded-xl bg-gray-50 p-6"
       aria-busy="true"
       aria-label="Loading payment options"
     >
@@ -88,8 +88,8 @@ export function ProfileSkeleton() {
   return (
     <div className="mt-6 space-y-4" aria-busy="true" aria-label="Loading profile">
       {fields.map((label) => (
-        <div key={label} className="rounded-2xl bg-pink-50 p-4">
-          <p className="text-sm font-semibold text-red-700">{label}</p>
+        <div key={label} className="rounded-2xl bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-700">{label}</p>
           <Skeleton className="mt-2 h-5 w-44 rounded-md" />
         </div>
       ))}

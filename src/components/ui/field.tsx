@@ -8,7 +8,7 @@ import {
 import { cn } from "@/lib/cn";
 
 const fieldBase =
-  "w-full rounded-[20px] border border-pink-200 bg-pink-50 px-4 py-3 text-red-950 outline-none placeholder:text-red-300 focus:border-red-500";
+  "w-full rounded-[20px] border border-gray-200 bg-gray-50 px-4 py-3 text-gray-950 outline-none placeholder:text-gray-300 focus:border-gray-500";
 
 export function TextInput({
   className,
@@ -46,7 +46,7 @@ export function FileInput({ className, ...props }: InputHTMLAttributes<HTMLInput
     <input
       type="file"
       className={cn(
-        "block w-full rounded-[20px] border border-pink-200 bg-pink-50 px-4 py-3 text-red-950 outline-none file:mr-3 file:rounded-[20px] file:border-0 file:bg-red-600 file:px-4 file:py-2 file:font-semibold file:text-white focus:border-red-500",
+        "block w-full rounded-[20px] border border-gray-200 bg-gray-50 px-4 py-3 text-gray-950 outline-none file:mr-3 file:rounded-[20px] file:border-0 file:bg-gray-600 file:px-4 file:py-2 file:font-semibold file:text-white focus:border-gray-500",
         className
       )}
       {...props}

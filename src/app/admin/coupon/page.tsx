@@ -190,26 +190,26 @@ export default function CouponPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
+    <main className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
       <div className="mx-auto max-w-4xl">
-        <h1 className="text-3xl font-black text-red-950">Coupon Management</h1>
+        <h1 className="text-3xl font-black text-gray-950">Coupon Management</h1>
 
         {error && (
-          <div className="mt-4 rounded-lg bg-red-100 p-4 text-red-900">
+          <div className="mt-4 rounded-lg bg-gray-100 p-4 text-gray-900">
             {error}
           </div>
         )}
 
         {/* Add/Edit Coupon Form */}
-        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
-          <h2 className="text-xl font-bold text-red-950">
+        <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+          <h2 className="text-xl font-bold text-gray-950">
             {editingId ? "Edit Coupon" : "Add New Coupon"}
           </h2>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   Coupon Code
                 </label>
                 <input
@@ -217,19 +217,19 @@ export default function CouponPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   placeholder="e.g., SUMMER50"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 placeholder-gray-300 focus:border-gray-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   Discount Type
                 </label>
                 <select
                   value={discountType}
                   onChange={(e) => setDiscountType(e.target.value as "percentage" | "fixed")}
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 focus:border-red-500 focus:outline-none"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 focus:border-gray-500 focus:outline-none"
                 >
                   <option value="percentage">Percentage (%)</option>
                   <option value="fixed">Fixed Amount (₹)</option>
@@ -239,7 +239,7 @@ export default function CouponPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   Discount Value
                 </label>
                 <input
@@ -249,13 +249,13 @@ export default function CouponPage() {
                   placeholder={discountType === "percentage" ? "e.g., 10" : "e.g., 100"}
                   min="0"
                   step={discountType === "percentage" ? "0.5" : "1"}
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 placeholder-gray-300 focus:border-gray-500 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   Minimum Purchase (₹)
                 </label>
                 <input
@@ -264,14 +264,14 @@ export default function CouponPage() {
                   onChange={(e) => setMinPurchase(e.target.value ? Number(e.target.value) : "")}
                   placeholder="Optional"
                   min="0"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 placeholder-gray-300 focus:border-gray-500 focus:outline-none"
                 />
               </div>
             </div>
 
             {discountType === "percentage" && (
               <div>
-                <label className="block text-sm font-semibold text-red-950">
+                <label className="block text-sm font-semibold text-gray-950">
                   Maximum Discount (₹)
                 </label>
                 <input
@@ -280,20 +280,20 @@ export default function CouponPage() {
                   onChange={(e) => setMaxDiscount(e.target.value ? Number(e.target.value) : "")}
                   placeholder="Optional"
                   min="0"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 placeholder-gray-300 focus:border-gray-500 focus:outline-none"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-semibold text-red-950">
+              <label className="block text-sm font-semibold text-gray-950">
                 Valid Till (Date)
               </label>
               <input
                 type="date"
                 value={validTill}
                 onChange={(e) => setValidTill(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 focus:border-red-500 focus:outline-none"
+                className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-950 focus:border-gray-500 focus:outline-none"
               />
             </div>
 
@@ -301,7 +301,7 @@ export default function CouponPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 rounded-lg bg-red-600 px-6 py-2.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                className="flex-1 rounded-lg bg-gray-600 px-6 py-2.5 font-semibold text-white hover:bg-gray-700 disabled:opacity-50"
               >
                 {submitting ? "Saving..." : editingId ? "Update Coupon" : "Add Coupon"}
               </button>
@@ -320,34 +320,34 @@ export default function CouponPage() {
 
         {/* Coupons List */}
         <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-bold text-red-950">Existing Coupons</h2>
+          <h2 className="text-xl font-bold text-gray-950">Existing Coupons</h2>
 
           {loading ? (
             <AdminCouponCardsSkeleton />
           ) : coupons.length === 0 ? (
-            <p className="text-red-900">No coupons added yet.</p>
+            <p className="text-gray-900">No coupons added yet.</p>
           ) : (
             <div className="space-y-3">
               {coupons.map((coupon) => (
                 <div
                   key={coupon._id}
-                  className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
+                  className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <h3 className="text-lg font-bold text-red-950 break-all">
+                        <h3 className="text-lg font-bold text-gray-950 break-all">
                           {coupon.code}
                         </h3>
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           coupon.active
-                            ? "bg-green-100 text-green-900"
-                            : "bg-red-100 text-red-900"
+                            ? "bg-gray-100 text-gray-900"
+                            : "bg-gray-100 text-gray-900"
                         }`}>
                           {coupon.active ? "Active" : "Inactive"}
                         </span>
                       </div>
-                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm text-red-900">
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm text-gray-900">
                         <div>
                           <span className="font-semibold">Discount:</span>{" "}
                           {coupon.discountType === "percentage"
@@ -385,8 +385,8 @@ export default function CouponPage() {
                         disabled={togglingId === coupon._id}
                         className={`rounded-lg px-4 py-2 text-sm font-semibold ${
                           coupon.active
-                            ? "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
-                            : "bg-green-100 text-green-900 hover:bg-green-200"
+                            ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                            : "bg-gray-100 text-gray-900 hover:bg-gray-200"
                         } disabled:opacity-60`}
                       >
                         {togglingId === coupon._id

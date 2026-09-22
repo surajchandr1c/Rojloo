@@ -17,27 +17,27 @@ export default function ProfileSection({
         <ProfileSkeleton />
       ) : (
         <div className="mt-6 space-y-4">
-        <div className="rounded-2xl bg-pink-50 p-4">
-          <p className="text-sm font-semibold text-red-700">Name</p>
-          <p className="mt-1 font-semibold text-red-950 break-words">
+        <div className="rounded-2xl bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-700">Name</p>
+          <p className="mt-1 font-semibold text-gray-950 break-words">
             {profile?.name ?? "—"}
           </p>
         </div>
-        <div className="rounded-2xl bg-pink-50 p-4">
-          <p className="text-sm font-semibold text-red-700">Email</p>
-          <p className="mt-1 font-semibold text-red-950 break-all">
+        <div className="rounded-2xl bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-700">Email</p>
+          <p className="mt-1 font-semibold text-gray-950 break-all">
             {profile?.email ?? "—"}
           </p>
         </div>
-        <div className="rounded-2xl bg-pink-50 p-4">
-          <p className="text-sm font-semibold text-red-700">Service</p>
-          <p className="mt-1 font-semibold text-red-950">
+        <div className="rounded-2xl bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-700">Service</p>
+          <p className="mt-1 font-semibold text-gray-950">
             {profile?.service ?? "—"}
           </p>
         </div>
-        <div className="rounded-2xl bg-pink-50 p-4">
-          <p className="text-sm font-semibold text-red-700">Member Since</p>
-          <p className="mt-1 font-semibold text-red-950">
+        <div className="rounded-2xl bg-gray-50 p-4">
+          <p className="text-sm font-semibold text-gray-700">Member Since</p>
+          <p className="mt-1 font-semibold text-gray-950">
             {profile?.createdAt ? formatDisplayDate(profile.createdAt) : "—"}
           </p>
         </div>

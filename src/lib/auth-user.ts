@@ -43,21 +43,7 @@ export async function getAuthenticatedUser(
     if (user) return user;
   }
 
-  try {
-    const parsed = JSON.parse(decodeURIComponent(raw));
-    if (parsed?._id) {
-      const user = await findUserById(parsed._id);
-      if (user) return user;
-    }
-    if (parsed?.email) {
-      const user = await findUserByEmail(parsed.email);
-      if (user) return user;
-    }
-  } catch {
-    // Non-JSON
-  }
-
-  return findUserById(raw);
+  return null;
 }
 
 export async function getAuthenticatedUserId(

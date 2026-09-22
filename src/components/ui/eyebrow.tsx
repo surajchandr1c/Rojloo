@@ -5,7 +5,7 @@ export function Eyebrow({ className, ...props }: HTMLAttributes<HTMLParagraphEle
   return (
     <p
       className={cn(
-        "text-sm font-semibold uppercase tracking-[0.3em] text-red-700",
+        "text-sm font-semibold uppercase tracking-[0.3em] text-gray-700",
         className
       )}
       {...props}

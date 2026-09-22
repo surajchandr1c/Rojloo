@@ -20,9 +20,9 @@ export function ActionButton({
   const baseClasses = "rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60";
 
   const variantClasses = {
-    edit: "bg-blue-100 text-blue-900 hover:bg-blue-200",
-    delete: "bg-red-100 text-red-900 hover:bg-red-200",
-    default: "bg-red-100 text-red-900 hover:bg-red-200",
+    edit: "bg-gray-100 text-gray-900 hover:bg-gray-200",
+    delete: "bg-gray-100 text-gray-900 hover:bg-gray-200",
+    default: "bg-gray-100 text-gray-900 hover:bg-gray-200",
   };
 
   return (

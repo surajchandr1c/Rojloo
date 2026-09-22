@@ -30,16 +30,16 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main>
-      <section className="bg-pink-200">
+      <section className="bg-gray-200">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-red-700">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
               get you fun
             </p>
-            <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-red-950 break-words">
+            <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-gray-950 break-words">
               Roj Lo Moj Lo Na Mile Khoj Lo
             </h1>
-            <p className="mx-auto mt-4 max-w-xl text-base sm:text-lg leading-7 sm:leading-8 text-red-900">
+            <p className="mx-auto mt-4 max-w-xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
               Rojlo connects you with call girls, male escorts, wellness, and the
               best local spots across Indian cities.
             </p>
@@ -59,14 +59,14 @@ export default function Home() {
       </section>
 
       <section className="px-4 py-8 sm:py-12 sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[2rem] bg-pink-100/85 p-5 sm:p-8 lg:p-10 shadow-lg shadow-pink-200/40">
-          <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-red-700">
+        <div className="mx-auto max-w-6xl rounded-[2rem] bg-gray-100/85 p-5 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
             Services
           </p>
-          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-black text-red-950">
+          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-black text-gray-950">
             What you can find
           </h2>
-          <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-red-900">
+          <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
             Rojlo brings together the everyday services people need, with a
             simple way to post your own ad.
           </p>
@@ -75,7 +75,7 @@ export default function Home() {
             {serviceCards.map((item) => (
               <article
                 key={item.title}
-                className="overflow-hidden rounded-[1.75rem] bg-white/90 shadow-md shadow-pink-200/30"
+                className="overflow-hidden rounded-[1.75rem] bg-white/90 shadow-md shadow-gray-200/30"
               >
                 <div className="relative h-56 overflow-hidden rounded-[1.25rem]">
                   <Image
@@ -86,10 +86,10 @@ export default function Home() {
                     sizes="(max-width: 1024px) 50vw, 33vw"
                   />
                 </div>
-                <h3 className="mt-4 px-6 text-xl font-black text-red-950">
+                <h3 className="mt-4 px-6 text-xl font-black text-gray-950">
                   {item.title}
                 </h3>
-                <p className="mt-2 px-6 pb-6 text-sm leading-7 text-red-900">
+                <p className="mt-2 px-6 pb-6 text-sm leading-7 text-gray-900">
                   {item.description}
                 </p>
                 <div className="px-6 pb-6">
@@ -104,7 +104,7 @@ export default function Home() {
       </section>
 
       <section className="px-4 pb-12 sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-[2rem] bg-red-950 p-6 sm:p-8 lg:p-10 text-center text-white">
+        <div className="mx-auto max-w-6xl rounded-[2rem] bg-gray-950 p-6 sm:p-8 lg:p-10 text-center text-white">
           <h2 className="text-2xl font-black !text-white sm:text-3xl">
             Ready to get started?
           </h2>

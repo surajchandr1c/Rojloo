@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       telegram: telegram ? String(telegram).trim() : undefined,
       about: String(about).trim(),
       images: imageList,
-      status: status ? String(status) : "Active",
+      status: typeof status === "string" && ["Active", "suspended"].includes(status) ? status : "Active",
       serviceRates: rateList,
     });
 
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     telegram: telegram ? String(telegram).trim() : undefined,
     about: String(about).trim(),
     images: imageList,
-    status: status ? String(status) : "Active",
+    status: "Active",
     serviceRates: rateList,
   });
 

@@ -49,10 +49,10 @@ export default function Contact() {
       <JsonLd data={breadcrumbSchema} />
       <SectionPanel>
         <Eyebrow>Contact</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950 sm:text-4xl">
+        <h1 className="mt-3 text-3xl font-black text-gray-950 sm:text-4xl">
           Contact Us
         </h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-red-900">
+        <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-900">
           Have a question or need help? Reach out to our team using the details
           below.
         </p>
@@ -62,7 +62,7 @@ export default function Contact() {
             <Eyebrow className="tracking-[0.25em]">Email</Eyebrow>
             <a
               href={`mailto:${siteInfo.email}`}
-              className="mt-3 block text-lg sm:text-xl font-black !text-red-950 break-all"
+              className="mt-3 block text-lg sm:text-xl font-black !text-gray-950 break-all"
             >
               {siteInfo.email}
             </a>
@@ -72,7 +72,7 @@ export default function Contact() {
             <Eyebrow className="tracking-[0.25em]">Contact</Eyebrow>
             <a
               href={`tel:${siteInfo.phone.replace(/\s/g, "")}`}
-              className="mt-3 block text-xl font-black !text-red-950"
+              className="mt-3 block text-xl font-black !text-gray-950"
             >
               {siteInfo.phone}
             </a>

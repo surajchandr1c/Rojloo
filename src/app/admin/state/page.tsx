@@ -656,19 +656,19 @@ export default function AdminStates() {
       {/* Page Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black text-red-950">States & Locations</h1>
-          <p className="mt-2 text-red-900">
+          <h1 className="text-3xl font-black text-gray-950">States & Locations</h1>
+          <p className="mt-2 text-gray-900">
             Add states, manage cities, and manage local areas within each city.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white">
+          <span className="rounded-full bg-gray-600 px-4 py-2 text-sm font-semibold text-white">
             Total States: {states.length}
           </span>
-          <span className="rounded-full bg-pink-100 px-4 py-2 text-sm font-semibold text-red-950">
+          <span className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-950">
             Total Cities: {cities.length}
           </span>
-          <span className="rounded-full bg-pink-100 px-4 py-2 text-sm font-semibold text-red-950">
+          <span className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-950">
             Total Areas: {allLocalAreas.length}
           </span>
           <button
@@ -677,7 +677,7 @@ export default function AdminStates() {
               setShowDeleteAllModal(true);
               setDeleteAllConfirmed(false);
             }}
-            className="rounded-full border border-red-300 bg-red-50 px-4 py-2 text-xs font-bold text-red-800 hover:bg-red-100 hover:text-red-950 transition-colors"
+            className="rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-xs font-bold text-gray-800 hover:bg-gray-100 hover:text-gray-950 transition-colors"
           >
             Delete All Locations
           </button>
@@ -688,7 +688,7 @@ export default function AdminStates() {
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
           <input
-            className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500 placeholder:text-red-400"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500 placeholder:text-gray-400"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Fuzzy search State, City, or Area..."
@@ -697,7 +697,7 @@ export default function AdminStates() {
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-3 top-2.5 text-xs font-bold text-red-500 hover:text-red-800"
+              className="absolute right-3 top-2.5 text-xs font-bold text-gray-500 hover:text-gray-800"
               title="Clear search"
             >
               Clear
@@ -709,14 +709,14 @@ export default function AdminStates() {
           <button
             type="button"
             onClick={handleExpandAll}
-            className="rounded-full border border-pink-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-red-900 hover:bg-pink-50"
+            className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-50"
           >
             Expand All
           </button>
           <button
             type="button"
             onClick={handleCollapseAll}
-            className="rounded-full border border-pink-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-red-900 hover:bg-pink-50"
+            className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-50"
           >
             Collapse All
           </button>
@@ -726,14 +726,14 @@ export default function AdminStates() {
       {/* Add State Form + Upload JSON Button */}
       <form
         onSubmit={addState}
-        className="mt-6 flex flex-col gap-3 rounded-2xl border border-red-100 bg-white p-4 sm:p-5 lg:flex-row lg:items-end"
+        className="mt-6 flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 lg:flex-row lg:items-end"
       >
         <label className="block">
-          <span className="mb-1 block text-sm font-medium text-red-900">
+          <span className="mb-1 block text-sm font-medium text-gray-900">
             New State
           </span>
           <input
-            className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500"
             value={stateName}
             onChange={(e) => setStateName(e.target.value)}
             placeholder="State name"
@@ -743,7 +743,7 @@ export default function AdminStates() {
         <button
           type="submit"
           disabled={submitting || loading}
-          className="rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-full bg-gray-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? "Adding..." : "Add State"}
         </button>
@@ -759,7 +759,7 @@ export default function AdminStates() {
             type="button"
             disabled={importing}
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-full bg-red-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-full bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {importing ? "Processing..." : "Upload JSON"}
           </button>
@@ -767,7 +767,7 @@ export default function AdminStates() {
             type="button"
             disabled={downloadingBackup || loading}
             onClick={handleDownloadBackup}
-            className="rounded-full border border-pink-300 bg-pink-50 px-4 py-2.5 text-sm font-semibold text-red-950 hover:bg-pink-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-full border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-950 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {downloadingBackup ? "Exporting..." : "Download JSON Backup"}
           </button>
@@ -775,16 +775,16 @@ export default function AdminStates() {
       </form>
 
       {/* Cascading Location Selector + Inline Creation Options */}
-      <section className="mt-4 rounded-2xl border border-red-100 bg-white p-5 shadow-xs">
-        <h2 className="text-base font-bold text-red-950 mb-3">Location Selector</h2>
+      <section className="mt-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-xs">
+        <h2 className="text-base font-bold text-gray-950 mb-3">Location Selector</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {/* 1. State Dropdown */}
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-red-900">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-900">
               State
             </span>
             <select
-              className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-sm text-red-950 outline-none focus:border-red-500"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-500"
               value={selectedState}
               onChange={(e) => handleStateSelect(e.target.value)}
             >
@@ -799,11 +799,11 @@ export default function AdminStates() {
 
           {/* 2. City Dropdown */}
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-red-900">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-900">
               City
             </span>
             <select
-              className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-sm text-red-950 outline-none focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               value={selectedCity}
               onChange={(e) => handleCitySelect(e.target.value)}
               disabled={!selectedState}
@@ -823,7 +823,7 @@ export default function AdminStates() {
                   </option>
                   <option
                     value={ADD_CITY_VALUE}
-                    className="font-bold text-red-600"
+                    className="font-bold text-gray-600"
                   >
                     + Add City
                   </option>
@@ -834,11 +834,11 @@ export default function AdminStates() {
 
           {/* 3. Local Area Dropdown */}
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-red-900">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-900">
               Local Area
             </span>
             <select
-              className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-sm text-red-950 outline-none focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               value={selectedLocalArea}
               onChange={(e) => handleLocalAreaSelect(e.target.value)}
               disabled={!selectedCity || selectedCity === ADD_CITY_VALUE}
@@ -860,7 +860,7 @@ export default function AdminStates() {
                   </option>
                   <option
                     value={ADD_LOCAL_AREA_VALUE}
-                    className="font-bold text-red-600"
+                    className="font-bold text-gray-600"
                   >
                     + Add Local Area
                   </option>
@@ -874,23 +874,23 @@ export default function AdminStates() {
         {selectedCity === ADD_CITY_VALUE && (
           <form
             onSubmit={handleInlineAddCity}
-            className="mt-4 rounded-xl border border-pink-200 bg-pink-50/60 p-4"
+            className="mt-4 rounded-xl border border-gray-200 bg-gray-50/60 p-4"
           >
             <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-red-950">
-                Add New City to <span className="text-red-600">{selectedState}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-950">
+                Add New City to <span className="text-gray-600">{selectedState}</span>
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedCity("")}
-                className="text-xs font-medium text-red-600 hover:text-red-900"
+                className="text-xs font-medium text-gray-600 hover:text-gray-900"
               >
                 Cancel
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
               <input
-                className="flex-1 min-w-[200px] rounded-xl border border-pink-200 bg-white px-3 py-2 text-sm text-red-950 outline-none focus:border-red-500 placeholder:text-red-400"
+                className="flex-1 min-w-[200px] rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-gray-500 placeholder:text-gray-400"
                 value={newCityName}
                 onChange={(e) => setNewCityName(e.target.value)}
                 placeholder="Enter city name..."
@@ -900,14 +900,14 @@ export default function AdminStates() {
               <button
                 type="submit"
                 disabled={creatingCity || !newCityName.trim()}
-                className="rounded-full bg-red-600 px-5 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="rounded-full bg-gray-600 px-5 py-2 text-xs font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {creatingCity ? "Adding..." : "Add City"}
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedCity("")}
-                className="rounded-full border border-pink-200 bg-white px-4 py-2 text-xs font-semibold text-red-950 hover:bg-pink-100 transition-colors"
+                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-950 hover:bg-gray-100 transition-colors"
               >
                 Cancel
               </button>
@@ -919,23 +919,23 @@ export default function AdminStates() {
         {selectedLocalArea === ADD_LOCAL_AREA_VALUE && (
           <form
             onSubmit={handleInlineAddLocalArea}
-            className="mt-4 rounded-xl border border-pink-200 bg-pink-50/60 p-4"
+            className="mt-4 rounded-xl border border-gray-200 bg-gray-50/60 p-4"
           >
             <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-red-950">
-                Add New Local Area to <span className="text-red-600">{selectedCity}</span>, {selectedState}
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-950">
+                Add New Local Area to <span className="text-gray-600">{selectedCity}</span>, {selectedState}
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedLocalArea("")}
-                className="text-xs font-medium text-red-600 hover:text-red-900"
+                className="text-xs font-medium text-gray-600 hover:text-gray-900"
               >
                 Cancel
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
               <input
-                className="flex-1 min-w-[200px] rounded-xl border border-pink-200 bg-white px-3 py-2 text-sm text-red-950 outline-none focus:border-red-500 placeholder:text-red-400"
+                className="flex-1 min-w-[200px] rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-gray-500 placeholder:text-gray-400"
                 value={newLocalAreaName}
                 onChange={(e) => setNewLocalAreaName(e.target.value)}
                 placeholder="Enter local area name..."
@@ -945,14 +945,14 @@ export default function AdminStates() {
               <button
                 type="submit"
                 disabled={creatingLocalArea || !newLocalAreaName.trim()}
-                className="rounded-full bg-red-600 px-5 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="rounded-full bg-gray-600 px-5 py-2 text-xs font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {creatingLocalArea ? "Adding..." : "Add Local Area"}
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedLocalArea("")}
-                className="rounded-full border border-pink-200 bg-white px-4 py-2 text-xs font-semibold text-red-950 hover:bg-pink-100 transition-colors"
+                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-950 hover:bg-gray-100 transition-colors"
               >
                 Cancel
               </button>
@@ -962,18 +962,18 @@ export default function AdminStates() {
       </section>
 
       {/* Feedback Messages */}
-      {error && <p className="mt-4 text-sm font-medium text-red-700">{error}</p>}
-      {success && <p className="mt-4 text-sm font-medium text-emerald-700">{success}</p>}
+      {error && <p className="mt-4 text-sm font-medium text-gray-700">{error}</p>}
+      {success && <p className="mt-4 text-sm font-medium text-gray-700">{success}</p>}
 
       {/* JSON Import Confirmation Modal */}
       {importSummary && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-xl font-black text-red-950">Confirm JSON Import</h3>
-            <p className="mt-2 text-sm text-red-900">
+            <h3 className="text-xl font-black text-gray-950">Confirm JSON Import</h3>
+            <p className="mt-2 text-sm text-gray-900">
               The JSON file was successfully validated. Review the detected locations below:
             </p>
-            <div className="mt-4 space-y-2 rounded-xl bg-pink-50 p-4 text-sm text-red-950">
+            <div className="mt-4 space-y-2 rounded-xl bg-gray-50 p-4 text-sm text-gray-950">
               <div className="flex justify-between">
                 <span>States:</span>
                 <span className="font-bold">
@@ -998,7 +998,7 @@ export default function AdminStates() {
                 type="button"
                 disabled={importing}
                 onClick={cancelImport}
-                className="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-semibold text-red-950 hover:bg-pink-50"
+                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-950 hover:bg-gray-50"
               >
                 Cancel
               </button>
@@ -1006,7 +1006,7 @@ export default function AdminStates() {
                 type="button"
                 disabled={importing}
                 onClick={confirmImport}
-                className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                className="rounded-full bg-gray-600 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50"
               >
                 {importing ? "Importing..." : "Confirm & Import"}
               </button>
@@ -1018,42 +1018,42 @@ export default function AdminStates() {
       {/* Delete All Locations Double-Confirmation Modal */}
       {showDeleteAllModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border-2 border-red-200">
-            <div className="flex items-center gap-2 text-red-700">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border-2 border-gray-200">
+            <div className="flex items-center gap-2 text-gray-700">
               <span className="text-xl">⚠️</span>
-              <h3 className="text-xl font-black text-red-950">Delete All Locations?</h3>
+              <h3 className="text-xl font-black text-gray-950">Delete All Locations?</h3>
             </div>
 
-            <p className="mt-3 text-sm text-red-900">
+            <p className="mt-3 text-sm text-gray-900">
               This is a permanent destructive action. It will immediately and irreversibly delete:
             </p>
 
-            <ul className="mt-3 space-y-1.5 rounded-xl bg-red-50 p-3.5 text-sm text-red-950 border border-red-200">
+            <ul className="mt-3 space-y-1.5 rounded-xl bg-gray-50 p-3.5 text-sm text-gray-950 border border-gray-200">
               <li className="flex justify-between">
                 <span>• All States:</span>
-                <span className="font-bold text-red-700">{states.length}</span>
+                <span className="font-bold text-gray-700">{states.length}</span>
               </li>
               <li className="flex justify-between">
                 <span>• All Cities:</span>
-                <span className="font-bold text-red-700">{cities.length}</span>
+                <span className="font-bold text-gray-700">{cities.length}</span>
               </li>
               <li className="flex justify-between">
                 <span>• All Local Areas:</span>
-                <span className="font-bold text-red-700">{allLocalAreas.length}</span>
+                <span className="font-bold text-gray-700">{allLocalAreas.length}</span>
               </li>
             </ul>
 
-            <p className="mt-3 text-xs font-semibold text-red-700">
+            <p className="mt-3 text-xs font-semibold text-gray-700">
               This action cannot be undone. All user-facing location dropdowns, listings, and places will have zero locations until new data is imported.
             </p>
 
             {/* Explicit double-confirmation checkbox */}
-            <label className="mt-4 flex items-start gap-2.5 rounded-lg border border-red-200 bg-pink-50/50 p-3 text-xs font-medium text-red-950 cursor-pointer">
+            <label className="mt-4 flex items-start gap-2.5 rounded-lg border border-gray-200 bg-gray-50/50 p-3 text-xs font-medium text-gray-950 cursor-pointer">
               <input
                 type="checkbox"
                 checked={deleteAllConfirmed}
                 onChange={(e) => setDeleteAllConfirmed(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-600 focus:ring-gray-500"
               />
               <span>
                 I understand that all states, cities, and local areas will be permanently deleted.
@@ -1068,7 +1068,7 @@ export default function AdminStates() {
                   setShowDeleteAllModal(false);
                   setDeleteAllConfirmed(false);
                 }}
-                className="rounded-full border border-pink-200 bg-white px-4 py-2 text-sm font-semibold text-red-950 hover:bg-pink-50 disabled:opacity-50"
+                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-950 hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1076,7 +1076,7 @@ export default function AdminStates() {
                 type="button"
                 disabled={!deleteAllConfirmed || deletingAll}
                 onClick={handleDeleteAllLocations}
-                className="rounded-full bg-red-700 px-5 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="rounded-full bg-gray-700 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {deletingAll ? "Deleting Everything..." : "Delete Everything"}
               </button>
@@ -1087,10 +1087,10 @@ export default function AdminStates() {
 
       {/* Hierarchical States, Cities & Local Areas Cards */}
       <div className="mt-8">
-        <h2 className="text-xl font-black text-red-950 mb-4">
+        <h2 className="text-xl font-black text-gray-950 mb-4">
           All States, Cities & Local Areas
           {isSearching && (
-            <span className="ml-2 text-xs font-normal text-red-700">
+            <span className="ml-2 text-xs font-normal text-gray-700">
               (Filtered by: &ldquo;{debouncedSearch}&rdquo;)
             </span>
           )}
@@ -1099,9 +1099,9 @@ export default function AdminStates() {
         {loading ? (
           <AdminStateHierarchySkeleton />
         ) : states.length === 0 ? (
-          <p className="text-red-900">No states added yet.</p>
+          <p className="text-gray-900">No states added yet.</p>
         ) : filteredHierarchy.length === 0 ? (
-          <p className="text-red-900">No matching states, cities, or local areas.</p>
+          <p className="text-gray-900">No matching states, cities, or local areas.</p>
         ) : (
           <div className="space-y-4">
             {filteredHierarchy.map(({ state, stateKey, matchingCities }) => {
@@ -1225,7 +1225,7 @@ function StateHierarchyCard({
   }
 
   return (
-    <section className="rounded-2xl border border-red-100 bg-white p-5 shadow-xs transition-shadow hover:shadow-sm">
+    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xs transition-shadow hover:shadow-sm">
       {/* State Header with Accessible Collapse/Expand Button */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -1234,7 +1234,7 @@ function StateHierarchyCard({
             onClick={onToggleState}
             aria-expanded={isExpanded}
             aria-label={`Toggle ${state.name}`}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-pink-200 bg-pink-50 text-xs font-bold text-red-950 transition-colors hover:bg-pink-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-xs font-bold text-gray-950 transition-colors hover:bg-gray-100"
           >
             {isExpanded ? "▼" : "▶"}
           </button>
@@ -1242,15 +1242,15 @@ function StateHierarchyCard({
             <div className="flex items-center gap-2">
               <h2
                 onClick={onToggleState}
-                className="cursor-pointer text-xl font-black text-red-950 hover:text-red-700"
+                className="cursor-pointer text-xl font-black text-gray-950 hover:text-gray-700"
               >
                 {state.name}
               </h2>
-              <span className="rounded-full bg-pink-100 px-2.5 py-0.5 text-xs font-semibold text-red-900">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-900">
                 {matchingCities.length} {matchingCities.length === 1 ? "City" : "Cities"}
               </span>
               {totalAreasInState > 0 && (
-                <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                <span className="rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-800">
                   {totalAreasInState} {totalAreasInState === 1 ? "Area" : "Areas"}
                 </span>
               )}
@@ -1261,7 +1261,7 @@ function StateHierarchyCard({
         <button
           type="button"
           onClick={() => onRemoveState(state._id || state.slug || state.name)}
-          className="rounded-full bg-[#450a0a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#7f1d1d]"
+          className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[]"
         >
           Delete State
         </button>
@@ -1269,15 +1269,15 @@ function StateHierarchyCard({
 
       {/* Collapsible Content: Add City Form + Cities List */}
       {isExpanded && (
-        <div className="mt-5 border-t border-pink-100 pt-4">
+        <div className="mt-5 border-t border-gray-100 pt-4">
           {/* Add City Form */}
           <form onSubmit={addCity} className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-red-900">
+              <span className="mb-1 block text-sm font-medium text-gray-900">
                 City Name
               </span>
               <input
-                className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500 text-sm"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500 text-sm"
                 value={cityName}
                 onChange={(e) => setCityName(e.target.value)}
                 placeholder="City name"
@@ -1285,11 +1285,11 @@ function StateHierarchyCard({
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-red-900">
+              <span className="mb-1 block text-sm font-medium text-gray-900">
                 Country
               </span>
               <select
-                className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500 text-sm"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500 text-sm"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 required
@@ -1305,7 +1305,7 @@ function StateHierarchyCard({
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-full bg-red-600 px-5 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-full bg-gray-600 px-5 py-2 text-xs font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? "Adding..." : "Add City"}
               </button>
@@ -1313,13 +1313,13 @@ function StateHierarchyCard({
           </form>
 
           {error && (
-            <p className="mt-3 text-sm font-medium text-red-700">{error}</p>
+            <p className="mt-3 text-sm font-medium text-gray-700">{error}</p>
           )}
 
           {/* Cities & Local Areas List */}
           <div className="mt-5 space-y-3">
             {matchingCities.length === 0 ? (
-              <p className="text-xs text-red-900 italic">No cities in this state yet.</p>
+              <p className="text-xs text-gray-900 italic">No cities in this state yet.</p>
             ) : (
               matchingCities.map(
                 ({
@@ -1409,7 +1409,7 @@ function CityHierarchyItem({
   }
 
   return (
-    <div className="rounded-xl border border-pink-100 bg-pink-50/40 p-3.5 transition-colors">
+    <div className="rounded-xl border border-gray-100 bg-gray-50/40 p-3.5 transition-colors">
       {/* City Header with Expand/Collapse Icon */}
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
@@ -1418,17 +1418,17 @@ function CityHierarchyItem({
             onClick={onToggleCity}
             aria-expanded={isExpanded}
             aria-label={`Toggle ${city.name}`}
-            className="flex h-6 w-6 items-center justify-center rounded-md border border-pink-200 bg-white text-[10px] font-bold text-red-950 hover:bg-pink-100"
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 bg-white text-[10px] font-bold text-gray-950 hover:bg-gray-100"
           >
             {isExpanded ? "▼" : "▶"}
           </button>
           <span
             onClick={onToggleCity}
-            className="cursor-pointer font-bold text-sm text-red-950 hover:text-red-700"
+            className="cursor-pointer font-bold text-sm text-gray-950 hover:text-gray-700"
           >
             {city.name}
           </span>
-          <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-red-900 border border-pink-100">
+          <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-900 border border-gray-100">
             {cityAreas.length} {cityAreas.length === 1 ? "Area" : "Areas"}
           </span>
         </div>
@@ -1436,7 +1436,7 @@ function CityHierarchyItem({
         <button
           type="button"
           onClick={onDeleteCity}
-          className="rounded-full bg-[#450a0a] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#7f1d1d]"
+          className="rounded-full bg-[] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[]"
         >
           Delete City
         </button>
@@ -1445,31 +1445,31 @@ function CityHierarchyItem({
       {/* Collapsible Local Areas Section */}
       {isExpanded && (
         <div className="mt-3 pl-4 sm:pl-8">
-          <div className="rounded-xl border-l-2 border-pink-300 bg-pink-50/60 p-4 space-y-3">
+          <div className="rounded-xl border-l-2 border-gray-300 bg-gray-50/60 p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-red-950">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-950">
                 Local Areas {cityAreas.length > 0 && `(${cityAreas.length})`}
               </h4>
             </div>
 
             {/* Local Areas List */}
             {cityAreas.length === 0 ? (
-              <p className="text-xs italic text-red-700">No local areas</p>
+              <p className="text-xs italic text-gray-700">No local areas</p>
             ) : (
               <ul className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                 {cityAreas.map((area) => (
                   <li
                     key={area._id ?? area.slug}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-pink-200 bg-white px-3 py-1.5 text-xs text-red-950 shadow-2xs"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-950 shadow-2xs"
                   >
                     <span className="flex items-center gap-1.5 truncate">
-                      <span className="text-red-500 font-bold">•</span>
+                      <span className="text-gray-500 font-bold">•</span>
                       <span className="font-medium truncate">{area.name}</span>
                     </span>
                     <button
                       type="button"
                       onClick={() => onDeleteLocalArea(area._id)}
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-red-500 hover:bg-red-100 hover:text-red-800 font-bold text-sm transition-colors"
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 font-bold text-sm transition-colors"
                       title={`Delete ${area.name}`}
                       aria-label={`Delete ${area.name}`}
                     >
@@ -1483,7 +1483,7 @@ function CityHierarchyItem({
             {/* Quick Add Area Inline Form */}
             <form onSubmit={handleAddArea} className="mt-3 flex flex-wrap gap-2 pt-1">
               <input
-                className="flex-1 min-w-[180px] rounded-xl border border-pink-200 bg-white px-3 py-1.5 text-xs text-red-950 outline-none focus:border-red-500 placeholder:text-red-400"
+                className="flex-1 min-w-[180px] rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-950 outline-none focus:border-gray-500 placeholder:text-gray-400"
                 value={newArea}
                 onChange={(e) => setNewArea(e.target.value)}
                 placeholder="Local area name..."
@@ -1492,13 +1492,13 @@ function CityHierarchyItem({
               <button
                 type="submit"
                 disabled={addingArea || !newArea.trim()}
-                className="rounded-full bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="rounded-full bg-gray-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {addingArea ? "Adding..." : "Add Local Area"}
               </button>
             </form>
             {areaError && (
-              <p className="text-xs font-medium text-red-700">{areaError}</p>
+              <p className="text-xs font-medium text-gray-700">{areaError}</p>
             )}
           </div>
         </div>

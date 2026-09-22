@@ -13,11 +13,11 @@ const base =
   "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-150 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed select-none";
 
 const variants: Record<Variant, string> = {
-  solid: "bg-red-600 text-white hover:bg-red-700 active:scale-[0.98]",
-  soft: "border border-red-300 bg-pink-50 text-red-950 hover:bg-pink-100 active:scale-[0.98]",
-  outline: "border border-red-200 bg-white text-red-950 hover:bg-red-50 active:scale-[0.98]",
-  ghost: "text-red-950 hover:bg-red-50 active:scale-[0.98]",
-  light: "bg-white text-red-950 hover:bg-pink-100 active:scale-[0.98]",
+  solid: "bg-gray-600 text-white hover:bg-gray-700 active:scale-[0.98]",
+  soft: "border border-gray-300 bg-gray-50 text-gray-950 hover:bg-gray-100 active:scale-[0.98]",
+  outline: "border border-gray-200 bg-white text-gray-950 hover:bg-gray-50 active:scale-[0.98]",
+  ghost: "text-gray-950 hover:bg-gray-50 active:scale-[0.98]",
+  light: "bg-white text-gray-950 hover:bg-gray-100 active:scale-[0.98]",
 };
 
 const sizes: Record<Size, string> = {
@@ -27,7 +27,7 @@ const sizes: Record<Size, string> = {
 };
 
 const activeClass =
-  "bg-red-600 text-white shadow-md shadow-red-200 hover:bg-red-700";
+  "bg-gray-600 text-white shadow-md shadow-gray-200 hover:bg-gray-700";
 
 type CommonProps = {
   variant?: Variant;

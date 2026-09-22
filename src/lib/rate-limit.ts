@@ -121,8 +121,21 @@ export async function checkRateLimitAsync(
 }
 
 export function clientIp(request: Request): string {
+  const vercelIp = request.headers.get("x-vercel-ip");
+  if (vercelIp && vercelIp.trim()) return vercelIp.trim();
+
+  const cfIp = request.headers.get("cf-connecting-ip");
+  if (cfIp && cfIp.trim()) return cfIp.trim();
+
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp && realIp.trim()) return realIp.trim();
+
   const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return request.headers.get("x-real-ip") ?? "unknown";
+  if (forwarded) {
+    const parts = forwarded.split(",").map((p) => p.trim()).filter(Boolean);
+    if (parts.length > 0) return parts[0];
+  }
+
+  return "unknown";
 }
 

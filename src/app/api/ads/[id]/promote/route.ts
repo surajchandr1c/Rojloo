@@ -64,9 +64,16 @@ export async function POST(
         (body?.title && p.title === body.title)
     );
 
-    basePackageCoins = Number(matchedPkg ? matchedPkg.coinsCost : (body?.coinsCost ?? 5));
-    packageName = matchedPkg ? matchedPkg.title : (typeof body?.title === "string" ? body.title : "Bronze VIP");
-    promoTier = normalizeTier(body?.tier || matchedPkg?.tier, packageName);
+    if (!matchedPkg) {
+      return NextResponse.json(
+        { error: "Invalid promotion package selected. Please choose a valid package." },
+        { status: 400 }
+      );
+    }
+
+    basePackageCoins = Number(matchedPkg.coinsCost);
+    packageName = matchedPkg.title;
+    promoTier = normalizeTier(matchedPkg.tier, packageName);
   }
 
   // Total required coins = basePackageCoins * slotsMultiplier

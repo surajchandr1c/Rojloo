@@ -106,26 +106,26 @@ function CreatePasswordContent() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <SectionPanel className="w-full max-w-md">
         <Eyebrow>VIP Portal</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950">Create Password</h1>
-        <p className="mt-2 text-red-900">
+        <h1 className="mt-3 text-3xl font-black text-gray-950">Create Password</h1>
+        <p className="mt-2 text-gray-900">
           Set your new password to activate your VIP control panel account.
         </p>
 
         {validatingToken ? (
-          <div className="mt-8 text-center text-sm text-red-800 animate-pulse">
+          <div className="mt-8 text-center text-sm text-gray-800 animate-pulse">
             Validating invitation link...
           </div>
         ) : error && !tokenValid ? (
-          <div className="mt-6 rounded-xl bg-red-100 p-4 text-sm font-medium text-red-800">
+          <div className="mt-6 rounded-xl bg-gray-100 p-4 text-sm font-medium text-gray-800">
             <p>{error}</p>
-            <p className="mt-2 text-xs text-red-700">
+            <p className="mt-2 text-xs text-gray-700">
               Please check the email link or contact your administrator to generate a new invitation.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-red-950">
+              <label className="mb-1 block text-sm font-semibold text-gray-950">
                 VIP Account Email
               </label>
               <TextInput
@@ -137,7 +137,7 @@ function CreatePasswordContent() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-red-950">
+              <label className="mb-1 block text-sm font-semibold text-gray-950">
                 New Password
               </label>
               <div className="relative">
@@ -154,7 +154,7 @@ function CreatePasswordContent() {
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 flex items-center px-4 text-red-500 transition hover:text-red-700"
+                  className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 transition hover:text-gray-700"
                 >
                   {showPassword ? (
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -171,7 +171,7 @@ function CreatePasswordContent() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-red-950">
+              <label className="mb-1 block text-sm font-semibold text-gray-950">
                 Confirm New Password
               </label>
               <TextInput
@@ -184,8 +184,8 @@ function CreatePasswordContent() {
               />
             </div>
 
-            {error && <p className="text-sm font-medium text-red-700">{error}</p>}
-            {success && <p className="text-sm font-semibold text-green-700">{success}</p>}
+            {error && <p className="text-sm font-medium text-gray-700">{error}</p>}
+            {success && <p className="text-sm font-semibold text-gray-700">{success}</p>}
 
             <Button
               type="submit"
@@ -208,7 +208,7 @@ export default function CreatePasswordPage() {
       fallback={
         <main className="flex min-h-screen items-center justify-center px-4 py-10">
           <SectionPanel className="w-full max-w-md">
-            <p className="text-center text-sm text-red-800">Loading form...</p>
+            <p className="text-center text-sm text-gray-800">Loading form...</p>
           </SectionPanel>
         </main>
       }

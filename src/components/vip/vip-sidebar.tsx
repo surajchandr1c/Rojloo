@@ -96,7 +96,7 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-none flex-col border-r border-red-200 bg-[#450a0a] text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-none flex-col border-r border-gray-200 bg-[] text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -104,14 +104,14 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
         <div className="flex items-center justify-between px-5 py-5">
           <div>
             <div className="text-xl font-black text-white">VIP Panel</div>
-            <div className="text-xs text-red-200 truncate max-w-[170px]">
+            <div className="text-xs text-gray-200 truncate max-w-[170px]">
               {me?.email ?? "VIP Member"}
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#7f1d1d] transition-colors"
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[] transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -143,8 +143,8 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
                 onClick={onClose}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-[#7f1d1d] text-white"
-                    : "text-white hover:bg-[#7f1d1d] hover:text-white"
+                    ? "bg-[] text-white"
+                    : "text-white hover:bg-[] hover:text-white"
                 }`}
               >
                 <svg
@@ -167,11 +167,11 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
         </nav>
 
         {/* Logout Button */}
-        <div className="border-t border-[#7f1d1d] p-3">
+        <div className="border-t border-[] p-3">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#7f1d1d] hover:text-white"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[] hover:text-white"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Rojlo – Find services, places and post ads in your city.",
     start_url: "/",
     display: "standalone",
-    background_color: "#fce7f3",
-    theme_color: "#dc2626",
+    background_color: "",
+    theme_color: "",
     icons: [
       {
         src: "/favicon.png",

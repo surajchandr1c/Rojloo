@@ -31,10 +31,10 @@ export default function CityFaqSection({
     <section className="px-4 py-10 sm:px-6">
       <SectionPanel>
         <Eyebrow>FAQ</Eyebrow>
-        <h2 className="mt-3 text-2xl font-black text-red-950 sm:text-3xl">
+        <h2 className="mt-3 text-2xl font-black text-gray-950 sm:text-3xl">
           Frequently Asked Questions in {cityName}
         </h2>
-        <p className="mt-1 text-xs sm:text-sm text-red-900 font-medium">
+        <p className="mt-1 text-xs sm:text-sm text-gray-900 font-medium">
           Got questions? Click any question below to view the solution.
         </p>
 
@@ -46,8 +46,8 @@ export default function CityFaqSection({
                 key={faq.id || index}
                 className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
                   isOpen
-                    ? "border-red-500 bg-pink-50/90 shadow-sm ring-1 ring-red-500/20"
-                    : "border-red-200/80 bg-white hover:border-red-300 hover:bg-pink-50/30"
+                    ? "border-gray-500 bg-gray-50/90 shadow-sm ring-1 ring-gray-500/20"
+                    : "border-gray-200/80 bg-white hover:border-gray-300 hover:bg-gray-50/30"
                 }`}
               >
                 <button
@@ -56,8 +56,8 @@ export default function CityFaqSection({
                   aria-expanded={isOpen}
                   className="flex w-full items-center justify-between gap-3 p-4 sm:p-5 text-left cursor-pointer transition select-none"
                 >
-                  <span className="flex items-center gap-3 text-sm sm:text-base font-bold text-red-950 pr-2">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-black text-red-900 border border-red-200">
+                  <span className="flex items-center gap-3 text-sm sm:text-base font-bold text-gray-950 pr-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-black text-gray-900 border border-gray-200">
                       Q{index + 1}
                     </span>
                     <span className="leading-snug">{faq.question}</span>
@@ -66,8 +66,8 @@ export default function CityFaqSection({
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black transition-all duration-200 ${
                       isOpen
-                        ? "rotate-180 bg-[#450a0a] text-white border-[#450a0a]"
-                        : "border-red-200 bg-pink-50 text-red-900"
+                        ? "rotate-180 bg-[] text-white border-[]"
+                        : "border-gray-200 bg-gray-50 text-gray-900"
                     }`}
                     aria-hidden="true"
                   >
@@ -76,9 +76,9 @@ export default function CityFaqSection({
                 </button>
 
                 {isOpen && (
-                  <div className="border-t border-red-200/70 px-4 pb-5 pt-3.5 sm:px-5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="border-t border-gray-200/70 px-4 pb-5 pt-3.5 sm:px-5 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-black text-emerald-800 border border-emerald-200 mt-0.5">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[11px] font-black text-gray-800 border border-gray-200 mt-0.5">
                         A
                       </span>
                       <div className="min-w-0 flex-1">

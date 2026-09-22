@@ -301,11 +301,11 @@ export default function AdminPhoneControlPage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-red-100">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-gray-100">
         <div>
-          <h1 className="text-3xl font-black text-red-950 flex items-center gap-3">
+          <h1 className="text-3xl font-black text-gray-950 flex items-center gap-3">
             <svg
-              className="w-8 h-8 text-red-800"
+              className="w-8 h-8 text-gray-800"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -319,17 +319,17 @@ export default function AdminPhoneControlPage() {
             </svg>
             Phone No. Control
           </h1>
-          <p className="mt-1 text-sm text-red-900 max-w-3xl">
+          <p className="mt-1 text-sm text-gray-900 max-w-3xl">
             Override contact numbers on posted ads by State and City. Set custom Phone Number, WhatsApp, and Telegram, or choose to delete/hide original users&apos; contact details. Overrides take top priority on ads until removed.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-2.5 text-right">
-            <div className="text-xs font-semibold text-red-800 uppercase tracking-wider">
+          <div className="rounded-2xl bg-gray-50 border border-gray-200 px-4 py-2.5 text-right">
+            <div className="text-xs font-semibold text-gray-800 uppercase tracking-wider">
               Active Overrides
             </div>
-            <div className="text-2xl font-black text-red-950">
+            <div className="text-2xl font-black text-gray-950">
               {overrides.length}
             </div>
           </div>
@@ -337,11 +337,11 @@ export default function AdminPhoneControlPage() {
       </div>
 
       {error && (
-        <div className="mt-6 rounded-xl bg-red-100 border border-red-200 p-4 text-sm text-red-900 font-semibold flex items-center justify-between">
+        <div className="mt-6 rounded-xl bg-gray-100 border border-gray-200 p-4 text-sm text-gray-900 font-semibold flex items-center justify-between">
           <span>{error}</span>
           <button
             onClick={() => setError("")}
-            className="text-red-700 hover:text-red-900 font-bold ml-4"
+            className="text-gray-700 hover:text-gray-900 font-bold ml-4"
           >
             &times;
           </button>
@@ -349,11 +349,11 @@ export default function AdminPhoneControlPage() {
       )}
 
       {success && (
-        <div className="mt-6 rounded-xl bg-green-100 border border-green-200 p-4 text-sm text-green-900 font-semibold flex items-center justify-between">
+        <div className="mt-6 rounded-xl bg-gray-100 border border-gray-200 p-4 text-sm text-gray-900 font-semibold flex items-center justify-between">
           <span>{success}</span>
           <button
             onClick={() => setSuccess("")}
-            className="text-green-700 hover:text-green-900 font-bold ml-4"
+            className="text-gray-700 hover:text-gray-900 font-bold ml-4"
           >
             &times;
           </button>
@@ -361,19 +361,19 @@ export default function AdminPhoneControlPage() {
       )}
 
       {/* Control / Assignment Form Card */}
-      <div className="mt-8 rounded-3xl border border-red-200 bg-white p-6 sm:p-8 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-red-100 pb-4">
+      <div className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
           <div>
-            <h2 className="text-xl font-black text-red-950">
+            <h2 className="text-xl font-black text-gray-950">
               {existingOverrideForSelectedCity ? "Update City Override" : "Create City Override"}
             </h2>
-            <p className="text-xs text-red-700 mt-0.5">
+            <p className="text-xs text-gray-700 mt-0.5">
               Select a state and city to inspect contact statistics and apply overriding phone numbers.
             </p>
           </div>
           {existingOverrideForSelectedCity && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-3 py-1 text-xs font-bold text-amber-900">
-              <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 border border-gray-300 px-3 py-1 text-xs font-bold text-gray-900">
+              <span className="h-2 w-2 rounded-full bg-gray-600 animate-pulse" />
               Existing Override Active for {selectedCity}
             </span>
           )}
@@ -384,13 +384,13 @@ export default function AdminPhoneControlPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* State Dropdown */}
             <div>
-              <label className="block text-sm font-bold text-red-950 mb-1.5">
+              <label className="block text-sm font-bold text-gray-950 mb-1.5">
                 Select State
               </label>
               <select
                 value={selectedState}
                 onChange={(e) => handleStateChange(e.target.value)}
-                className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
               >
                 <option value="">-- All States ({states.length} available) --</option>
                 {states.map((s) => (
@@ -399,21 +399,21 @@ export default function AdminPhoneControlPage() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-gray-600">
                 Filter city list by state, or leave as All States.
               </p>
             </div>
 
             {/* City Dropdown */}
             <div>
-              <label className="block text-sm font-bold text-red-950 mb-1.5">
-                Select City <span className="text-red-500">*</span>
+              <label className="block text-sm font-bold text-gray-950 mb-1.5">
+                Select City <span className="text-gray-500">*</span>
               </label>
               <select
                 value={selectedCity}
                 onChange={(e) => handleCityChange(e.target.value)}
                 required
-                className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
               >
                 <option value="">-- Select City ({availableCities.length} available) --</option>
                 {availableCities.map((c) => (
@@ -422,7 +422,7 @@ export default function AdminPhoneControlPage() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-gray-600">
                 Ads posted in this city will have their contact numbers overridden.
               </p>
             </div>
@@ -430,41 +430,41 @@ export default function AdminPhoneControlPage() {
 
           {/* Selected City Numbers / Ad Count Statistics Display */}
           {selectedCity && selectedCityStats && (
-            <div className="rounded-2xl bg-gradient-to-r from-red-50 via-pink-50 to-red-50 border border-red-200 p-5">
+            <div className="rounded-2xl bg-gradient-to-r from-gray-50 via-gray-50 to-gray-50 border border-gray-200 p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-red-800">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-800">
                     City Phone & Ad Statistics
                   </div>
-                  <h3 className="text-lg font-black text-red-950 mt-0.5">
+                  <h3 className="text-lg font-black text-gray-950 mt-0.5">
                     {selectedCity} {selectedState ? `(${selectedState})` : ""}
                   </h3>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                  <div className="rounded-xl bg-white border border-red-200 px-4 py-2 text-center shadow-xs">
-                    <div className="text-xs text-red-700 font-semibold">Total User Ads</div>
-                    <div className="text-xl font-black text-red-950">
+                  <div className="rounded-xl bg-white border border-gray-200 px-4 py-2 text-center shadow-xs">
+                    <div className="text-xs text-gray-700 font-semibold">Total User Ads</div>
+                    <div className="text-xl font-black text-gray-950">
                       {selectedCityStats.totalAds}
                     </div>
                   </div>
 
-                  <div className="rounded-xl bg-white border border-red-200 px-4 py-2 text-center shadow-xs">
-                    <div className="text-xs text-red-700 font-semibold">Ads With Phone</div>
-                    <div className="text-xl font-black text-red-950">
+                  <div className="rounded-xl bg-white border border-gray-200 px-4 py-2 text-center shadow-xs">
+                    <div className="text-xs text-gray-700 font-semibold">Ads With Phone</div>
+                    <div className="text-xl font-black text-gray-950">
                       {selectedCityStats.totalPhones}
                     </div>
                   </div>
 
-                  <div className="rounded-xl bg-white border border-red-200 px-4 py-2 text-center shadow-xs">
-                    <div className="text-xs text-red-700 font-semibold">Unique User Numbers</div>
-                    <div className="text-xl font-black text-red-950">
+                  <div className="rounded-xl bg-white border border-gray-200 px-4 py-2 text-center shadow-xs">
+                    <div className="text-xs text-gray-700 font-semibold">Unique User Numbers</div>
+                    <div className="text-xl font-black text-gray-950">
                       {selectedCityStats.uniquePhones}
                     </div>
                   </div>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-red-800">
+              <p className="mt-2 text-xs text-gray-800">
                 Overriding will replace user contact numbers across all{" "}
                 <strong>{selectedCityStats.totalAds}</strong> ads posted in <strong>{selectedCity}</strong>.
               </p>
@@ -475,7 +475,7 @@ export default function AdminPhoneControlPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Phone No */}
             <div>
-              <label className="block text-sm font-bold text-red-950 mb-1.5">
+              <label className="block text-sm font-bold text-gray-950 mb-1.5">
                 Overriding Phone No.
               </label>
               <input
@@ -483,16 +483,16 @@ export default function AdminPhoneControlPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. +91 9876543210"
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
               />
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-gray-600">
                 Shown as caller phone number on all ads in this city.
               </p>
             </div>
 
             {/* WhatsApp */}
             <div>
-              <label className="block text-sm font-bold text-red-950 mb-1.5">
+              <label className="block text-sm font-bold text-gray-950 mb-1.5">
                 Overriding WhatsApp Number
               </label>
               <input
@@ -500,16 +500,16 @@ export default function AdminPhoneControlPage() {
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="e.g. +91 9876543210"
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
               />
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-gray-600">
                 Used for the WhatsApp chat button on all ads in this city.
               </p>
             </div>
 
             {/* Telegram */}
             <div>
-              <label className="block text-sm font-bold text-red-950 mb-1.5">
+              <label className="block text-sm font-bold text-gray-950 mb-1.5">
                 Overriding Telegram
               </label>
               <input
@@ -517,28 +517,28 @@ export default function AdminPhoneControlPage() {
                 value={telegram}
                 onChange={(e) => setTelegram(e.target.value)}
                 placeholder="e.g. @adminhandle or https://t.me/handle"
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
               />
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-gray-600">
                 Used for the Telegram contact button on ads in this city.
               </p>
             </div>
           </div>
 
           {/* Delete User Phone No Option */}
-          <div className="rounded-2xl bg-red-50/70 border border-red-200 p-5">
+          <div className="rounded-2xl bg-gray-50/70 border border-gray-200 p-5">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={deleteUserPhone}
                 onChange={(e) => setDeleteUserPhone(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-red-300 text-red-800 accent-red-800"
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-800 accent-gray-800"
               />
               <div>
-                <span className="text-sm font-bold text-red-950 block">
+                <span className="text-sm font-bold text-gray-950 block">
                   Delete / Hide original users&apos; phone numbers on ads in this city
                 </span>
-                <span className="text-xs text-red-700 block mt-0.5 leading-relaxed">
+                <span className="text-xs text-gray-700 block mt-0.5 leading-relaxed">
                   When enabled, all posted ads in <strong>{selectedCity || "the selected city"}</strong> will hide original users&apos; phone numbers and only show the overriding numbers set above. If any of phone, WhatsApp, or Telegram are left empty, that contact method will be hidden from the ad.
                 </span>
               </div>
@@ -557,7 +557,7 @@ export default function AdminPhoneControlPage() {
                       existingOverrideForSelectedCity.city
                     )
                   }
-                  className="rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-800 hover:bg-red-100 transition"
+                  className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-2.5 text-xs font-bold text-gray-800 hover:bg-gray-100 transition"
                 >
                   Remove Override for {selectedCity}
                 </button>
@@ -578,7 +578,7 @@ export default function AdminPhoneControlPage() {
               <button
                 type="submit"
                 disabled={saving || !selectedCity}
-                className="rounded-xl bg-[#450a0a] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#7f1d1d] disabled:opacity-50 transition flex items-center gap-2"
+                className="rounded-xl bg-[] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[] disabled:opacity-50 transition flex items-center gap-2"
               >
                 {saving && (
                   <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -594,13 +594,13 @@ export default function AdminPhoneControlPage() {
       <div className="mt-12">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-black text-red-950 flex items-center gap-2">
+            <h2 className="text-2xl font-black text-gray-950 flex items-center gap-2">
               List of Numbers Overriding User Numbers
-              <span className="rounded-full bg-red-100 px-3 py-0.5 text-xs font-bold text-red-900 border border-red-200">
+              <span className="rounded-full bg-gray-100 px-3 py-0.5 text-xs font-bold text-gray-900 border border-gray-200">
                 {overrides.length} {overrides.length === 1 ? "City" : "Cities"}
               </span>
             </h2>
-            <p className="mt-1 text-xs text-red-700">
+            <p className="mt-1 text-xs text-gray-700">
               Active admin overrides. These replace original user phone numbers on the live website. Removing an override immediately restores original numbers.
             </p>
           </div>
@@ -611,7 +611,7 @@ export default function AdminPhoneControlPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by city, state, or phone..."
-              className="w-full rounded-xl border border-red-200 bg-white px-4 py-2 text-xs text-red-950 outline-none focus:border-red-400"
+              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs text-gray-950 outline-none focus:border-gray-400"
             />
           </div>
         </div>
@@ -623,16 +623,16 @@ export default function AdminPhoneControlPage() {
             />
           </div>
         ) : filteredOverrides.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-red-200 bg-white p-8 text-center text-sm text-red-800">
+          <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-800">
             {searchQuery
               ? `No overrides match "${searchQuery}".`
               : "No contact overrides are currently configured by admin. Ads in all cities are currently displaying their original posted user numbers."}
           </div>
         ) : (
-          <div className="mt-4 overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
+          <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-red-950">
-                <thead className="bg-red-50/70 border-b border-red-100 text-xs uppercase font-bold text-red-900">
+              <table className="w-full text-left text-sm text-gray-950">
+                <thead className="bg-gray-50/70 border-b border-gray-100 text-xs uppercase font-bold text-gray-900">
                   <tr>
                     <th className="px-5 py-3.5">City & State</th>
                     <th className="px-5 py-3.5">Overriding Phone</th>
@@ -644,7 +644,7 @@ export default function AdminPhoneControlPage() {
                     <th className="px-5 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-red-100">
+                <tbody className="divide-y divide-gray-100">
                   {filteredOverrides.map((item) => {
                     const stats = cityStats[item.city.toLowerCase()] || {
                       totalAds: 0,
@@ -653,65 +653,65 @@ export default function AdminPhoneControlPage() {
                     };
 
                     return (
-                      <tr key={item._id} className="hover:bg-red-50/40 transition">
+                      <tr key={item._id} className="hover:bg-gray-50/40 transition">
                         <td className="px-5 py-4">
-                          <div className="font-bold text-red-950 text-base">{item.city}</div>
+                          <div className="font-bold text-gray-950 text-base">{item.city}</div>
                           {item.state && (
-                            <div className="text-xs text-red-700">{item.state}</div>
+                            <div className="text-xs text-gray-700">{item.state}</div>
                           )}
                         </td>
                         <td className="px-5 py-4">
                           {item.phone ? (
-                            <span className="font-mono font-bold text-red-950 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200">
+                            <span className="font-mono font-bold text-gray-950 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200">
                               {item.phone}
                             </span>
                           ) : (
-                            <span className="text-red-400 text-xs italic">Not set</span>
+                            <span className="text-gray-400 text-xs italic">Not set</span>
                           )}
                         </td>
                         <td className="px-5 py-4">
                           {item.whatsapp ? (
-                            <span className="font-mono text-xs font-semibold text-green-800 bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                            <span className="font-mono text-xs font-semibold text-gray-800 bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
                               {item.whatsapp}
                             </span>
                           ) : (
-                            <span className="text-red-400 text-xs italic">Not set</span>
+                            <span className="text-gray-400 text-xs italic">Not set</span>
                           )}
                         </td>
                         <td className="px-5 py-4">
                           {item.telegram ? (
-                            <span className="font-mono text-xs font-semibold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                            <span className="font-mono text-xs font-semibold text-gray-800 bg-gray-50 px-2 py-0.5 rounded border border-gray-200">
                               {item.telegram}
                             </span>
                           ) : (
-                            <span className="text-red-400 text-xs italic">Not set</span>
+                            <span className="text-gray-400 text-xs italic">Not set</span>
                           )}
                         </td>
                         <td className="px-5 py-4">
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                               item.deleteUserPhone
-                                ? "bg-red-100 text-red-900 border border-red-200"
-                                : "bg-green-100 text-green-900 border border-green-200"
+                                ? "bg-gray-100 text-gray-900 border border-gray-200"
+                                : "bg-gray-100 text-gray-900 border border-gray-200"
                             }`}
                           >
                             <span
                               className={`h-1.5 w-1.5 rounded-full ${
-                                item.deleteUserPhone ? "bg-red-700" : "bg-green-600"
+                                item.deleteUserPhone ? "bg-gray-700" : "bg-gray-600"
                               }`}
                             />
                             {item.deleteUserPhone ? "User Numbers Hidden" : "Numbers Overridden"}
                           </span>
                         </td>
                         <td className="px-5 py-4">
-                          <div className="text-xs font-bold text-red-950">
+                          <div className="text-xs font-bold text-gray-950">
                             {stats.totalAds} Ads
                           </div>
-                          <div className="text-xs text-red-700">
+                          <div className="text-xs text-gray-700">
                             {stats.uniquePhones} unique numbers
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-xs text-red-800">
+                        <td className="px-5 py-4 text-xs text-gray-800">
                           {formatDisplayDateTime(item.updatedAt || item.createdAt)}
                         </td>
                         <td className="px-5 py-4 text-right">
@@ -719,14 +719,14 @@ export default function AdminPhoneControlPage() {
                             <button
                               type="button"
                               onClick={() => handleEditOverride(item)}
-                              className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100 transition"
+                              className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-1 text-xs font-bold text-gray-700 hover:bg-gray-100 transition"
                             >
                               Edit
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDelete(item._id, item.city)}
-                              className="rounded-lg bg-red-50 border border-red-200 px-3 py-1 text-xs font-bold text-red-800 hover:bg-red-100 transition"
+                              className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-1 text-xs font-bold text-gray-800 hover:bg-gray-100 transition"
                             >
                               Remove
                             </button>

@@ -196,37 +196,37 @@ export default function VipPhoneControlPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Phone No. & Contact Control</h1>
-          <p className="mt-2 text-red-900 max-w-3xl">
+          <h1 className="text-3xl font-black text-gray-950">Phone No. & Contact Control</h1>
+          <p className="mt-2 text-gray-900 max-w-3xl">
             Control contact details on ads in your assigned cities. Set your own Phone Number, WhatsApp, and Telegram, or hide/delete original users&apos; phone numbers. When your VIP access date expires, all ads will automatically return to showing their original posted numbers.
           </p>
         </div>
-        <span className="rounded-full bg-pink-100 px-3.5 py-1.5 text-xs font-bold text-red-900 border border-red-200">
+        <span className="rounded-full bg-gray-100 px-3.5 py-1.5 text-xs font-bold text-gray-900 border border-gray-200">
           {cities.length} Assigned {cities.length === 1 ? "City" : "Cities"}
         </span>
       </div>
 
-      {error && <div className="mt-4 rounded-xl bg-red-100 p-3 text-sm text-red-800 font-semibold">{error}</div>}
-      {success && <div className="mt-4 rounded-xl bg-green-100 p-3 text-sm text-green-900 font-semibold">{success}</div>}
+      {error && <div className="mt-4 rounded-xl bg-gray-100 p-3 text-sm text-gray-800 font-semibold">{error}</div>}
+      {success && <div className="mt-4 rounded-xl bg-gray-100 p-3 text-sm text-gray-900 font-semibold">{success}</div>}
 
       {/* Control Form Card */}
-      <div className="mt-8 rounded-2xl border border-red-200 bg-white p-5 sm:p-7 shadow-sm">
-        <h2 className="text-xl font-bold text-red-950">Configure Contact Numbers</h2>
-        <p className="mt-1 text-xs text-red-700">
+      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 sm:p-7 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-950">Configure Contact Numbers</h2>
+        <p className="mt-1 text-xs text-gray-700">
           VIP can only change contact numbers for cities within their assigned access.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 grid gap-5 md:grid-cols-2">
           {/* City Selection */}
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Select City to Control
             </label>
             <select
               value={selectedCity}
               onChange={(e) => handleSelectCity(e.target.value)}
               disabled={applyToAll || cities.length === 0}
-              className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-red-950 outline-none focus:border-red-400 disabled:bg-gray-100"
+              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400 disabled:bg-gray-100"
               required={!applyToAll}
             >
               {cities.length === 0 ? (
@@ -241,12 +241,12 @@ export default function VipPhoneControlPage() {
             </select>
 
             {cities.length > 1 && (
-              <label className="mt-2.5 flex items-center gap-2 text-xs font-medium text-red-900 cursor-pointer">
+              <label className="mt-2.5 flex items-center gap-2 text-xs font-medium text-gray-900 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={applyToAll}
                   onChange={(e) => setApplyToAll(e.target.checked)}
-                  className="rounded border-red-300 text-red-800 accent-red-800"
+                  className="rounded border-gray-300 text-gray-800 accent-gray-800"
                 />
                 Apply these contact details to all my assigned cities ({cities.length} cities)
               </label>
@@ -255,63 +255,63 @@ export default function VipPhoneControlPage() {
 
           {/* Phone No */}
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Your Phone Number
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
               placeholder="e.g. +91 9876543210"
             />
-            <p className="mt-1 text-xs text-red-600">Replaces the caller number on ads in this city.</p>
+            <p className="mt-1 text-xs text-gray-600">Replaces the caller number on ads in this city.</p>
           </div>
 
           {/* WhatsApp */}
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Your WhatsApp Number
             </label>
             <input
               type="text"
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
               placeholder="e.g. +91 9876543210"
             />
-            <p className="mt-1 text-xs text-red-600">Replaces the WhatsApp contact button on ads.</p>
+            <p className="mt-1 text-xs text-gray-600">Replaces the WhatsApp contact button on ads.</p>
           </div>
 
           {/* Telegram */}
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Your Telegram Username / Link
             </label>
             <input
               type="text"
               value={telegram}
               onChange={(e) => setTelegram(e.target.value)}
-              className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
               placeholder="e.g. @vipuser or https://t.me/vipuser"
             />
-            <p className="mt-1 text-xs text-red-600">Replaces the Telegram button on ads.</p>
+            <p className="mt-1 text-xs text-gray-600">Replaces the Telegram button on ads.</p>
           </div>
 
           {/* Delete User Phone No Option */}
-          <div className="md:col-span-2 rounded-xl bg-red-50/80 border border-red-200 p-4">
+          <div className="md:col-span-2 rounded-xl bg-gray-50/80 border border-gray-200 p-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={deleteUserPhone}
                 onChange={(e) => setDeleteUserPhone(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-red-300 text-red-800 accent-red-800"
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-800 accent-gray-800"
               />
               <div>
-                <span className="text-sm font-bold text-red-950 block">
+                <span className="text-sm font-bold text-gray-950 block">
                   Delete / Hide original users&apos; phone numbers from ads
                 </span>
-                <span className="text-xs text-red-700 block mt-0.5 leading-relaxed">
+                <span className="text-xs text-gray-700 block mt-0.5 leading-relaxed">
                   When enabled, original users&apos; contact numbers are hidden from callers and replaced with your numbers above. Once your VIP date expires, all ads will automatically revert to their original user numbers.
                 </span>
               </div>
@@ -322,7 +322,7 @@ export default function VipPhoneControlPage() {
             <button
               type="submit"
               disabled={saving || cities.length === 0}
-              className="rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#7f1d1d] disabled:opacity-50 transition"
+              className="rounded-xl bg-[] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[] disabled:opacity-50 transition"
             >
               {saving ? "Saving..." : "Save Contact Control"}
             </button>
@@ -332,8 +332,8 @@ export default function VipPhoneControlPage() {
 
       {/* Active Overrides Section */}
       <div className="mt-10">
-        <h2 className="text-xl font-bold text-red-950">Active City Overrides</h2>
-        <p className="mt-1 text-xs text-red-700">
+        <h2 className="text-xl font-bold text-gray-950">Active City Overrides</h2>
+        <p className="mt-1 text-xs text-gray-700">
           Currently active contact modifications. These automatically expire when your VIP assignment expires.
         </p>
 
@@ -342,7 +342,7 @@ export default function VipPhoneControlPage() {
             <AdminTableSkeleton headers={["City", "Phone", "WhatsApp", "Telegram", "Status", "Expires", "Actions"]} />
           </div>
         ) : overrides.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-red-200 bg-white p-6 text-center text-sm text-red-800">
+          <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-800">
             No active contact overrides. Ads in your assigned cities are currently displaying original user contact info.
           </div>
         ) : (
@@ -350,16 +350,16 @@ export default function VipPhoneControlPage() {
             {overrides.map((item) => (
               <div
                 key={item._id}
-                className="rounded-2xl border border-red-200 bg-white p-5 shadow-sm flex flex-col justify-between"
+                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 border-b border-red-100 pb-3">
-                    <span className="text-base font-bold text-red-950">{item.city}</span>
+                  <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                    <span className="text-base font-bold text-gray-950">{item.city}</span>
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                         item.deleteUserPhone
-                          ? "bg-red-100 text-red-900 border border-red-200"
-                          : "bg-green-100 text-green-900 border border-green-200"
+                          ? "bg-gray-100 text-gray-900 border border-gray-200"
+                          : "bg-gray-100 text-gray-900 border border-gray-200"
                       }`}
                     >
                       {item.deleteUserPhone ? "User Numbers Hidden" : "Overridden"}
@@ -367,33 +367,33 @@ export default function VipPhoneControlPage() {
                   </div>
 
                   <div className="mt-3 space-y-1.5 text-xs">
-                    <p className="text-red-950">
-                      <strong>Phone:</strong> {item.phone || <span className="text-red-400">None</span>}
+                    <p className="text-gray-950">
+                      <strong>Phone:</strong> {item.phone || <span className="text-gray-400">None</span>}
                     </p>
-                    <p className="text-red-950">
-                      <strong>WhatsApp:</strong> {item.whatsapp || <span className="text-red-400">None</span>}
+                    <p className="text-gray-950">
+                      <strong>WhatsApp:</strong> {item.whatsapp || <span className="text-gray-400">None</span>}
                     </p>
-                    <p className="text-red-950">
-                      <strong>Telegram:</strong> {item.telegram || <span className="text-red-400">None</span>}
+                    <p className="text-gray-950">
+                      <strong>Telegram:</strong> {item.telegram || <span className="text-gray-400">None</span>}
                     </p>
-                    <p className="text-red-700 pt-2 border-t border-red-100">
+                    <p className="text-gray-700 pt-2 border-t border-gray-100">
                       <strong>Expires:</strong> {formatDisplayDateTime(item.expiresAt)}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-red-100 flex items-center justify-between gap-2">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => handleSelectCity(item.city)}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                    className="text-xs font-semibold text-gray-600 hover:text-gray-800 hover:underline"
                   >
                     Edit &uarr;
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(item._id, item.city)}
-                    className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-900 hover:bg-red-200 transition"
+                    className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 transition"
                   >
                     Remove Override
                   </button>

@@ -17,7 +17,7 @@ export default function SiteLoading() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="flex min-h-[24rem] flex-col justify-between rounded-[1.5rem] border border-red-100 bg-white p-5 sm:p-6"
+              className="flex min-h-[24rem] flex-col justify-between rounded-[1.5rem] border border-gray-100 bg-white p-5 sm:p-6"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between">

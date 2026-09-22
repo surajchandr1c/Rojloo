@@ -1,9 +1,13 @@
 import { readStore, writeStore } from "../persist";
 
+function cleanEnv(val?: string): string {
+  return (val ?? "").trim().replace(/^['"]|['"]$/g, "");
+}
+
 export const DEFAULT_UPI = {
-  upiId: "surajkumar40407@ybl",
-  name: "suraj",
-  qrCode: "/surajkumar40407@ybl.jpeg",
+  upiId: cleanEnv(process.env.DEFAULT_UPI_ID) || "payments@rojlo.com",
+  name: cleanEnv(process.env.DEFAULT_UPI_NAME) || "Rojlo Payments",
+  qrCode: cleanEnv(process.env.DEFAULT_UPI_QR) || "/qr-placeholder.png",
 } as const;
 
 export type UPIRecord = {

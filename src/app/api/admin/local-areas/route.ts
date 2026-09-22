@@ -8,7 +8,14 @@ import { getAdminContext, canAccess } from "@/lib/admin-access";
 
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
-  if (!ctx || (!canAccess(ctx, "city") && !canAccess(ctx, "state"))) {
+  if (
+    !ctx ||
+    (!canAccess(ctx, "city") &&
+      !canAccess(ctx, "state") &&
+      !canAccess(ctx, "city-seo") &&
+      !canAccess(ctx, "dynamic-seo") &&
+      !canAccess(ctx, "local-area-seo"))
+  ) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

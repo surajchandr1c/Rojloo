@@ -117,9 +117,9 @@ export function AdDetailSkeleton() {
           {/* Service Rates Table Placeholder */}
           <div className="mt-8">
             <Skeleton className="h-6 w-36 rounded-md" />
-            <div className="mt-3 overflow-x-auto rounded-2xl border border-red-100 bg-white p-5">
+            <div className="mt-3 overflow-x-auto rounded-2xl border border-gray-100 bg-white p-5">
               <div className="space-y-3">
-                <div className="flex justify-between border-b border-red-50 pb-3">
+                <div className="flex justify-between border-b border-gray-50 pb-3">
                   <Skeleton className="h-5 w-24" />
                   <Skeleton className="h-5 w-24" />
                   <Skeleton className="h-5 w-24" />
@@ -127,7 +127,7 @@ export function AdDetailSkeleton() {
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex justify-between border-b border-red-50/50 py-3 last:border-0"
+                    className="flex justify-between border-b border-gray-50/50 py-3 last:border-0"
                   >
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-4 w-20" />
@@ -169,7 +169,7 @@ export function PlacesExplorerSkeleton() {
         {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
-            className="flex w-full min-w-0 flex-col rounded-xl border border-red-100 bg-white p-3 sm:p-3.5"
+            className="flex w-full min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-3 sm:p-3.5"
           >
             <div className="flex w-full min-w-0 items-start justify-between gap-2">
               <div className="min-w-0 flex-1 space-y-1.5">

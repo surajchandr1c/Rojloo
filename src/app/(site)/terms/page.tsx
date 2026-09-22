@@ -61,20 +61,20 @@ export default function Terms() {
     <main className="px-4 py-10 sm:px-6 lg:px-8">
       <SectionPanel>
         <Eyebrow>Terms</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950 sm:text-4xl">
+        <h1 className="mt-3 text-3xl font-black text-gray-950 sm:text-4xl">
           Terms and Conditions
         </h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-red-900">
+        <p className="mt-4 max-w-3xl text-lg leading-8 text-gray-900">
           Please read these terms carefully before using Rojlo.
         </p>
 
         <div className="mt-8 space-y-6">
           {sections.map((section) => (
             <section key={section.title}>
-              <h2 className="text-xl font-black text-red-950">
+              <h2 className="text-xl font-black text-gray-950">
                 {section.title}
               </h2>
-              <p className="mt-2 max-w-3xl text-base leading-7 text-red-900">
+              <p className="mt-2 max-w-3xl text-base leading-7 text-gray-900">
                 {section.body}
               </p>
             </section>

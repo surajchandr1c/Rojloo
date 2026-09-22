@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fce7f3;
-  --foreground: #450a0a;
-  --surface: #fce7f3;
-  --surface-strong: #fbcfe8;
-  --accent: #dc2626;
-  --accent-hover: #b91c1c;
+  --background: ;
+  --foreground: ;
+  --surface: ;
+  --surface-strong: ;
+  --accent: ;
+  --accent-hover: ;
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono: "Courier New", Courier, monospace;
 }

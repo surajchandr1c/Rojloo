@@ -108,20 +108,20 @@ export default function AdminAds() {
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Ads</h1>
-          <p className="mt-2 text-red-900">Manage all posted ads.</p>
+          <h1 className="text-3xl font-black text-gray-950">Ads</h1>
+          <p className="mt-2 text-gray-900">Manage all posted ads.</p>
         </div>
 
         <div className="relative w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="flex w-full sm:w-60 items-center justify-between gap-2 rounded-full border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-950 outline-none hover:border-red-400"
+            className="flex w-full sm:w-60 items-center justify-between gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-950 outline-none hover:border-gray-400"
           >
             <span>{selectedCity ? selectedCity.name : "All Cities"}</span>
             <svg
               viewBox="0 0 24 24"
-              className={`h-4 w-4 text-red-500 transition-transform ${
+              className={`h-4 w-4 text-gray-500 transition-transform ${
                 open ? "rotate-180" : ""
               }`}
               fill="none"
@@ -141,19 +141,19 @@ export default function AdminAds() {
                 className="fixed inset-0 z-10"
                 onClick={() => setOpen(false)}
               />
-              <div className="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-2xl border border-red-100 bg-white shadow-lg">
+              <div className="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg">
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedSlug("");
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-pink-50 ${
-                    selectedSlug === "" ? "bg-pink-50" : ""
+                  className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 ${
+                    selectedSlug === "" ? "bg-gray-50" : ""
                   }`}
                 >
-                  <span className="font-semibold text-red-950">All Cities</span>
-                  <span className="rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                  <span className="font-semibold text-gray-950">All Cities</span>
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
                     {ads.length}
                   </span>
                 </button>
@@ -166,12 +166,12 @@ export default function AdminAds() {
                         setSelectedSlug(c.slug);
                         setOpen(false);
                       }}
-                      className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-pink-50 ${
-                        c.slug === selectedSlug ? "bg-pink-50" : ""
+                      className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 ${
+                        c.slug === selectedSlug ? "bg-gray-50" : ""
                       }`}
                     >
-                      <span className="text-red-950">{c.name}</span>
-                      <span className="rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                      <span className="text-gray-950">{c.name}</span>
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
                         {cityCounts[c.slug] ?? 0}
                       </span>
                     </button>
@@ -188,15 +188,15 @@ export default function AdminAds() {
           headers={["Ad", "Category", "City", "Status", "Actions"]}
         />
       ) : filteredAds.length === 0 ? (
-        <p className="mt-6 text-red-900">
+        <p className="mt-6 text-gray-900">
           {selectedSlug && ads.length > 0
             ? `No ads found in ${selectedCity?.name ?? "this city"}.`
             : "No ads found."}
         </p>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-100 bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-gray-50 text-gray-950">
               <tr>
                 <th className="px-4 py-3 font-semibold">Ad</th>
                 <th className="px-4 py-3 font-semibold">Category</th>
@@ -207,7 +207,7 @@ export default function AdminAds() {
             </thead>
             <tbody>
               {filteredAds.map((ad) => (
-                <tr key={ad._id} className="border-t border-red-50">
+                <tr key={ad._id} className="border-t border-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {ad.images?.[0] ? (
@@ -219,24 +219,24 @@ export default function AdminAds() {
                           className="h-12 w-12 rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="h-12 w-12 rounded-lg bg-pink-100" />
+                        <div className="h-12 w-12 rounded-lg bg-gray-100" />
                       )}
-                      <span className="font-medium text-red-950">{ad.name}</span>
+                      <span className="font-medium text-gray-950">{ad.name}</span>
                       {ad.age ? (
-                        <span className="text-sm text-red-500">
+                        <span className="text-sm text-gray-500">
                           Age: {ad.age}
                         </span>
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-red-900">{ad.category}</td>
-                  <td className="px-4 py-3 text-red-900">{ad.city}</td>
+                  <td className="px-4 py-3 text-gray-900">{ad.category}</td>
+                  <td className="px-4 py-3 text-gray-900">{ad.city}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-semibold ${
                         ad.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-gray-100 text-gray-700"
+                          : "bg-gray-100 text-gray-700"
                       }`}
                     >
                       {ad.status}
@@ -247,14 +247,14 @@ export default function AdminAds() {
                       <button
                         type="button"
                         onClick={() => toggleStatus(ad)}
-                        className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+                        className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-700"
                       >
                         {ad.status === "Active" ? "Deactivate" : "Activate"}
                       </button>
                       <button
                         type="button"
                         onClick={() => remove(ad._id)}
-                        className="rounded-full bg-[#450a0a] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#7f1d1d]"
+                        className="rounded-full bg-[] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[]"
                       >
                         Delete
                       </button>

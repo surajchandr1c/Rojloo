@@ -37,7 +37,7 @@ export async function generateMetadata({
   const { location, id } = await params;
   const ad = await getPublicAdById(id);
   if (!ad) {
-    const [city, area, localSeo, citySeo] = await Promise.all([
+    const [city, area, areaSeo, citySeo] = await Promise.all([
       getCityBySlug(location),
       getLocalAreaBySlug(location, id),
       getLocalAreaSeo(location, id),
@@ -45,13 +45,37 @@ export async function generateMetadata({
     ]);
 
     if (city && area) {
-      const seo = localSeo?.mode === "individual" ? localSeo : citySeo;
-      const title = seo?.title?.trim() || `Services in ${area.name}, ${city.name} | Rojlo`;
-      const description = seo?.description?.trim() || `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`;
-      const canonical = `${siteConfig.url}/places/${city.slug}/${area.slug}`;
+      const isIndividual = areaSeo?.mode === "individual" && areaSeo.status === "published";
+      const title =
+        isIndividual && areaSeo?.title?.trim()
+          ? areaSeo.title.trim()
+          : citySeo?.title?.trim()
+          ? `${citySeo.title.trim()} - ${area.name}, ${city.name}`
+          : `Services in ${area.name}, ${city.name} | Rojlo`;
+
+      const description =
+        isIndividual && areaSeo?.description?.trim()
+          ? areaSeo.description.trim()
+          : citySeo?.description?.trim()
+          ? `${citySeo.description.trim()} Explore local services in ${area.name}, ${city.name}.`
+          : `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`;
+
+      let canonical = `${siteConfig.url}/places/${city.slug}/${area.slug}`;
+      if (isIndividual && areaSeo?.canonicalUrl?.trim()) {
+        canonical = areaSeo.canonicalUrl.trim();
+      }
+
+      const keywords =
+        isIndividual && areaSeo?.keywords?.trim()
+          ? areaSeo.keywords.trim()
+          : citySeo?.primaryKeyword
+          ? `${citySeo.primaryKeyword}, ${area.name}, ${city.name}`
+          : undefined;
+
       return {
         title,
         description,
+        keywords,
         alternates: { canonical },
         openGraph: {
           title,
@@ -145,22 +169,34 @@ async function LocalAreaContent({
   citySlug: string;
   areaSlug: string;
 }) {
-  const [city, area] = await Promise.all([
+  const [city, area, areaSeo, citySeo] = await Promise.all([
     getCityBySlug(citySlug),
     getLocalAreaBySlug(citySlug, areaSlug),
+    getLocalAreaSeo(citySlug, areaSlug),
+    getCitySeo(citySlug),
   ]);
 
   if (!city || !area) notFound();
 
-  const [ads, localAreas, localSeo, citySeo] = await Promise.all([
+  const isIndividual = areaSeo?.mode === "individual" && areaSeo?.status === "published";
+  const activeSeo = isIndividual ? areaSeo : citySeo;
+
+  const [ads, localAreas] = await Promise.all([
     listAdsByLocalArea(city.name, area.slug),
     listLocalAreas({ citySlug: city.slug }),
-    getLocalAreaSeo(city.slug, area.slug),
-    getCitySeo(city.slug),
   ]);
-  const seo = localSeo?.mode === "individual" ? localSeo : citySeo;
-  const showSeoContent = seo?.status === "published" && Boolean(seo.content?.length);
-  const canonical = `${siteConfig.url}/places/${city.slug}/${area.slug}`;
+  const canonical = isIndividual && areaSeo?.canonicalUrl?.trim()
+    ? areaSeo.canonicalUrl.trim()
+    : `${siteConfig.url}/places/${city.slug}/${area.slug}`;
+
+  const areaTitle = isIndividual && areaSeo?.title?.trim()
+    ? areaSeo.title.trim()
+    : `Services posted in ${area.name}, ${city.name}`;
+
+  const areaDescription = isIndividual && areaSeo?.description?.trim()
+    ? areaSeo.description.trim()
+    : `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`;
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -174,11 +210,14 @@ async function LocalAreaContent({
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `Services in ${area.name}, ${city.name}`,
-    description: seo?.description?.trim() || `Explore local services and places in ${area.name}, ${city.name} on Rojlo.`,
+    name: areaTitle,
+    description: areaDescription,
     url: canonical,
-    about: { "@type": "Place", name: area.name, containedInPlace: { "@type": "City", name: city.name } },
+    about: { "@type": "Place", name: `${area.name}, ${city.name}`, containedInPlace: { "@type": "City", name: city.name } },
   };
+
+  const contentBlocks = activeSeo?.content && activeSeo.content.length > 0 ? activeSeo.content : [];
+  const faqs = activeSeo?.faqs && activeSeo.faqs.length > 0 ? activeSeo.faqs : [];
 
   return (
     <main>
@@ -190,16 +229,19 @@ async function LocalAreaContent({
               { label: "Home", href: "/" },
               { label: "Places", href: "/places" },
               { label: city.name, href: `/places/${city.slug}` },
-              { label: area.name },
+              { label: `${area.name} (${city.name})` },
             ]}
           />
           <h1 className="mt-3 text-2xl font-black text-gray-950 sm:text-3xl">
-            Services posted in {area.name}, {city.name}
+            {areaTitle}
           </h1>
+          <p className="mt-2 text-sm text-gray-700">
+            {areaDescription}
+          </p>
 
           {localAreas.length > 1 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-gray-950">Popular Areas:</span>
+              <span className="text-sm font-semibold text-gray-950">Popular Areas in {city.name}:</span>
               {localAreas.map((local) => (
                 <Link
                   key={local._id ?? local.slug}
@@ -261,21 +303,48 @@ async function LocalAreaContent({
           )}
         </SectionPanel>
       </section>
-      {showSeoContent && seo?.content && (
-        <section className="px-4 py-10 sm:px-6">
+
+      {/* Structured SEO Content Blocks */}
+      {contentBlocks.length > 0 && (
+        <section className="px-4 pb-8 sm:px-6 lg:px-8">
           <SectionPanel>
-            {seo.content.map((block) => {
-              const className = "mt-4 text-gray-950";
-              if (block.type === "h1") return <h2 key={block.id} className={`text-3xl font-black ${className}`}>{block.text}</h2>;
-              if (block.type === "h2") return <h2 key={block.id} className={`text-2xl font-bold ${className}`}>{block.text}</h2>;
-              if (block.type === "h3") return <h3 key={block.id} className={`text-xl font-semibold ${className}`}>{block.text}</h3>;
-              return <p key={block.id} className="mt-3 leading-7 text-gray-900">{block.text}</p>;
-            })}
+            <div className="prose prose-gray max-w-none space-y-4 text-gray-900">
+              {contentBlocks.map((block) => {
+                if (block.type === "h1") {
+                  return (
+                    <h2 key={block.id} className="text-2xl font-black text-gray-950 sm:text-3xl">
+                      {block.text}
+                    </h2>
+                  );
+                }
+                if (block.type === "h2") {
+                  return (
+                    <h3 key={block.id} className="text-xl font-bold text-gray-950 sm:text-2xl">
+                      {block.text}
+                    </h3>
+                  );
+                }
+                if (block.type === "h3") {
+                  return (
+                    <h4 key={block.id} className="text-lg font-bold text-gray-900">
+                      {block.text}
+                    </h4>
+                  );
+                }
+                return (
+                  <p key={block.id} className="text-sm leading-relaxed text-gray-800">
+                    {block.text}
+                  </p>
+                );
+              })}
+            </div>
           </SectionPanel>
         </section>
       )}
-      {showSeoContent && seo?.faqs && seo.faqs.length > 0 && (
-        <CityFaqSection faqs={seo.faqs} cityName={`${area.name}, ${city.name}`} />
+
+      {/* FAQs */}
+      {faqs.length > 0 && (
+        <CityFaqSection faqs={faqs} cityName={`${area.name}, ${city.name}`} />
       )}
     </main>
   );

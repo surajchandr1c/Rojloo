@@ -290,7 +290,7 @@ function PaymentView() {
     <main className="px-4 py-10 sm:px-6 lg:px-8">
       <SectionPanel>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-red-950 sm:text-4xl">
+          <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">
             Complete Payment
           </h1>
           <Button
@@ -307,9 +307,9 @@ function PaymentView() {
             <>
               {/* 24h Cooldown Alert Banner */}
               {eligibility && !eligibility.allowed && (
-                <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-amber-950 shadow-xs">
+                <div className="mb-6 rounded-2xl border border-gray-300 bg-gray-50 p-4 text-left text-gray-950 shadow-xs">
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 rounded-full bg-amber-200 p-2 text-amber-800">
+                    <div className="shrink-0 rounded-full bg-gray-200 p-2 text-gray-800">
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path
                           strokeLinecap="round"
@@ -321,17 +321,17 @@ function PaymentView() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-                        <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-950">
                           24-Hour Purchase Limit Active
                         </h3>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 text-xs font-black text-amber-950 w-fit">
-                          <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-200/90 border border-gray-300 px-2.5 py-0.5 text-xs font-black text-gray-950 w-fit">
+                          <span className="h-2 w-2 rounded-full bg-gray-600 animate-pulse" />
                           Next purchase in: {liveCountdown || eligibility.remainingFormatted}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs sm:text-sm text-amber-900 leading-relaxed">
+                      <p className="mt-1 text-xs sm:text-sm text-gray-900 leading-relaxed">
                         An email can only purchase coins once in 24 hours. Your last coin purchase was recorded on{" "}
-                        <strong className="font-semibold text-amber-950">
+                        <strong className="font-semibold text-gray-950">
                           {eligibility.lastPurchaseAt
                             ? new Date(eligibility.lastPurchaseAt).toLocaleString("en-IN", {
                                 dateStyle: "medium",
@@ -346,18 +346,18 @@ function PaymentView() {
                 </div>
               )}
 
-              <p className="text-lg font-bold text-red-950">
+              <p className="text-lg font-bold text-gray-950">
                 Pay {price || "—"} &nbsp;·&nbsp; Get {coins} coins
               </p>
-              <p className="mt-1 text-sm text-red-900">
+              <p className="mt-1 text-sm text-gray-900">
                 Scan the QR code with any UPI app or use the UPI ID below.
               </p>
             </>
           )}
           {submitted && submittedStatus === "pending" && (
-            <div className="rounded-[1.5rem] border border-green-200 bg-green-50 p-6 text-center">
-              <p className="text-xl font-black text-green-900">Payment submitted</p>
-              <p className="mt-2 text-base text-green-800">
+            <div className="rounded-[1.5rem] border border-gray-200 bg-gray-50 p-6 text-center">
+              <p className="text-xl font-black text-gray-900">Payment submitted</p>
+              <p className="mt-2 text-base text-gray-800">
                 Don&apos;t pay again. Please wait to confirm the payment.
               </p>
               <div className="mt-5 flex justify-center">
@@ -374,9 +374,9 @@ function PaymentView() {
           )}
 
           {submitted && submittedStatus === "declined" && (
-            <div className="rounded-[1.5rem] border border-red-200 bg-red-50 p-6 text-center">
-              <p className="text-xl font-black text-red-900">Payment Declined</p>
-              <p className="mt-2 text-base font-semibold text-red-800">
+            <div className="rounded-[1.5rem] border border-gray-200 bg-gray-50 p-6 text-center">
+              <p className="text-xl font-black text-gray-900">Payment Declined</p>
+              <p className="mt-2 text-base font-semibold text-gray-800">
                 {declineReason || "Wrong Transaction ID"}
               </p>
               <div className="mt-5 flex flex-col sm:flex-row justify-center gap-3">
@@ -406,9 +406,9 @@ function PaymentView() {
           )}
 
           {submitted && submittedStatus === "confirmed" && (
-            <div className="rounded-[1.5rem] border border-green-200 bg-green-50 p-6 text-center">
-              <p className="text-xl font-black text-green-900">Payment Confirmed!</p>
-              <p className="mt-2 text-base text-green-800">
+            <div className="rounded-[1.5rem] border border-gray-200 bg-gray-50 p-6 text-center">
+              <p className="text-xl font-black text-gray-900">Payment Confirmed!</p>
+              <p className="mt-2 text-base text-gray-800">
                 Coins have been added to your wallet.
               </p>
               <div className="mt-5 flex justify-center">
@@ -427,7 +427,7 @@ function PaymentView() {
           {!submitted && (
             <>
               {/* Coupon Section */}
-              <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+              <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
@@ -435,13 +435,13 @@ function PaymentView() {
                     disabled={applyingCoupon}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                     placeholder="Enter coupon code (optional)"
-                    className="min-w-0 flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none disabled:opacity-60"
+                    className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-gray-950 placeholder-gray-400 focus:border-gray-500 focus:outline-none disabled:opacity-60"
                   />
                   <button
                     type="button"
                     onClick={applyCoupon}
                     disabled={applyingCoupon}
-                    className="w-full sm:w-auto rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {applyingCoupon && (
                       <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -453,16 +453,16 @@ function PaymentView() {
                   </button>
                 </div>
                 {discountError && (
-                  <p className="mt-2 text-sm text-red-600 text-left font-medium">{discountError}</p>
+                  <p className="mt-2 text-sm text-gray-600 text-left font-medium">{discountError}</p>
                 )}
                 {discount > 0 && (
-                  <div className="mt-2 flex items-center justify-between rounded-lg bg-green-100 p-3">
-                    <p className="font-semibold text-green-900">Discount Applied</p>
-                    <p className="text-lg font-bold text-green-900">-₹{discount.toFixed(2)}</p>
+                  <div className="mt-2 flex items-center justify-between rounded-lg bg-gray-100 p-3">
+                    <p className="font-semibold text-gray-900">Discount Applied</p>
+                    <p className="text-lg font-bold text-gray-900">-₹{discount.toFixed(2)}</p>
                   </div>
                 )}
                 {discount > 0 && (
-                  <p className="mt-2 text-sm font-semibold text-red-950">
+                  <p className="mt-2 text-sm font-semibold text-gray-950">
                     Final Amount: ₹{finalAmount.toFixed(2)}
                   </p>
                 )}
@@ -472,7 +472,7 @@ function PaymentView() {
               ) : upis.length > 0 ? (
                 <div className="mt-6 space-y-6">
                   {upis.map((upi) => (
-                    <div key={upi._id} className="rounded-xl bg-red-50 p-6">
+                    <div key={upi._id} className="rounded-xl bg-gray-50 p-6">
                       <div className="mt-4 flex justify-center">
                         {upi.qrCode ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -481,20 +481,20 @@ function PaymentView() {
                             alt={`UPI payment QR code for ${upi.upiId}`}
                             width={240}
                             height={240}
-                            className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-red-200 bg-white p-2 object-contain"
+                            className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-gray-200 bg-white p-2 object-contain"
                           />
                         ) : (
-                          <div className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-red-200 bg-white p-2 flex items-center justify-center text-red-900">
+                          <div className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-gray-200 bg-white p-2 flex items-center justify-center text-gray-900">
                             No QR Code
                           </div>
                         )}
                       </div>
 
                       <div className="mt-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-700">
                           UPI ID
                         </p>
-                        <p className="mt-1 text-base sm:text-lg font-black text-red-950 break-all">
+                        <p className="mt-1 text-base sm:text-lg font-black text-gray-950 break-all">
                           {upi.upiId}
                         </p>
                       </div>
@@ -520,7 +520,7 @@ function PaymentView() {
                       </div>
 
                       <div className="mt-4">
-                        <label className="block text-sm font-semibold text-red-950 text-left">
+                        <label className="block text-sm font-semibold text-gray-950 text-left">
                           Transaction ID
                         </label>
                         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -533,13 +533,13 @@ function PaymentView() {
                               if (submitError) setSubmitError("");
                             }}
                             placeholder="Enter UPI transaction ID"
-                            className="min-w-0 flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none disabled:opacity-60"
+                            className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-gray-950 placeholder-gray-400 focus:border-gray-500 focus:outline-none disabled:opacity-60"
                           />
                           <button
                             type="button"
                             onClick={handleSubmitTransaction}
                             disabled={submitting || Boolean(eligibility && !eligibility.allowed)}
-                            className="w-full sm:w-auto rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
+                            className="w-full sm:w-auto rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
                           >
                             {submitting && (
                               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -555,7 +555,7 @@ function PaymentView() {
                           </button>
                         </div>
                         {submitError && (
-                          <p className="mt-2 text-sm text-red-600 font-medium text-left">{submitError}</p>
+                          <p className="mt-2 text-sm text-gray-600 font-medium text-left">{submitError}</p>
                         )}
                       </div>
                     </div>
@@ -570,15 +570,15 @@ function PaymentView() {
                       alt="UPI payment QR code"
                       width={240}
                       height={240}
-                      className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-red-200 bg-white p-2 object-contain"
+                      className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-gray-200 bg-white p-2 object-contain"
                     />
                   </div>
 
                   <div className="mt-6">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-700">
                       UPI ID
                     </p>
-                    <p className="mt-1 text-base sm:text-lg font-black text-red-950 break-all">
+                    <p className="mt-1 text-base sm:text-lg font-black text-gray-950 break-all">
                       {paymentInfo.upiId}
                     </p>
                   </div>
@@ -597,7 +597,7 @@ function PaymentView() {
                   </div>
 
                   <div className="mt-4">
-                    <label className="block text-sm font-semibold text-red-950 text-left">
+                    <label className="block text-sm font-semibold text-gray-950 text-left">
                       Transaction ID
                     </label>
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -610,13 +610,13 @@ function PaymentView() {
                           if (submitError) setSubmitError("");
                         }}
                         placeholder="Enter UPI transaction ID"
-                        className="min-w-0 flex-1 rounded-lg border border-red-200 px-3 py-2 text-red-950 placeholder-red-400 focus:border-red-500 focus:outline-none disabled:opacity-60"
+                        className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-gray-950 placeholder-gray-400 focus:border-gray-500 focus:outline-none disabled:opacity-60"
                       />
                       <button
                         type="button"
                         onClick={handleSubmitTransaction}
                         disabled={submitting || Boolean(eligibility && !eligibility.allowed)}
-                        className="w-full sm:w-auto rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
+                        className="w-full sm:w-auto rounded-lg bg-gray-600 px-4 py-2 font-semibold text-white hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
                       >
                         {submitting && (
                           <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -632,13 +632,13 @@ function PaymentView() {
                       </button>
                     </div>
                     {submitError && (
-                      <p className="mt-2 text-sm text-red-600 font-medium text-left">{submitError}</p>
+                      <p className="mt-2 text-sm text-gray-600 font-medium text-left">{submitError}</p>
                     )}
                   </div>
                 </>
               )}
 
-              <p className="mt-6 text-sm text-red-900">
+              <p className="mt-6 text-sm text-gray-900">
                 After paying, your coins will be added once the payment is verified.
                 Keep the payment screenshot for reference.
               </p>

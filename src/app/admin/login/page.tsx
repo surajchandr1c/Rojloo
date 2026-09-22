@@ -45,12 +45,12 @@ export default function AdminLogin() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <SectionPanel className="w-full max-w-md">
         <Eyebrow>Admin</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950">Admin Login</h1>
-        <p className="mt-2 text-red-900">Sign in with your admin credentials.</p>
+        <h1 className="mt-3 text-3xl font-black text-gray-950">Admin Login</h1>
+        <p className="mt-2 text-gray-900">Sign in with your admin credentials.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Email
             </label>
             <TextInput
@@ -61,7 +61,7 @@ export default function AdminLogin() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Password
             </label>
             <div className="relative">
@@ -78,7 +78,7 @@ export default function AdminLogin() {
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute inset-y-0 right-0 flex items-center px-4 text-red-500 transition hover:text-red-700"
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 transition hover:text-gray-700"
               >
                 {showPassword ? (
                   <svg
@@ -116,7 +116,7 @@ export default function AdminLogin() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-700">{error}</p>}
+          {error && <p className="text-sm text-gray-700">{error}</p>}
 
           <Button
             type="submit"

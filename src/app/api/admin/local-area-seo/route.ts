@@ -4,7 +4,12 @@ import { getAllLocalAreaSeo, upsertLocalAreaSeo } from "@/lib/models/local-area-
 
 export async function GET(request: NextRequest) {
   const context = await getAdminContext(request);
-  if (!context || !canAccess(context, "local-area-seo")) {
+  if (
+    !context ||
+    (!canAccess(context, "dynamic-seo") &&
+      !canAccess(context, "local-area-seo") &&
+      !canAccess(context, "city-seo"))
+  ) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -13,7 +18,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const context = await getAdminContext(request);
-  if (!context || !canAccess(context, "local-area-seo")) {
+  if (
+    !context ||
+    (!canAccess(context, "dynamic-seo") &&
+      !canAccess(context, "local-area-seo") &&
+      !canAccess(context, "city-seo"))
+  ) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

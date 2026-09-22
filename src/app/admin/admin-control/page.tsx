@@ -10,6 +10,7 @@ const PERMISSION_OPTIONS = [
   { key: "state", label: "State" },
   { key: "city", label: "City" },
   { key: "city-seo", label: "City SEO" },
+  { key: "dynamic-seo", label: "Dynamic SEO" },
   { key: "ads", label: "Ads" },
   { key: "users", label: "Users" },
   { key: "upi", label: "UPI" },
@@ -75,15 +76,15 @@ export default function AdminControl() {
 
   return (
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <h1 className="text-3xl font-black text-red-950">Admin Control</h1>
-      <p className="mt-2 text-red-900">
+      <h1 className="text-3xl font-black text-gray-950">Admin Control</h1>
+      <p className="mt-2 text-gray-900">
         Create a sub-admin and assign access to specific sections.
       </p>
 
-      <div className="mt-6 max-w-xl rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+      <div className="mt-6 max-w-xl rounded-2xl border border-gray-100 bg-white p-4 sm:p-6">
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
+            <label className="mb-1 block text-sm font-semibold text-gray-950">
               Email
             </label>
             <input
@@ -91,7 +92,7 @@ export default function AdminControl() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-[20px] border border-red-200 px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+              className="w-full rounded-[20px] border border-gray-200 px-4 py-2.5 text-sm text-gray-950 outline-none focus:border-gray-400"
             />
           </div>
           <div>
@@ -104,14 +105,14 @@ export default function AdminControl() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 aria-label="Password"
-                className="w-full rounded-[20px] border border-red-200 px-4 py-2.5 pr-12 text-sm text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-[20px] border border-gray-200 px-4 py-2.5 pr-12 text-sm text-gray-950 outline-none focus:border-gray-400"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute inset-y-0 right-0 flex items-center px-4 text-red-500 transition hover:text-red-700"
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500 transition hover:text-gray-700"
               >
                 {showPassword ? (
                   <svg
@@ -150,20 +151,20 @@ export default function AdminControl() {
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-semibold text-red-950">
+            <p className="mb-2 text-sm font-semibold text-gray-950">
               Assign access
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {PERMISSION_OPTIONS.map((option) => (
                 <label
                   key={option.key}
-                  className="flex items-center gap-2 text-sm text-red-900"
+                  className="flex items-center gap-2 text-sm text-gray-900"
                 >
                   <input
                     type="checkbox"
                     checked={permissions.includes(option.key)}
                     onChange={() => togglePermission(option.key)}
-                    className="h-4 w-4 accent-[#7f1d1d]"
+                    className="h-4 w-4 accent-[]"
                   />
                   {option.label}
                 </label>
@@ -171,13 +172,13 @@ export default function AdminControl() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-700">{error}</p>}
-          {success && <p className="text-sm text-green-700">{success}</p>}
+          {error && <p className="text-sm text-gray-700">{error}</p>}
+          {success && <p className="text-sm text-gray-700">{success}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-full bg-[#450a0a] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#7f1d1d] disabled:opacity-60"
+            className="mt-2 rounded-full bg-[] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[] disabled:opacity-60"
           >
             {loading ? "Creating..." : "Create Sub Admin"}
           </button>

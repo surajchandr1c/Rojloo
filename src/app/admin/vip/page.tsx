@@ -218,57 +218,57 @@ export default function VipPage() {
   if (!me || !me.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 p-4 sm:p-6 lg:p-10 min-w-0">
+    <main className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-10 min-w-0">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black text-red-950">VIP Access Control</h1>
-            <p className="mt-2 text-red-900">
+            <h1 className="text-3xl font-black text-gray-950">VIP Access Control</h1>
+            <p className="mt-2 text-gray-900">
               Assign City or State level VIP access. The VIP&apos;s phone number serves as their password to access their dedicated VIP Panel.
             </p>
           </div>
           <Link
             href="/api/admin/go-to-vip"
             prefetch={false}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline transition shrink-0"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-gray-800 hover:underline transition shrink-0"
           >
             <span>Go to VIP Dashboard</span>
             <span>&rarr;</span>
           </Link>
         </div>
 
-        {error && <div className="mt-4 rounded-xl bg-red-100 p-3 text-sm text-red-800">{error}</div>}
+        {error && <div className="mt-4 rounded-xl bg-gray-100 p-3 text-sm text-gray-800">{error}</div>}
         {success && (
-          <div className="mt-4 rounded-xl bg-green-100 p-4 text-sm text-green-900 font-semibold">
+          <div className="mt-4 rounded-xl bg-gray-100 p-4 text-sm text-gray-900 font-semibold">
             {success}
           </div>
         )}
 
-        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
+        <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
           <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
             {/* Access Type Toggle */}
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-red-950">
+              <label className="mb-2 block text-sm font-semibold text-gray-950">
                 Assignment Type
               </label>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-red-950">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-950">
                   <input
                     type="radio"
                     name="accessType"
                     checked={accessType === "city"}
                     onChange={() => setAccessType("city")}
-                    className="accent-red-800"
+                    className="accent-gray-800"
                   />
                   City Access (Specific cities only)
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-red-950">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-950">
                   <input
                     type="radio"
                     name="accessType"
                     checked={accessType === "state"}
                     onChange={() => setAccessType("state")}
-                    className="accent-red-800"
+                    className="accent-gray-800"
                   />
                   State Access (Full state & all cities within it)
                 </label>
@@ -278,13 +278,13 @@ export default function VipPage() {
             {/* State Selection Dropdown */}
             {accessType === "state" ? (
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-red-950">
+                <label className="mb-1 block text-sm font-semibold text-gray-950">
                   Select State
                 </label>
                 <select
                   value={stateName}
                   onChange={(e) => setStateName(e.target.value)}
-                  className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
                   required
                 >
                   <option value="">-- Select a State --</option>
@@ -294,7 +294,7 @@ export default function VipPage() {
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-red-600">
+                <p className="mt-1 text-xs text-gray-600">
                   The VIP will see this state and all cities belonging to it.
                 </p>
               </div>
@@ -302,24 +302,24 @@ export default function VipPage() {
               /* City input for multiple city access */
               <>
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm font-semibold text-red-950">City Names</label>
+                  <label className="mb-1 block text-sm font-semibold text-gray-950">City Names</label>
                   <textarea
                     value={cities}
                     onChange={(e) => setCities(e.target.value)}
-                    className="min-h-24 w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                    className="min-h-24 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
                     placeholder="Jaipur, Delhi, Mumbai"
                     required
                   />
-                  <p className="mt-1 text-xs text-red-600">Enter city names separated by commas.</p>
+                  <p className="mt-1 text-xs text-gray-600">Enter city names separated by commas.</p>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-red-950">City Slug (Optional)</label>
+                  <label className="mb-1 block text-sm font-semibold text-gray-950">City Slug (Optional)</label>
                   <input
                     type="text"
                     value={citySlug}
                     onChange={(e) => setCitySlug(e.target.value)}
-                    className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
                     placeholder="jaipur"
                   />
                 </div>
@@ -327,38 +327,38 @@ export default function VipPage() {
             )}
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-red-950">VIP Owner Email</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-950">VIP Owner Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
                 placeholder="vipowner@example.com"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-red-950">Phone No. (Used as Password)</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-950">Phone No. (Used as Password)</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
                 placeholder="e.g. 9876543210"
                 required
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-semibold text-red-950">Expires In (Days)</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-950">Expires In (Days)</label>
               <input
                 type="number"
                 min={1}
                 max={365}
                 value={expiresInDays}
                 onChange={(e) => setExpiresInDays(Number(e.target.value || 7))}
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-950 outline-none focus:border-gray-400"
               />
             </div>
 
@@ -366,7 +366,7 @@ export default function VipPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-[#450a0a] px-5 py-3 font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-60 transition"
+                className="w-full rounded-xl bg-[] px-5 py-3 font-bold text-white hover:bg-[] disabled:opacity-60 transition"
               >
                 {loading ? "Assigning..." : "assign vip access"}
               </button>
@@ -376,42 +376,42 @@ export default function VipPage() {
 
         {/* Assignments List */}
         <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-bold text-red-950">Active VIP Assignments</h2>
+          <h2 className="text-xl font-bold text-gray-950">Active VIP Assignments</h2>
           {assignments.length === 0 ? (
-            <div className="rounded-2xl border border-red-200 bg-white p-6 text-red-900">
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-gray-900">
               No VIP assignments yet.
             </div>
           ) : (
             assignments.map((item) => (
-              <div key={item._id} className="relative rounded-2xl border border-red-200 bg-white p-4 sm:p-5">
-                <div className="absolute right-4 top-4 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-900">
+              <div key={item._id} className="relative rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+                <div className="absolute right-4 top-4 rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-900">
                   {getAssignedDays(item)} days left
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 pr-24">
-                      <span className="rounded-md bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-900 uppercase">
+                      <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-900 uppercase">
                         {item.type === "state" ? "State" : "City"}
                       </span>
-                      <h3 className="text-lg font-bold text-red-950">
+                      <h3 className="text-lg font-bold text-gray-950">
                         {item.type === "state" ? item.stateName : item.cityName}
                       </h3>
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           item.status === "active"
-                            ? "bg-green-100 text-green-900"
-                            : "bg-red-100 text-red-900"
+                            ? "bg-gray-100 text-gray-900"
+                            : "bg-gray-100 text-gray-900"
                         }`}
                       >
                         {item.status === "inactive" ? "Inactive" : "Active"}
                       </span>
                     </div>
 
-                    <p className="mt-2 text-sm text-red-900 break-all font-medium">Email: {item.email}</p>
-                    <p className="text-sm font-bold text-red-950 break-all">Password: {item.phone || "—"}</p>
-                    <p className="text-xs text-red-700 mt-1">Assigned: {formatDisplayDate(item.assignedAt)}</p>
-                    <p className="text-xs text-red-700">Expires: {formatDisplayDateTime(item.expiresAt)}</p>
+                    <p className="mt-2 text-sm text-gray-900 break-all font-medium">Email: {item.email}</p>
+                    <p className="text-sm font-bold text-gray-950 break-all">Password: {item.phone || "—"}</p>
+                    <p className="text-xs text-gray-700 mt-1">Assigned: {formatDisplayDate(item.assignedAt)}</p>
+                    <p className="text-xs text-gray-700">Expires: {formatDisplayDateTime(item.expiresAt)}</p>
                   </div>
 
                   <div className="flex flex-col items-start sm:items-end gap-2.5">
@@ -419,14 +419,14 @@ export default function VipPage() {
                       <button
                         type="button"
                         onClick={() => handleExtend(item._id, -7)}
-                        className="rounded-lg bg-orange-100 px-3 py-2 text-xs font-semibold text-orange-900 hover:bg-orange-200"
+                        className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-200"
                       >
                         -7 Days
                       </button>
                       <button
                         type="button"
                         onClick={() => handleExtend(item._id, 7)}
-                        className="rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-900 hover:bg-blue-200"
+                        className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-200"
                       >
                         +7 Days
                       </button>
@@ -435,8 +435,8 @@ export default function VipPage() {
                         onClick={() => handleToggle(item._id, item.status !== "active")}
                         className={`rounded-lg px-3 py-2 text-xs font-semibold ${
                           item.status === "active"
-                            ? "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
-                            : "bg-green-100 text-green-900 hover:bg-green-200"
+                            ? "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                            : "bg-gray-100 text-gray-900 hover:bg-gray-200"
                         }`}
                       >
                         {item.status === "active" ? "Mark Inactive" : "Mark Active"}
@@ -444,14 +444,14 @@ export default function VipPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(item._id)}
-                        className="rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-900 hover:bg-red-200"
+                        className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-200"
                       >
                         Delete
                       </button>
                     </div>
                     <a
                       href={`/api/admin/go-to-vip?email=${encodeURIComponent(item.email)}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-gray-800 hover:underline transition"
                     >
                       Go to VIP Dashboard &rarr;
                     </a>

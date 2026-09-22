@@ -10,7 +10,7 @@ export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Skeleton({ className = "", ...props }: SkeletonProps) {
   return (
     <div
-      className={`animate-pulse motion-reduce:animate-none rounded-xl bg-pink-200/60 ${className}`}
+      className={`animate-pulse motion-reduce:animate-none rounded-xl bg-gray-200/60 ${className}`}
       aria-hidden="true"
       {...props}
     />
@@ -97,8 +97,8 @@ export function PageSkeleton({
       aria-busy="true"
       aria-label="Loading page"
     >
-      <div className="rounded-3xl border border-red-100 bg-white/90 p-5 sm:p-8 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-red-100 pb-5">
+      <div className="rounded-3xl border border-gray-100 bg-white/90 p-5 sm:p-8 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-5">
           <div className="space-y-2">
             <Skeleton className="h-8 w-48 sm:w-64" />
             <Skeleton className="h-4 w-64 sm:w-96" />
@@ -119,7 +119,7 @@ export function PageSkeleton({
 export function CardSkeleton({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`rounded-3xl border border-red-100 bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between ${className}`}
+      className={`rounded-3xl border border-gray-100 bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between ${className}`}
       aria-busy="true"
     >
       <div className="space-y-3">
@@ -131,7 +131,7 @@ export function CardSkeleton({ className = "" }: { className?: string }) {
         <Skeleton className="h-4 w-full rounded-md" />
         <Skeleton className="h-48 w-full rounded-2xl sm:h-56" />
       </div>
-      <div className="mt-4 pt-3 border-t border-red-50 flex items-center justify-between gap-2">
+      <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between gap-2">
         <Skeleton className="h-9 w-24 rounded-xl" />
         <Skeleton className="h-9 w-24 rounded-xl" />
       </div>
@@ -153,16 +153,16 @@ export function TableSkeleton({
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-red-100 bg-white shadow-xs ${className}`}
+      className={`overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs ${className}`}
       aria-busy="true"
       aria-label="Loading table"
     >
-      <div className="border-b border-red-100 bg-pink-50/70 p-4 flex gap-4">
+      <div className="border-b border-gray-100 bg-gray-50/70 p-4 flex gap-4">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} className="h-4 flex-1 rounded-md" />
         ))}
       </div>
-      <div className="divide-y divide-red-50 p-2">
+      <div className="divide-y divide-gray-50 p-2">
         {Array.from({ length: rows }).map((_, r) => (
           <div key={r} className="flex items-center gap-4 p-3.5">
             {Array.from({ length: cols }).map((_, c) => (
@@ -187,7 +187,7 @@ export function ProfileSkeleton() {
   const fields = ["Name", "Email", "Phone", "Service Type", "Member Since"];
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading profile">
-      <div className="flex items-center gap-4 border-b border-red-100 pb-5">
+      <div className="flex items-center gap-4 border-b border-gray-100 pb-5">
         <SkeletonAvatar size="h-16 w-16 sm:h-20 sm:w-20" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-44" />
@@ -196,8 +196,8 @@ export function ProfileSkeleton() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         {fields.map((label) => (
-          <div key={label} className="rounded-2xl border border-red-100 bg-pink-50/50 p-4 space-y-2">
-            <span className="text-xs font-bold text-red-900">{label}</span>
+          <div key={label} className="rounded-2xl border border-gray-100 bg-gray-50/50 p-4 space-y-2">
+            <span className="text-xs font-bold text-gray-900">{label}</span>
             <Skeleton className="h-5 w-40 rounded-md" />
           </div>
         ))}
@@ -211,7 +211,7 @@ export function ProfileSkeleton() {
  */
 export function NavbarSkeleton() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[#7f1d1d] bg-[#450a0a] px-4 py-3">
+    <header className="sticky top-0 z-50 w-full border-b border-[] bg-[] px-4 py-3">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Skeleton className="h-9 w-9 rounded-full bg-white/20" />
@@ -235,7 +235,7 @@ export function DashboardSkeleton() {
     <div className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-red-100 bg-white p-5 space-y-2">
+          <div key={i} className="rounded-2xl border border-gray-100 bg-white p-5 space-y-2">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-8 w-28" />
           </div>
@@ -252,12 +252,12 @@ export function DashboardSkeleton() {
 export function PaymentSkeleton() {
   return (
     <main className="px-4 py-10 sm:px-6 lg:px-8 max-w-5xl mx-auto" aria-busy="true" aria-label="Loading payment">
-      <div className="rounded-3xl border border-red-100 bg-white p-6 sm:p-8 space-y-6 shadow-xs">
-        <div className="flex items-center justify-between border-b border-red-100 pb-4">
+      <div className="rounded-3xl border border-gray-100 bg-white p-6 sm:p-8 space-y-6 shadow-xs">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-20 rounded-full" />
         </div>
-        <div className="flex flex-col items-center justify-center p-6 bg-pink-50/50 rounded-2xl border border-red-100 space-y-4">
+        <div className="flex flex-col items-center justify-center p-6 bg-gray-50/50 rounded-2xl border border-gray-100 space-y-4">
           <Skeleton className="h-56 w-56 sm:h-64 sm:w-64 rounded-2xl" />
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-4 w-36" />
@@ -282,7 +282,7 @@ export function PackageSkeleton({ count = 4 }: { count?: number }) {
       aria-label="Loading packages"
     >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-red-100 bg-white p-5 space-y-4">
+        <div key={i} className="rounded-2xl border border-gray-100 bg-white p-5 space-y-4">
           <SkeletonBadge className="h-5 w-16" />
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-8 w-24" />
@@ -300,7 +300,7 @@ export function PackageSkeleton({ count = 4 }: { count?: number }) {
 export function FormSkeleton({ fields = 4 }: { fields?: number }) {
   return (
     <div
-      className="space-y-4 max-w-md mx-auto w-full p-4 sm:p-6 rounded-3xl border border-red-100 bg-white shadow-xs"
+      className="space-y-4 max-w-md mx-auto w-full p-4 sm:p-6 rounded-3xl border border-gray-100 bg-white shadow-xs"
       aria-busy="true"
       aria-label="Loading form"
     >
@@ -326,7 +326,7 @@ export function ListSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Loading list">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-red-100 bg-white p-4 flex items-center justify-between gap-4">
+        <div key={i} className="rounded-2xl border border-gray-100 bg-white p-4 flex items-center justify-between gap-4">
           <div className="space-y-2 flex-1">
             <Skeleton className="h-5 w-1/3" />
             <Skeleton className="h-4 w-2/3" />
@@ -344,11 +344,11 @@ export function ListSkeleton({ count = 3 }: { count?: number }) {
 export function ModalSkeleton() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" aria-busy="true">
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-red-200 text-center space-y-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-gray-200 text-center space-y-4">
         <SkeletonAvatar size="h-14 w-14 mx-auto" />
         <Skeleton className="h-6 w-48 mx-auto" />
         <Skeleton className="h-4 w-64 mx-auto" />
-        <div className="rounded-2xl bg-pink-50 p-4 space-y-2">
+        <div className="rounded-2xl bg-gray-50 p-4 space-y-2">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-4/5" />
         </div>

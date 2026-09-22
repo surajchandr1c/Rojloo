@@ -238,12 +238,12 @@ export default function SetCoinsPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
+    <main className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-red-200 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
           <div>
-            <h1 className="text-3xl font-black text-red-950">Set Coin Packages</h1>
-            <p className="mt-1 text-sm text-red-900">
+            <h1 className="text-3xl font-black text-gray-950">Set Coin Packages</h1>
+            <p className="mt-1 text-sm text-gray-900">
               Manage the coin packages shown on the public Buy Coins page.
             </p>
           </div>
@@ -252,14 +252,14 @@ export default function SetCoinsPage() {
             <button
               type="button"
               onClick={handleResetToDefaults}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-900 hover:bg-gray-50 transition shadow-xs cursor-pointer"
             >
               Reset to Default 5 Packages
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs"
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-950 hover:bg-gray-50 transition shadow-xs"
             >
               + Add Package
             </button>
@@ -267,7 +267,7 @@ export default function SetCoinsPage() {
               type="button"
               onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
               disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-emerald-700 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs"
+              className="rounded-xl bg-gray-700 px-5 py-2 text-xs font-bold text-white hover:bg-gray-800 disabled:opacity-50 transition shadow-xs"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
@@ -275,18 +275,18 @@ export default function SetCoinsPage() {
         </div>
 
         {/* Standard Packages Reference Table */}
-        <div className="mt-4 rounded-2xl border border-red-200 bg-white p-4 shadow-xs overflow-x-auto">
+        <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-xs overflow-x-auto">
           <div className="flex items-center justify-between gap-2 mb-2.5">
-            <h3 className="text-xs font-black uppercase tracking-wider text-red-950">
+            <h3 className="text-xs font-black uppercase tracking-wider text-gray-950">
               Standard Package Pricing Reference
             </h3>
-            <span className="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full">
               Base: ₹8.00 / Coin
             </span>
           </div>
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-red-100 text-gray-500 font-bold">
+              <tr className="border-b border-gray-100 text-gray-500 font-bold">
                 <th className="pb-1.5 pr-3">Package</th>
                 <th className="pb-1.5 pr-3">Coins</th>
                 <th className="pb-1.5 pr-3">Original Price</th>
@@ -295,60 +295,60 @@ export default function SetCoinsPage() {
                 <th className="pb-1.5">Discount Tag</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-red-50 font-medium text-red-950">
+            <tbody className="divide-y divide-gray-50 font-medium text-gray-950">
               <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#1</td>
+                <td className="py-1.5 pr-3 font-black text-gray-900">#1</td>
                 <td className="py-1.5 pr-3 font-bold">99</td>
                 <td className="py-1.5 pr-3">₹792</td>
                 <td className="py-1.5 pr-3">0%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹792</td>
+                <td className="py-1.5 pr-3 font-black text-gray-800">₹792</td>
                 <td className="py-1.5 text-gray-400">—</td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#2</td>
+                <td className="py-1.5 pr-3 font-black text-gray-900">#2</td>
                 <td className="py-1.5 pr-3 font-bold">145</td>
                 <td className="py-1.5 pr-3">₹1,160</td>
                 <td className="py-1.5 pr-3">3%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹1,125</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">3% DISCOUNT</span></td>
+                <td className="py-1.5 pr-3 font-black text-gray-800">₹1,125</td>
+                <td className="py-1.5"><span className="rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-[10px] font-black text-gray-900">3% DISCOUNT</span></td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#3</td>
+                <td className="py-1.5 pr-3 font-black text-gray-900">#3</td>
                 <td className="py-1.5 pr-3 font-bold">200</td>
                 <td className="py-1.5 pr-3">₹1,600</td>
                 <td className="py-1.5 pr-3">6%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹1,504</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">6% DISCOUNT</span></td>
+                <td className="py-1.5 pr-3 font-black text-gray-800">₹1,504</td>
+                <td className="py-1.5"><span className="rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-[10px] font-black text-gray-900">6% DISCOUNT</span></td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#4</td>
+                <td className="py-1.5 pr-3 font-black text-gray-900">#4</td>
                 <td className="py-1.5 pr-3 font-bold">350</td>
                 <td className="py-1.5 pr-3">₹2,800</td>
                 <td className="py-1.5 pr-3">9%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹2,548</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">9% DISCOUNT</span></td>
+                <td className="py-1.5 pr-3 font-black text-gray-800">₹2,548</td>
+                <td className="py-1.5"><span className="rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-[10px] font-black text-gray-900">9% DISCOUNT</span></td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#5</td>
+                <td className="py-1.5 pr-3 font-black text-gray-900">#5</td>
                 <td className="py-1.5 pr-3 font-bold">870</td>
                 <td className="py-1.5 pr-3">₹6,960</td>
                 <td className="py-1.5 pr-3">12%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹6,125</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">12% DISCOUNT</span></td>
+                <td className="py-1.5 pr-3 font-black text-gray-800">₹6,125</td>
+                <td className="py-1.5"><span className="rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-[10px] font-black text-gray-900">12% DISCOUNT</span></td>
               </tr>
             </tbody>
           </table>
         </div>
 
         {/* All Packages Combo Configuration Box */}
-        <div className="mt-4 rounded-2xl border border-red-200 bg-white p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl">👑</span>
-              <h3 className="text-sm font-black text-red-950">
+              <h3 className="text-sm font-black text-gray-950">
                 All Packages Combo Coin Price
               </h3>
-              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-900 uppercase">
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-900 uppercase">
                 Ad Promotion Setting
               </span>
             </div>
@@ -365,7 +365,7 @@ export default function SetCoinsPage() {
                 max="10000"
                 value={allPackagesCoins}
                 onChange={(e) => setAllPackagesCoins(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-32 rounded-xl border border-red-300 bg-pink-50/40 px-3 py-2 text-center text-sm font-black text-red-950 outline-none focus:border-red-500"
+                className="w-32 rounded-xl border border-gray-300 bg-gray-50/40 px-3 py-2 text-center text-sm font-black text-gray-950 outline-none focus:border-gray-500"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 pointer-events-none">
                 coins
@@ -376,12 +376,12 @@ export default function SetCoinsPage() {
         </div>
 
         {error && (
-          <div className="mt-4 rounded-xl bg-red-100 border border-red-200 p-3 text-sm text-red-900 font-semibold">
+          <div className="mt-4 rounded-xl bg-gray-100 border border-gray-200 p-3 text-sm text-gray-900 font-semibold">
             {error}
           </div>
         )}
         {success && (
-          <div className="mt-4 rounded-xl bg-green-100 border border-green-200 p-3 text-sm text-green-900 font-semibold">
+          <div className="mt-4 rounded-xl bg-gray-100 border border-gray-200 p-3 text-sm text-gray-900 font-semibold">
             {success}
           </div>
         )}
@@ -391,18 +391,18 @@ export default function SetCoinsPage() {
             {packages.map((pkg, index) => (
               <div
                 key={pkg._id || index}
-                className="relative rounded-2xl border border-red-200 bg-white p-4 shadow-xs flex flex-col justify-between"
+                className="relative rounded-2xl border border-gray-200 bg-white p-4 shadow-xs flex flex-col justify-between"
               >
                 <div>
-                  <div className="mb-3 flex items-center justify-between gap-2 border-b border-red-100 pb-2">
-                    <span className="text-xs font-black text-red-950 uppercase tracking-wider">
+                  <div className="mb-3 flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
+                    <span className="text-xs font-black text-gray-950 uppercase tracking-wider">
                       Package #{index + 1}
                     </span>
                     <button
                       type="button"
                       disabled={saving}
                       onClick={() => void handleDeletePackage(index)}
-                      className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition disabled:opacity-50"
+                      className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-bold text-gray-700 hover:bg-gray-600 hover:text-white transition disabled:opacity-50"
                       title="Remove package and save changes"
                     >
                       &times; Remove
@@ -411,20 +411,20 @@ export default function SetCoinsPage() {
 
                   <div className="space-y-2.5 text-xs">
                     <div>
-                      <label className="block font-bold text-red-950">Total Coins</label>
+                      <label className="block font-bold text-gray-950">Total Coins</label>
                       <input
                         type="number"
                         min="1"
                         value={pkg.coins || ""}
                         onChange={(e) => updatePackage(index, "coins", e.target.value)}
                         placeholder="e.g. 99"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 font-bold outline-none focus:border-red-400"
+                        className="mt-0.5 w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-950 font-bold outline-none focus:border-gray-400"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block font-bold text-red-950">Final Price (₹)</label>
+                      <label className="block font-bold text-gray-950">Final Price (₹)</label>
                       <input
                         type="number"
                         min="0"
@@ -432,13 +432,13 @@ export default function SetCoinsPage() {
                         value={pkg.price || ""}
                         onChange={(e) => updatePackage(index, "price", e.target.value)}
                         placeholder="e.g. 792"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 font-bold outline-none focus:border-red-400"
+                        className="mt-0.5 w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-950 font-bold outline-none focus:border-gray-400"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-red-800">
+                      <label className="block font-semibold text-gray-800">
                         Original Price (₹) <span className="text-gray-400 font-normal">(strikethrough)</span>
                       </label>
                       <input
@@ -448,39 +448,39 @@ export default function SetCoinsPage() {
                         value={pkg.originalPrice || ""}
                         onChange={(e) => updatePackage(index, "originalPrice", e.target.value)}
                         placeholder="e.g. 792"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
+                        className="mt-0.5 w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-950 outline-none focus:border-gray-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-red-800">Discount Tag</label>
+                      <label className="block font-semibold text-gray-800">Discount Tag</label>
                       <input
                         type="text"
                         value={pkg.discount || ""}
                         onChange={(e) => updatePackage(index, "discount", e.target.value)}
                         placeholder="e.g. 3% DISCOUNT"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
+                        className="mt-0.5 w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-950 outline-none focus:border-gray-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-red-800">Breakdown / Bonus</label>
+                      <label className="block font-semibold text-gray-800">Breakdown / Bonus</label>
                       <input
                         type="text"
                         value={pkg.breakdown || ""}
                         onChange={(e) => updatePackage(index, "breakdown", e.target.value)}
                         placeholder="e.g. Optional note"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
+                        className="mt-0.5 w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-950 outline-none focus:border-gray-400"
                       />
                     </div>
 
                     <div className="pt-1">
-                      <label className="flex items-center gap-2 cursor-pointer font-semibold text-red-950">
+                      <label className="flex items-center gap-2 cursor-pointer font-semibold text-gray-950">
                         <input
                           type="checkbox"
                           checked={Boolean(pkg.popular)}
                           onChange={(e) => updatePackage(index, "popular", e.target.checked)}
-                          className="h-4 w-4 rounded accent-red-700"
+                          className="h-4 w-4 rounded accent-gray-700"
                         />
                         Mark as Popular
                       </label>
@@ -489,7 +489,7 @@ export default function SetCoinsPage() {
                 </div>
 
                 {/* Card Preview Footnote */}
-                <div className="mt-3 border-t border-red-100 pt-2 text-[11px] text-red-700">
+                <div className="mt-3 border-t border-gray-100 pt-2 text-[11px] text-gray-700">
                   Preview: <strong>{pkg.coins || 0} Coins</strong> for{" "}
                   <strong>₹{Number(pkg.price || 0).toFixed(2)}</strong>
                 </div>
@@ -501,14 +501,14 @@ export default function SetCoinsPage() {
             <button
               type="submit"
               disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-[#450a0a] px-6 py-3 text-sm font-bold text-white hover:bg-[#7f1d1d] disabled:opacity-50 transition shadow-sm"
+              className="rounded-xl bg-[] px-6 py-3 text-sm font-bold text-white hover:bg-[] disabled:opacity-50 transition shadow-sm"
             >
               {saving ? "Saving..." : `Save All ${packages.length} Packages`}
             </button>
             <button
               type="button"
               onClick={handleAddPackage}
-              className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition"
+              className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-950 hover:bg-gray-50 transition"
             >
               + Add Another Package
             </button>

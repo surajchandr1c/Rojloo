@@ -16,7 +16,7 @@ export default function AdminLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm"
+            className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm"
           >
             <Skeleton className="h-4 w-28 rounded-md" />
             <Skeleton className="mt-3 h-8 w-20 rounded-md" />
