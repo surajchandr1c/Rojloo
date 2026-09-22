@@ -11,7 +11,7 @@ export const serviceCards = [
     image: "/call_girls.jpeg",
     button: "Post Ad",
     description:
-      "Connect with verified call girls for companionship and personalized meetups in your city.",
+      "Premium escort services offering discreet, professional companionship. Book verified call girls for unforgettable experiences. Available 24/7 with complete privacy and satisfaction guaranteed. Contact now for elite adult entertainment tailored to your desires.",
   },
   {
     id: "male-escorts",
@@ -19,7 +19,7 @@ export const serviceCards = [
     image: "/male_escort.jpeg",
     button: "Post Ad",
     description:
-      "Book male escorts for companionship, events, and private meetups tailored to your preferences.",
+      "Premium *male escort* services for discerning clients. Our professional *male escorts* offer discreet companionship, charming conversation, and unforgettable experiences. Book verified *male escort* companions 24/7 with complete privacy guaranteed. Reserve yours today!.",
   },
   {
     id: "massage",
@@ -27,7 +27,7 @@ export const serviceCards = [
     image: "/massaga.jpeg",
     button: "Post Ad",
     description:
-      "Relax with professional massage services designed to reduce stress, improve comfort, and support your overall wellness.",
+      "Experience ultimate relaxation with our professional *massage service. Skilled therapists offer Swedish, deep tissue, and sensual **massage* treatments. Book rejuvenating *massage services* 24/7 for stress relief and complete satisfaction. Schedule your session today!.",
   },
 ] as const;
 
