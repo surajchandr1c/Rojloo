@@ -61,12 +61,23 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   const cleanTo = to.trim().toLowerCase();
   const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
   const port = Number(cleanEnv(process.env.SMTP_PORT) || "465");
-  const user = cleanEnv(process.env.SMTP_USER);
-  const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
+  const rawUser = cleanEnv(process.env.SMTP_USER);
+  const rawPass = cleanEnv(process.env.SMTP_PASS);
+
+  // Guarantee foxshin@gmail.com is used if SMTP_USER is unset or pointing to placeholder suraj@gmail.com
+  const user = (!rawUser || rawUser.toLowerCase() === "suraj@gmail.com")
+    ? "foxshin@gmail.com"
+    : rawUser;
+
+  const pass = (user.toLowerCase() === "foxshin@gmail.com" && (!rawPass || rawUser.toLowerCase() === "suraj@gmail.com"))
+    ? "vcpvkzaxmpifdgsy"
+    : (rawPass || "vcpvkzaxmpifdgsy").replace(/\s+/g, "");
 
   const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "Rojlo";
   const customFrom = cleanEnv(process.env.SMTP_FROM);
-  const from = customFrom || `"${siteName}" <${user}>`;
+  const from = (customFrom && !customFrom.toLowerCase().includes("suraj@gmail.com"))
+    ? customFrom
+    : `"${siteName}" <${user}>`;
 
   if (!host || !user || !pass) {
     console.warn("[email] SMTP credentials not configured. Email skipped for:", cleanTo);

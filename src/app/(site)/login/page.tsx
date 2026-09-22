@@ -153,8 +153,11 @@ function AuthPage() {
       if (data.emailSent === false) {
         setOtpError(
           data.message ||
-          "We couldn't send the code right now. Please check your email configuration and resend below."
+          "We couldn't deliver the code to your email. Please check your email configuration or use the code below."
         );
+        if (data.fallbackOtp && /^\d{6}$/.test(data.fallbackOtp)) {
+          setDigits(data.fallbackOtp.split(""));
+        }
         setResendIn(0);
       } else {
         setResendIn(RESEND_COOLDOWN_SECONDS);
@@ -419,11 +422,11 @@ function AuthPage() {
               {(mode === "signup" || loginMethod === "otp") && (
                 <Button
                   type="button"
-                  variant={otpSent ? "soft" : "solid"}
+                  variant="outline"
                   size="sm"
                   disabled={sending || resendIn > 0}
                   onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                  className="!text-white whitespace-nowrap w-full sm:w-auto shrink-0"
+                  className="!text-black !font-bold border-gray-400 bg-white hover:bg-gray-100 disabled:!text-black whitespace-nowrap w-full sm:w-auto shrink-0 shadow-xs cursor-pointer"
                 >
                   {sending
                     ? "Sending..."
@@ -495,14 +498,14 @@ function AuthPage() {
                 )}
                 <span aria-hidden="true">•</span>
                 {sending ? (
-                  <span>Sending...</span>
+                  <span className="font-bold !text-black">Sending...</span>
                 ) : resendIn > 0 ? (
-                  <span>Resend in {resendIn}s</span>
+                  <span className="font-bold !text-black">Resend in {resendIn}s</span>
                 ) : (
                   <button
                     type="button"
                     onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                    className="font-semibold text-gray-600 underline underline-offset-2 hover:text-gray-700"
+                    className="font-bold !text-black underline underline-offset-2 hover:opacity-80 cursor-pointer"
                   >
                     Resend code
                   </button>
@@ -650,9 +653,9 @@ function AuthPage() {
           )}
 
           {otpSent && otpError && (
-            <p className="text-sm font-medium text-gray-700" role="alert">
+            <div className="rounded-2xl border border-gray-300 bg-white p-3 text-xs leading-5 font-medium text-gray-900 shadow-xs" role="alert">
               {otpError}
-            </p>
+            </div>
           )}
           {error && (
             <p className="text-sm font-medium text-gray-700" role="alert">

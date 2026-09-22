@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
         needsVerification: true,
         email: normalizedEmail,
         emailSent: otpResult.sent,
+        fallbackOtp: otpResult.fallbackOtp,
         isExistingUser: Boolean(existing?.emailVerified && existing?.passwordHash),
       },
       { status: 200 }
