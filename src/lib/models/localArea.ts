@@ -73,6 +73,21 @@ export const listLocalAreas = cache(async function (filters?: {
   );
 });
 
+export const getLocalAreaBySlug = cache(async function (
+  citySlug: string,
+  areaSlug: string
+): Promise<LocalAreaRecord | null> {
+  const normalizedAreaSlug = slugify(areaSlug);
+  const areas = await listLocalAreas({ citySlug });
+  return (
+    areas.find(
+      (area) =>
+        area.slug.toLowerCase() === normalizedAreaSlug ||
+        slugify(area.name) === normalizedAreaSlug
+    ) ?? null
+  );
+});
+
 export async function createLocalArea(data: {
   name: string;
   cityName: string;

@@ -238,16 +238,16 @@ async function CityContent({
   return (
     <main>
       {isPreview && (
-        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-amber-300 bg-amber-500 px-4 py-2.5 text-white shadow-md">
+        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-300 bg-gray-500 px-4 py-2.5 text-white shadow-md">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
-            <span className="rounded-full bg-amber-800 px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-amber-100">
+            <span className="rounded-full bg-gray-800 px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-gray-100">
               {seo?.status === "draft" ? "Draft Preview" : "Live Preview"}
             </span>
             <span>
               Preview Mode — Viewing {seo?.status === "draft" ? "Draft" : "Published"} SEO Content for {city.name}
             </span>
           </div>
-          <span className="hidden sm:inline-block text-xs font-medium text-amber-100">
+          <span className="hidden sm:inline-block text-xs font-medium text-gray-100">
             Draft content is visible only with preview link
           </span>
         </div>
@@ -266,28 +266,29 @@ async function CityContent({
           <div className="mt-4">
             <Eyebrow>Services in {city.name}</Eyebrow>
           </div>
-          <h1 className="mt-3 text-2xl font-black text-red-950 sm:text-3xl">
+          <h1 className="mt-3 text-2xl font-black text-gray-950 sm:text-3xl">
             Services posted in {city.name}
           </h1>
 
           {localAreas.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-red-950">
+              <span className="text-sm font-semibold text-gray-950">
                 Popular Areas:
               </span>
               {localAreas.map((area) => (
-                <span
+                <Link
                   key={area._id ?? area.slug}
-                  className="rounded-full border border-red-200 bg-pink-50 px-3 py-1 text-xs font-medium text-red-900"
+                  href={`/places/${city.slug}/${area.slug}`}
+                  className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-900"
                 >
                   {area.name}
-                </span>
+                </Link>
               ))}
             </div>
           )}
 
           {ads.length === 0 ? (
-            <p className="mt-4 text-red-900">
+            <p className="mt-4 text-gray-900">
               No services posted in {city.name} yet. Be the first to post an ad!
             </p>
           ) : (
@@ -301,7 +302,7 @@ async function CityContent({
                     <Link
                       href={`/places/${city.slug}/${ad._id}`}
                       aria-label={`View details for ${ad.name}`}
-                      className="absolute inset-0 z-0 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                      className="absolute inset-0 z-0 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2"
                     />
                   )}
 
@@ -312,24 +313,24 @@ async function CityContent({
                   )}
 
                   {ad.city && (
-                    <span className="pointer-events-none absolute right-3.5 top-3.5 z-10 inline-flex max-w-[12rem] sm:max-w-xs items-center truncate rounded-full bg-pink-100 px-2.5 sm:px-3 py-1 text-xs font-semibold text-red-800 sm:right-6 sm:top-6">
+                    <span className="pointer-events-none absolute right-3.5 top-3.5 z-10 inline-flex max-w-[12rem] sm:max-w-xs items-center truncate rounded-full bg-gray-100 px-2.5 sm:px-3 py-1 text-xs font-semibold text-gray-800 sm:right-6 sm:top-6">
                       {ad.city}
                     </span>
                   )}
 
                   <div className="pointer-events-none relative z-10">
-                    <h3 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-red-950 break-words">
+                    <h3 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-gray-950 break-words">
                       {ad.name}
                     </h3>
 
                     {ad.about && (
-                      <p className="mt-2 text-sm leading-6 sm:leading-7 text-red-900 line-clamp-3">
+                      <p className="mt-2 text-sm leading-6 sm:leading-7 text-gray-900 line-clamp-3">
                         {ad.about}
                       </p>
                     )}
 
                     {ad.images[0] && (
-                      <div className="relative mt-4 h-56 overflow-hidden rounded-[1rem] bg-pink-50 sm:h-64">
+                      <div className="relative mt-4 h-56 overflow-hidden rounded-[1rem] bg-gray-50 sm:h-64">
                         <Image
                           src={ad.images[0]}
                           alt={`${ad.name} - Services in ${city.name}`}
@@ -361,7 +362,7 @@ async function CityContent({
           <SectionPanel>
             <Eyebrow>City Guide</Eyebrow>
             {seo.featuredImage && (
-              <div className="relative mt-4 h-64 sm:h-80 w-full overflow-hidden rounded-2xl bg-pink-50 border border-pink-100">
+              <div className="relative mt-4 h-64 sm:h-80 w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-100">
                 <Image
                   src={seo.featuredImage}
                   alt={seo.imageAlt || `${city.name} guide`}
@@ -376,7 +377,7 @@ async function CityContent({
                 return (
                   <h2
                     key={block.id}
-                    className="mt-6 text-3xl font-black text-red-950"
+                    className="mt-6 text-3xl font-black text-gray-950"
                   >
                     {block.text}
                   </h2>
@@ -385,7 +386,7 @@ async function CityContent({
                 return (
                   <h2
                     key={block.id}
-                    className="mt-5 text-2xl font-bold text-red-950"
+                    className="mt-5 text-2xl font-bold text-gray-950"
                   >
                     {block.text}
                   </h2>
@@ -394,7 +395,7 @@ async function CityContent({
                 return (
                   <h3
                     key={block.id}
-                    className="mt-4 text-xl font-semibold text-red-950"
+                    className="mt-4 text-xl font-semibold text-gray-950"
                   >
                     {block.text}
                   </h3>
@@ -402,7 +403,7 @@ async function CityContent({
               return (
                 <p
                   key={block.id}
-                  className="mt-3 leading-7 text-red-900"
+                  className="mt-3 leading-7 text-gray-900"
                 >
                   {block.text}
                 </p>
@@ -420,14 +421,14 @@ async function CityContent({
         <section className="px-4 py-8 sm:px-6">
           <SectionPanel>
             <Eyebrow className="text-center">Popular Searches</Eyebrow>
-            <h2 className="mt-3 text-center text-2xl font-black text-red-950 sm:text-3xl">
+            <h2 className="mt-3 text-center text-2xl font-black text-gray-950 sm:text-3xl">
               Most Search in {city.name}
             </h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {popularKeywords.map((keyword, index) => (
                 <span
                   key={`${keyword}-${index}`}
-                  className="rounded-full border border-pink-200 bg-pink-50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-red-950 transition hover:bg-pink-100 hover:border-pink-300 shadow-2xs"
+                  className="rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-950 transition hover:bg-gray-100 hover:border-gray-300 shadow-2xs"
                 >
                   {keyword}
                 </span>
@@ -441,7 +442,7 @@ async function CityContent({
         <section className="px-4 py-8 sm:px-6">
           <SectionPanel>
             <Eyebrow>Regional Directory</Eyebrow>
-            <h2 className="mt-3 text-xl font-bold text-red-950 sm:text-2xl">
+            <h2 className="mt-3 text-xl font-bold text-gray-950 sm:text-2xl">
               More Cities in {city.state}
             </h2>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -449,7 +450,7 @@ async function CityContent({
                 <Link
                   key={sibling.slug}
                   href={`/places/${sibling.slug}`}
-                  className="rounded-full border border-pink-200 bg-pink-50 px-3.5 py-1.5 text-xs font-semibold text-red-950 transition hover:bg-pink-100 hover:border-pink-300"
+                  className="rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 text-xs font-semibold text-gray-950 transition hover:bg-gray-100 hover:border-gray-300"
                 >
                   {sibling.name}
                 </Link>

@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/config/site";
 import { listAllCities } from "@/lib/models/city";
 import { listAllAds, filterVisibleCityAds } from "@/lib/models/ad";
+import { listLocalAreas } from "@/lib/models/localArea";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +112,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const adRoutes: MetadataRoute.Sitemap = [];
   const seenAdUrls = new Set<string>();
+  const localAreaRoutes: MetadataRoute.Sitemap = [];
+  const seenLocalAreaUrls = new Set<string>();
+
+  try {
+    const localAreas = await listLocalAreas();
+
+    for (const area of localAreas) {
+      const citySlug = citySlugMap.get(String(area.citySlug ?? "").trim().toLowerCase());
+      const areaSlug = String(area.slug ?? "").trim().toLowerCase();
+      if (!citySlug || !areaSlug) continue;
+
+      const areaUrl = `${base}/places/${citySlug}/${areaSlug}`;
+      if (seenLocalAreaUrls.has(areaUrl.toLowerCase())) continue;
+      seenLocalAreaUrls.add(areaUrl.toLowerCase());
+      localAreaRoutes.push({
+        url: areaUrl,
+        lastModified: getValidDate(area.createdAt, now),
+        changeFrequency: "daily",
+        priority: 0.7,
+      });
+    }
+  } catch (error) {
+    console.error("[sitemap] Failed to load local areas:", error);
+  }
 
   try {
     const allAds = await listAllAds(1000);
@@ -154,6 +179,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const allRoutes = [
     ...staticRoutes,
     ...cityRoutes,
+    ...localAreaRoutes,
     ...adRoutes,
   ];
 

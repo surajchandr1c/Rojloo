@@ -17,6 +17,7 @@ export interface Ad {
   placeOfService?: string[];
   state?: string;
   city: string;
+  localArea?: string;
   pincode?: string;
   phone: string;
   whatsapp?: string;
@@ -357,6 +358,20 @@ export async function listAdsByCity(city: string): Promise<PublicAd[]> {
   const visibleAds = await filterVisibleCityAds(docs);
   const sorted = sortAdsWithPromotions(visibleAds);
   return sorted.map((a) => toPublicAd(a, override));
+}
+
+export async function listAdsByLocalArea(
+  city: string,
+  localArea: string
+): Promise<PublicAd[]> {
+  const normalizedArea = localArea.trim().toLowerCase();
+  const areaSlug = normalizedArea.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const ads = await listAdsByCity(city);
+  return ads.filter((ad) => {
+    const value = String(ad.localArea ?? "").trim().toLowerCase();
+    const valueSlug = value.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return value === normalizedArea || valueSlug === areaSlug;
+  });
 }
 
 export const listRelatedCityAds = cache(async function (
@@ -861,6 +876,7 @@ export function toPublicAd(ad: Ad, override?: VipPhoneOverride | null): PublicAd
     toServe: ad.toServe,
     placeOfService: ad.placeOfService,
     city: ad.city,
+    localArea: ad.localArea,
     phone,
     whatsapp,
     telegram,
