@@ -13,7 +13,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = await checkRateLimitAsync(`resend-otp:${ip}`, 5);
+    const rate = await checkRateLimitAsync(`resend-otp:${ip}`, 30);
     if (!rate.ok) {
       return NextResponse.json(
         {

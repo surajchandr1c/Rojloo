@@ -10,7 +10,7 @@ import { FormSkeleton } from "@/components/ui/skeleton";
 
 const serviceOptions = Object.values(serviceNames);
 const OTP_TTL_SECONDS = 10 * 60; // 10 minutes
-const RESEND_COOLDOWN_SECONDS = 60;
+const RESEND_COOLDOWN_SECONDS = 10; // 10 seconds resend
 
 function AuthPage() {
   const router = useRouter();
@@ -155,6 +155,7 @@ function AuthPage() {
           data.message ||
           "We couldn't send the code right now. Please check your email configuration and resend below."
         );
+        setResendIn(0);
       } else {
         setResendIn(RESEND_COOLDOWN_SECONDS);
       }

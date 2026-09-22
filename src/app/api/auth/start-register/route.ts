@@ -18,7 +18,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = await checkRateLimitAsync(`start-register:${ip}`, 5);
+    const rate = await checkRateLimitAsync(`start-register:${ip}`, 30);
     if (!rate.ok) {
       return NextResponse.json(
         { error: "Too many requests. Please try again in a few minutes." },

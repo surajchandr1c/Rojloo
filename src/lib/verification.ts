@@ -6,7 +6,7 @@ import {
   OTP_RESEND_COOLDOWN_MS,
   OTP_TTL_MS,
 } from "./otp";
-import { setUserOtp } from "./models/user";
+import { setUserOtp, resetOtpCooldown } from "./models/user";
 import { sendOtpEmail } from "./email";
 
 export type OtpSendResult =
@@ -50,6 +50,14 @@ export async function createAndSendOtp(
     console.error("[verification] sendOtpEmail uncaught error:", error);
     sent = false;
     sendError = error instanceof Error ? error.message : String(error);
+  }
+
+  if (!sent) {
+    try {
+      await resetOtpCooldown(userId);
+    } catch (e) {
+      console.error("[verification] Failed to reset OTP cooldown:", e);
+    }
   }
 
   void now;

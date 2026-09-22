@@ -440,6 +440,33 @@ export async function setUserOtp(
 }
 
 /**
+ * Reset the OTP resend cooldown (e.g. if email delivery failed, allow immediate retry).
+ */
+export async function resetOtpCooldown(userId: string): Promise<boolean> {
+  const collection = await getUsersCollection();
+  if (collection) {
+    let _id: ObjectId;
+    try {
+      _id = new ObjectId(userId);
+    } catch {
+      return false;
+    }
+    const result = await collection.updateOne(
+      { _id },
+      { $unset: { otpLastSentAt: "" } }
+    );
+    return Boolean(result);
+  }
+
+  const store = await readStore();
+  const user = store.users.find((u) => u._id === userId) as User | undefined;
+  if (!user) return false;
+  delete user.otpLastSentAt;
+  await writeStore(store);
+  return true;
+}
+
+/**
  * Remove stored OTPs (after successful verification, expiry, or lockout).
  */
 export async function clearUserOtp(userId: string): Promise<boolean> {

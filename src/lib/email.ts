@@ -24,7 +24,7 @@ function getPooledTransporter(
   pass: string,
   isGmail: boolean
 ): nodemailer.Transporter {
-  const cacheKey = `${host}:${port}:${user}`;
+  const cacheKey = `${host}:${port}:${user}:${pass}`;
   const existing = transporterCache.get(cacheKey);
   if (existing) {
     return existing;
@@ -36,11 +36,8 @@ function getPooledTransporter(
         port: 465,
         secure: true,
         auth: { user, pass },
-        pool: true,
-        maxConnections: 3,
-        maxMessages: 100,
-        connectionTimeout: 4000,
-        greetingTimeout: 4000,
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
         socketTimeout: 8000,
       }
     : {
@@ -48,11 +45,8 @@ function getPooledTransporter(
         port,
         secure: port === 465,
         auth: { user, pass },
-        pool: true,
-        maxConnections: 3,
-        maxMessages: 100,
-        connectionTimeout: 4000,
-        greetingTimeout: 4000,
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
         socketTimeout: 8000,
       };
 
@@ -87,7 +81,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     host.toLowerCase().includes("gmail") ||
     user.toLowerCase().endsWith("@gmail.com");
 
-  const primaryCacheKey = `${host}:${port}:${user}`;
+  const primaryCacheKey = `${host}:${port}:${user}:${pass}`;
   try {
     const transporter = getPooledTransporter(host, port, user, pass, isGmail);
     await transporter.sendMail({
@@ -116,7 +110,9 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     return {
       sent: false,
       reason: isAuthError ? "gmail-auth-failed" : "send-failed",
-      error: errMsg,
+      error: isAuthError
+        ? `Gmail authentication failed (535 BadCredentials). Please verify that 2-Step Verification is enabled for ${user} and the App Password has not been revoked.`
+        : errMsg,
     };
   }
 }
