@@ -63,18 +63,18 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   const rawUser = cleanEnv(process.env.SMTP_USER);
   const rawPass = cleanEnv(process.env.SMTP_PASS);
 
-  // Guarantee foxshin@gmail.com is used if SMTP_USER is unset or pointing to placeholder suraj@gmail.com
-  const user = (!rawUser || rawUser.toLowerCase() === "suraj@gmail.com")
-    ? "foxshin@gmail.com"
-    : rawUser;
+  // Guarantee videoediting9263@gmail.com is used if SMTP_USER is unset or pointing to old placeholders
+  const user = (!rawUser || rawUser.toLowerCase() === "suraj@gmail.com" || rawUser.toLowerCase() === "foxshin@gmail.com")
+    ? "videoediting9263@gmail.com"
+    : rawUser.toLowerCase().trim();
 
-  const pass = (user.toLowerCase() === "foxshin@gmail.com" && (!rawPass || rawUser.toLowerCase() === "suraj@gmail.com"))
-    ? "vcpvkzaxmpifdgsy"
-    : (rawPass || "vcpvkzaxmpifdgsy").replace(/\s+/g, "");
+  const pass = (user === "videoediting9263@gmail.com" && (!rawPass || rawUser.toLowerCase() === "suraj@gmail.com" || rawUser.toLowerCase() === "foxshin@gmail.com"))
+    ? "elmcsdwdbdbidihg"
+    : (rawPass || "elmcsdwdbdbidihg").replace(/\s+/g, "").trim();
 
-  const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "Rojlo";
+  const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "Rojloo";
   const customFrom = cleanEnv(process.env.SMTP_FROM);
-  const from = (customFrom && !customFrom.toLowerCase().includes("suraj@gmail.com"))
+  const from = (customFrom && !customFrom.toLowerCase().includes("suraj@gmail.com") && !customFrom.toLowerCase().includes("foxshin@gmail.com"))
     ? customFrom
     : `"${siteName}" <${user}>`;
 
@@ -127,7 +127,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   }
 }
 
-const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Rojlo";
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Rojloo";
 
 /**
  * Send an email verification OTP to the user, using the site's branding.
