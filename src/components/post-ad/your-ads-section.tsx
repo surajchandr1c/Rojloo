@@ -544,12 +544,10 @@ export default function YourAdsSection({
                 ) : !isPromoted ? (
                   <Link
                     href={ad._id ? `/post-ad/your-ads/promoted?adId=${ad._id}` : "/post-ad/your-ads/promoted"}
-                    className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition shadow-xs w-full text-center bg-[] hover:bg-[] !text-white text-white shadow-md border border-transparent"
-                    style={{ color: "" }}
+                    className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold transition shadow-md w-full text-center bg-black hover:bg-gray-900 !text-white text-white border border-black"
                   >
-                    <span>⭐</span>
                     <span className="!text-white text-white font-bold">
-                      Boost with VIP Promotion (Top Ranking)
+                      VIP Promotion
                     </span>
                   </Link>
                 ) : (
