@@ -46,11 +46,14 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header with Hamburger */}
         {isAuthenticated && (
-          <header className="md:hidden flex items-center justify-between h-16 bg-[] text-white px-4 border-b border-gray-200 z-20">
-            <div className="text-lg font-bold">VIP Panel</div>
+          <header
+            className="md:hidden flex items-center justify-between h-16 bg-black text-white px-4 border-b border-gray-800 z-20"
+            style={{ backgroundColor: "#000000", color: "#ffffff" }}
+          >
+            <div className="text-lg font-bold !text-white text-white">VIP Panel</div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-[] transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-800 transition-colors !text-white text-white"
               aria-label="Toggle menu"
             >
               <svg
