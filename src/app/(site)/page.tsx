@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Button from "@/components/ui/button";
 import SearchBar from "@/components/search-bar";
+import HomeFaq from "@/components/home-faq";
 import { serviceCards } from "@/lib/services";
 import { siteConfig } from "@/lib/config/site";
 
@@ -122,12 +123,12 @@ export default function Home() {
       </section>
 
       <section className="px-4 pb-16 sm:px-6">
-        <div className="mx-auto max-w-6xl space-y-8 sm:space-y-10">
-          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+        <div className="mx-auto max-w-6xl space-y-12 sm:space-y-16">
+          <article>
             <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
               Community &amp; Conduct
             </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-black text-gray-950">
               Professional Etiquette &amp; Standards
             </h2>
             <p className="mt-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
@@ -135,11 +136,11 @@ export default function Home() {
             </p>
           </article>
 
-          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+          <article>
             <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
               Safety &amp; Privacy
             </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-black text-gray-950">
               Privacy &amp; Discretion Guidelines
             </h2>
             <div className="mt-4 space-y-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
@@ -155,11 +156,11 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+          <article>
             <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
               Services &amp; Occasions
             </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-black text-gray-950">
               Event &amp; Social Accompaniment
             </h2>
             <p className="mt-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
@@ -167,11 +168,11 @@ export default function Home() {
             </p>
           </article>
 
-          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+          <article>
             <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
               Arrangements &amp; Notice
             </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-black text-gray-950">
               Advance Scheduling &amp; Logistics
             </h2>
             <div className="mt-4 space-y-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
@@ -184,55 +185,7 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
-            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
-              Common Inquiries
-            </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
-              Frequently Asked Questions
-            </h2>
-            <p className="mt-2 text-sm sm:text-base text-gray-700 font-medium">
-              Everything you need to know about using Rojlo, posting listings, and exploring city services.
-            </p>
-
-            <div className="mt-8 grid gap-4 sm:gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
-                  How do I find services on Rojlo?
-                </h3>
-                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
-                  On Rojlo, you can find services by browsing the &apos;Find Services&apos; section, where you can explore various categories and listings.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
-                  What types of listings can I find on Rojlo?
-                </h3>
-                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
-                  Rojlo offers listings for call girls, places, and ads posted by individuals and businesses.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
-                  How can I post an ad on Rojlo?
-                </h3>
-                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
-                  To post an ad, you need to create an account and follow the guidelines provided on the platform.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
-                  Is there a fee for posting ads on Rojlo?
-                </h3>
-                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
-                  Yes, there may be fees associated with posting ads, depending on the type of listing and the duration of the posting.
-                </p>
-              </div>
-            </div>
-          </article>
+          <HomeFaq />
         </div>
       </section>
     </main>
