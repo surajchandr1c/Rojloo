@@ -427,7 +427,7 @@ export default function PromotedAdView() {
               <p className="text-xs sm:text-sm text-gray-900">You do not have any ads yet.</p>
               <Link
                 href="/post-ad/new"
-                className="mt-3 inline-block rounded-xl bg-[] px-4 py-2 text-xs font-bold text-white hover:bg-[]"
+                className="mt-3 inline-block rounded-xl bg-black px-4 py-2 text-xs font-bold !text-white text-white hover:bg-gray-900"
               >
                 + Post an Ad First
               </Link>
@@ -824,7 +824,7 @@ export default function PromotedAdView() {
                           type="button"
                           className={`w-full rounded-xl py-1.5 text-xs font-bold transition ${
                             isSelected
-                              ? "bg-[] text-white shadow-xs"
+                              ? "bg-black text-white shadow-xs"
                               : "bg-gray-100/80 text-gray-900 hover:bg-gray-200/80"
                           }`}
                         >
@@ -861,10 +861,10 @@ export default function PromotedAdView() {
                   type="button"
                   disabled={submitting || !selectedAd}
                   onClick={handlePromote}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[] hover:bg-[] disabled:opacity-50 text-white px-6 py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-md cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-black hover:bg-gray-900 disabled:opacity-50 !text-white text-white px-6 py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider transition shadow-md cursor-pointer border border-black"
                 >
                   <span>🚀</span>
-                  <span>{submitting ? "Promoting..." : `Promote Ad Now (${totalCoinsCost} Coins)`}</span>
+                  <span className="!text-white text-white font-bold">{submitting ? "Promoting..." : `Promote Ad Now (${totalCoinsCost} Coins)`}</span>
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
@@ -873,7 +873,7 @@ export default function PromotedAdView() {
                   </span>
                   <Link
                     href="/post-ad/buy-coin"
-                    className="rounded-xl bg-[] hover:bg-[] text-white px-4 py-2 text-xs font-bold transition"
+                    className="rounded-xl bg-black hover:bg-gray-900 !text-white text-white px-4 py-2 text-xs font-bold transition border border-black"
                   >
                     Buy Coins &rarr;
                   </Link>
@@ -958,8 +958,7 @@ export default function PromotedAdView() {
             <div className="mt-5 flex gap-2">
               <Link
                 href="/post-ad/your-ads"
-                className="flex-1 rounded-xl bg-[] hover:bg-[] !text-white text-white py-2.5 text-xs sm:text-sm font-bold transition shadow-xs flex items-center justify-center"
-                style={{ color: "" }}
+                className="flex-1 rounded-xl bg-black hover:bg-gray-900 !text-white text-white py-2.5 text-xs sm:text-sm font-bold transition shadow-xs flex items-center justify-center border border-black"
               >
                 View Your Ads
               </Link>
