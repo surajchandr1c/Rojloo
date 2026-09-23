@@ -120,6 +120,121 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section className="px-4 pb-16 sm:px-6">
+        <div className="mx-auto max-w-6xl space-y-8 sm:space-y-10">
+          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
+              Community &amp; Conduct
+            </p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+              Professional Etiquette &amp; Standards
+            </h2>
+            <p className="mt-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
+              Rojlo is a platform designed to connect clients with independent call girls and companions. The service allows users to find services, post ads, and explore places in their city. Clients and companions should be aware that Rojlo provides a space for independent listings, where individuals can offer companionship services. When scheduling companionship, it helps support both parties to communicate openly and respect each other&apos;s boundaries. Rojlo does not operate as a direct service provider but rather as a facilitator, helping users have a platform to connect and arrange their meetings. The platform is open to a wide range of individuals seeking companionship, whether for social events, travel, or personal enrichment. Rojlo&apos;s service overview emphasizes the importance of mutual respect and understanding between clients and companions, creating a comfortable and respectful environment for all users.
+            </p>
+          </article>
+
+          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
+              Safety &amp; Privacy
+            </p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+              Privacy &amp; Discretion Guidelines
+            </h2>
+            <div className="mt-4 space-y-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
+              <p>
+                Clients and companions are advised to uphold clear discretion standards and privacy when engaging with call girls service or escort girls. Discretion guidelines emphasize the importance of maintaining personal privacy and helping all interactions are conducted with mutual respect and consent. When arranging social accompaniment through Rojlo, it is recommended to understand the significance of these principles to ensure a mutually respectful experience. Rojlo encourages all parties to adhere to these guidelines, promoting a community where both clients and companions feel secure and valued. Discretion is paramount, and all individuals are reminded to respect the boundaries and choices of others. By prioritizing privacy and consent, we contribute to a healthier and more considerate adult social scene.
+              </p>
+              <p>
+                To further emphasize the importance of privacy and discretion, clients are advised to refrain from sharing any personal or identifiable information about their encounters on Rojlo. This includes avoiding any public posts or discussions that could potentially reveal the identity of companions or the nature of their interactions. By maintaining strict confidentiality, clients not only protect their own privacy but also contribute to a safer environment for all users. Rojlo takes pride in fostering a community where individuals can engage in adult social activities with peace of mind, knowing that their personal choices and interactions are respected and safeguarded.
+              </p>
+              <p>
+                When evaluating call boys, practical considerations and transparent standards remain essential for the best outcome.
+              </p>
+            </div>
+          </article>
+
+          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
+              Services &amp; Occasions
+            </p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+              Event &amp; Social Accompaniment
+            </h2>
+            <p className="mt-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
+              When arranging social accompaniment for business dinners, private travel, formal galas, and professional client etiquette, it is recommended to consider the occasion and the role of the companion. Clients and companions are advised to maintain a level of decorum and respect, helping the event runs smoothly and professionally. For those seeking an escort service or call service, it is essential to understand the nuances of dinner etiquette and client conduct. Social accompaniment can greatly enhance the experience of attending formal events, providing a sense of security and confidence. Rojlo offers a detailed guide for finding suitable companions for various occasions. Discreet and professional, these independent listings cater to clients who value privacy and confidentiality. By understanding the importance of social etiquette and the role of a travel companion, clients can ensure a successful and comfortable experience. Rojlo is here to support you in navigating the complexities of social accompaniment, helping you make informed decisions that align with your needs and preferences.
+            </p>
+          </article>
+
+          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
+              Arrangements &amp; Notice
+            </p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+              Advance Scheduling &amp; Logistics
+            </h2>
+            <div className="mt-4 space-y-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
+              <p>
+                When arranging social accompaniment through Rojlo, clients and companions are advised to adhere to certain guidelines for a well-coordinated experience. Advance reservations are crucial for ensuring availability, and scheduling notice should be provided with ample time for both parties to confirm. It is essential to communicate clearly and discreetly, respecting the privacy of all involved. For independent companion listings, etiquette plays a significant role in fostering a respectful and enjoyable atmosphere. Rojlo encourages open and honest communication between clients and companions, allowing for a mutually satisfying encounter. By following these scheduling guidelines, clients and companions can create a memorable experience that respects all parties&apos; boundaries and preferences.
+              </p>
+              <p>
+                When scheduling through Rojlo, clients should remember that punctuality is key to a smooth experience. It is advisable to provide a detailed itinerary, including the date, time, and location of the meeting, to ensure that both parties are well-prepared. Clients are also encouraged to be transparent about their intentions and expectations to avoid any misunderstandings. For companions, maintaining a professional and courteous demeanor is recommended, as it sets the tone for a respectful and enjoyable encounter. Rojlo values the safety and satisfaction of all its users and promotes a culture of respect and discretion in all interactions.
+              </p>
+            </div>
+          </article>
+
+          <article className="rounded-[2rem] bg-gray-100/85 p-6 sm:p-8 lg:p-10 shadow-lg shadow-gray-200/40">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
+              Common Inquiries
+            </p>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-black text-gray-950">
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-gray-700 font-medium">
+              Everything you need to know about using Rojlo, posting listings, and exploring city services.
+            </p>
+
+            <div className="mt-8 grid gap-4 sm:gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
+                  How do I find services on Rojlo?
+                </h3>
+                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
+                  On Rojlo, you can find services by browsing the &apos;Find Services&apos; section, where you can explore various categories and listings.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
+                  What types of listings can I find on Rojlo?
+                </h3>
+                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
+                  Rojlo offers listings for call girls, places, and ads posted by individuals and businesses.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
+                  How can I post an ad on Rojlo?
+                </h3>
+                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
+                  To post an ad, you need to create an account and follow the guidelines provided on the platform.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-950">
+                  Is there a fee for posting ads on Rojlo?
+                </h3>
+                <p className="mt-3 text-sm sm:text-base leading-7 text-gray-800">
+                  Yes, there may be fees associated with posting ads, depending on the type of listing and the duration of the posting.
+                </p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
     </main>
   );
 }
