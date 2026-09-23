@@ -24,7 +24,8 @@ function getPooledTransporter(
   pass: string,
   isGmail: boolean
 ): nodemailer.Transporter {
-  const cacheKey = `${host}:${port}:${user}:${pass}`;
+  const cleanPass = pass.replace(/\s+/g, "").trim();
+  const cacheKey = `${host}:${port}:${user}:${cleanPass}`;
   const existing = transporterCache.get(cacheKey);
   if (existing) {
     return existing;
@@ -32,22 +33,20 @@ function getPooledTransporter(
 
   const transportOptions = isGmail
     ? {
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: { user, pass },
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 8000,
+        service: "gmail",
+        auth: { user: user.trim(), pass: cleanPass },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
       }
     : {
         host,
         port,
         secure: port === 465,
-        auth: { user, pass },
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 8000,
+        auth: { user: user.trim(), pass: cleanPass },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
       };
 
   const transporter = nodemailer.createTransport(
@@ -122,7 +121,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       sent: false,
       reason: isAuthError ? "gmail-auth-failed" : "send-failed",
       error: isAuthError
-        ? `Gmail authentication failed (535 BadCredentials). Please verify that 2-Step Verification is enabled for ${user} and the App Password has not been revoked.`
+        ? `Gmail rejected the credentials for ${user} (535 BadCredentials). Google requires a fresh 16-character App Password generated specifically for ${user} at myaccount.google.com/apppasswords with 2-Step Verification turned ON.`
         : errMsg,
     };
   }

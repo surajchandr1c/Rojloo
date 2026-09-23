@@ -32,6 +32,7 @@ function AuthPage() {
 
   // OTP (shown inline below the email field)
   const [otpSent, setOtpSent] = useState(false);
+  const [emailDelivered, setEmailDelivered] = useState(false);
   const [otpEmail, setOtpEmail] = useState("");
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [otpError, setOtpError] = useState("");
@@ -78,6 +79,7 @@ function AuthPage() {
 
   function resetOtp() {
     setOtpSent(false);
+    setEmailDelivered(false);
     setOtpEmail("");
     setDigits(["", "", "", "", "", ""]);
     setResendIn(0);
@@ -151,15 +153,15 @@ function AuthPage() {
       setDigits(["", "", "", "", "", ""]);
       setExpiresIn(OTP_TTL_SECONDS);
       if (data.emailSent === false) {
+        setEmailDelivered(false);
         setOtpError(
           data.message ||
-          "We couldn't deliver the code to your email. Please check your email configuration or use the code below."
+          "We couldn't deliver the code to your email. Please check your email configuration and resend below."
         );
-        if (data.fallbackOtp && /^\d{6}$/.test(data.fallbackOtp)) {
-          setDigits(data.fallbackOtp.split(""));
-        }
         setResendIn(0);
       } else {
+        setEmailDelivered(true);
+        setOtpError("");
         setResendIn(RESEND_COOLDOWN_SECONDS);
       }
       digitRefs.current[0]?.focus();
@@ -440,19 +442,19 @@ function AuthPage() {
             </div>
             {(mode === "signup" || loginMethod === "otp") && (
               <div className="mt-1.5">
-                {otpSent ? (
-                  <p className="text-xs font-semibold text-gray-700">
-                    ✓ Code sent to {otpEmail}. Check your inbox or spam folder.
+                {otpSent && emailDelivered ? (
+                  <p className="text-xs font-bold text-gray-900">
+                    ✓ 6-digit verification code sent to {otpEmail}. Please check your email inbox (and spam folder) and enter it below.
                   </p>
                 ) : (
                   <p className="text-xs text-gray-800">
-                    Click <strong>&quot;Send Code&quot;</strong> to receive your 6-digit verification code.
+                    Click <strong>&quot;Send Code&quot;</strong> to receive your 6-digit verification code in your email.
                   </p>
                 )}
                 {otpError && (
-                  <p className="mt-1 text-xs font-semibold text-gray-600">
+                  <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-900 leading-relaxed shadow-xs" role="alert">
                     {otpError}
-                  </p>
+                  </div>
                 )}
               </div>
             )}
@@ -652,11 +654,6 @@ function AuthPage() {
             </div>
           )}
 
-          {otpSent && otpError && (
-            <div className="rounded-2xl border border-gray-300 bg-white p-3 text-xs leading-5 font-medium text-gray-900 shadow-xs" role="alert">
-              {otpError}
-            </div>
-          )}
           {error && (
             <p className="text-sm font-medium text-gray-700" role="alert">
               {error}

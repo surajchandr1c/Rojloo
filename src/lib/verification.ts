@@ -10,7 +10,7 @@ import { setUserOtp, resetOtpCooldown } from "./models/user";
 import { sendOtpEmail } from "./email";
 
 export type OtpSendResult =
-  | { ok: true; sent: boolean; message?: string; fallbackOtp?: string }
+  | { ok: true; sent: boolean; message?: string }
   | { ok: false; error: string; status: number };
 
 /**
@@ -61,7 +61,7 @@ export async function createAndSendOtp(
   }
 
   void now;
-  return { ok: true, sent, message: sendError, fallbackOtp: !sent ? otp : undefined };
+  return { ok: true, sent, message: sendError };
 }
 
 export function otpCooldownRemainingMs(lastSentAt: Date | undefined, now: Date): number {

@@ -77,7 +77,6 @@ export async function POST(request: NextRequest) {
           ? "A new verification code has been sent to your email."
           : otpResult.message || "We couldn't send the code right now. Please check your email configuration.",
         emailSent: otpResult.sent,
-        fallbackOtp: otpResult.fallbackOtp,
       },
       { status: 200 }
     );
