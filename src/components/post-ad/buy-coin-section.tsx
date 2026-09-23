@@ -12,6 +12,25 @@ const FALLBACK_PACKAGES: CoinPackage[] = DEFAULT_PACKAGES.map((pkg, idx) => ({
   ...pkg,
 }));
 
+function getInitialPackages(): CoinPackage[] {
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem("rojlo_cached_coin_packages");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Discard any stale legacy packages (e.g. old 99 coins)
+          const isStale = parsed.some((p: CoinPackage) => Number(p.coins) === 99 || Number(p.coins) === 145);
+          if (!isStale) {
+            return parsed;
+          }
+        }
+      }
+    } catch {}
+  }
+  return FALLBACK_PACKAGES;
+}
+
 interface EligibilityState {
   allowed: boolean;
   remainingMs: number;
@@ -24,7 +43,7 @@ interface EligibilityState {
 export default function BuyCoinSection() {
   const router = useRouter();
   const { user } = useAuth();
-  const [packages, setPackages] = useState<CoinPackage[]>(FALLBACK_PACKAGES);
+  const [packages, setPackages] = useState<CoinPackage[]>(getInitialPackages);
   const [navigatingPkgId, setNavigatingPkgId] = useState<string | null>(null);
   const [eligibility, setEligibility] = useState<EligibilityState | null>(null);
   const [liveCountdown, setLiveCountdown] = useState<string>("");
@@ -39,6 +58,9 @@ export default function BuyCoinSection() {
       const list = Array.isArray(data.packages) ? data.packages : [];
       if (list.length) {
         setPackages(list);
+        try {
+          localStorage.setItem("rojlo_cached_coin_packages", JSON.stringify(list));
+        } catch {}
       }
     } catch (err) {
       console.error("Failed to load coin packages:", err);
