@@ -216,9 +216,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-gray-800 text-white"
-                    : "text-white hover:bg-gray-900 hover:text-white"
+                    ? "bg-gray-800 !text-white text-white"
+                    : "!text-white text-white hover:bg-gray-900 hover:!text-white"
                 }`}
+                style={{ color: "#ffffff" }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

@@ -301,7 +301,8 @@ export default function AdminCities() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/city"
-            className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white transition shadow-sm"
+            className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold !text-white text-white transition shadow-sm"
+            style={{ color: "#ffffff" }}
           >
             City List
           </Link>
