@@ -17,7 +17,8 @@ import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import CityFaqSection from "@/components/places/city-faq-section";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const dynamicParams = true;
 
 export async function generateMetadata({
@@ -27,7 +28,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { location: slug } = await params;
   let city = await getCityBySlug(slug);
-  const seo = await getCitySeo(slug);
+  const seo =
+    (await getCitySeo(slug)) ||
+    (city ? await getCitySeo(city.slug) : null);
 
   if (!city && seo) {
     city = {
@@ -131,7 +134,9 @@ async function CityContent({
   isPreview?: boolean;
 }) {
   let city = await getCityBySlug(slug);
-  const seo = await getCitySeo(slug);
+  const seo =
+    (await getCitySeo(slug)) ||
+    (city ? await getCitySeo(city.slug) : null);
 
   // Fallback: If city not yet indexed in static/custom list but SEO exists, synthesize city record
   if (!city && seo) {
@@ -373,7 +378,7 @@ async function CityContent({
               </div>
             )}
             {seo.content.map((block) => {
-              if (block.type === "h1" || block.type === "h2" || block.type === "h3")
+              if (block.type === "h1" || block.type === "h2") {
                 return (
                   <h2
                     key={block.id}
@@ -382,6 +387,17 @@ async function CityContent({
                     {block.text}
                   </h2>
                 );
+              }
+              if (block.type === "h3") {
+                return (
+                  <h3
+                    key={block.id}
+                    className="mt-4 text-xl font-bold text-gray-950 sm:text-2xl"
+                  >
+                    {block.text}
+                  </h3>
+                );
+              }
               return (
                 <p
                   key={block.id}

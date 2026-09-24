@@ -185,15 +185,17 @@ export const getCitySeo = cache(async function (
 });
 
 export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
+  const cleanSlug = String(data.slug || "").trim().toLowerCase();
+  const cleanUrlSlug = data.urlSlug?.trim().toLowerCase() || cleanSlug;
   const record: CitySeo = {
-    slug: String(data.slug || "").trim(),
+    slug: cleanSlug,
     name: data.name?.trim() || String(data.slug),
     title: data.title?.trim() ?? "",
     description: data.description?.trim() ?? "",
     keywords:
       data.keywords?.trim() ||
       (data.primaryKeyword ? data.primaryKeyword.trim() : ""),
-    urlSlug: data.urlSlug?.trim() || data.slug,
+    urlSlug: cleanUrlSlug,
     primaryKeyword: data.primaryKeyword?.trim() ?? "",
     popularSearches: Array.isArray(data.popularSearches)
       ? Array.from(new Set(data.popularSearches.map((s) => String(s).trim()).filter(Boolean)))
@@ -235,11 +237,30 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
   const db = await getDb();
   if (db) {
     try {
-      await db.collection("city_seo").updateOne(
-        { slug: record.slug },
-        { $set: record },
-        { upsert: true }
-      );
+      const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const existing = await db.collection("city_seo").findOne({
+        $or: [
+          { slug: cleanSlug },
+          { slug: new RegExp(`^${escape(cleanSlug)}$`, "i") },
+          { urlSlug: cleanSlug },
+          { urlSlug: new RegExp(`^${escape(cleanSlug)}$`, "i") },
+          { slug: cleanUrlSlug },
+          { urlSlug: cleanUrlSlug },
+        ],
+      });
+
+      if (existing) {
+        await db.collection("city_seo").updateOne(
+          { _id: existing._id },
+          { $set: record }
+        );
+      } else {
+        await db.collection("city_seo").updateOne(
+          { slug: cleanSlug },
+          { $set: record },
+          { upsert: true }
+        );
+      }
     } catch (err) {
       console.error("[city-seo] upsertCitySeo mongo write failed:", err);
     }
@@ -249,7 +270,13 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
   try {
     const store = await readStore();
     const list = (store.citySeo ?? []) as unknown as CitySeo[];
-    const index = list.findIndex((c) => c.slug === record.slug);
+    const index = list.findIndex(
+      (c) =>
+        (c.slug && c.slug.toLowerCase() === cleanSlug) ||
+        (c.urlSlug && c.urlSlug.toLowerCase() === cleanSlug) ||
+        (c.slug && c.slug.toLowerCase() === cleanUrlSlug) ||
+        (c.urlSlug && c.urlSlug.toLowerCase() === cleanUrlSlug)
+    );
     if (index >= 0) {
       list[index] = record;
     } else {

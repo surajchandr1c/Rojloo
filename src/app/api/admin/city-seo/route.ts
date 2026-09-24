@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getAllCitySeo, upsertCitySeo } from "@/lib/models/city-seo";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 
@@ -69,6 +70,17 @@ export async function POST(request: NextRequest) {
     faqs: Array.isArray(faqs) ? faqs : [],
     status: status === "published" || status === "draft" ? status : "draft",
   });
+
+  try {
+    revalidatePath(`/places/${saved.slug}`);
+    if (saved.urlSlug && saved.urlSlug !== saved.slug) {
+      revalidatePath(`/places/${saved.urlSlug}`);
+    }
+    revalidatePath("/places");
+    revalidatePath("/", "layout");
+  } catch (err) {
+    console.warn("[city-seo] revalidatePath error:", err);
+  }
 
   return NextResponse.json({ success: true, seo: saved });
 }

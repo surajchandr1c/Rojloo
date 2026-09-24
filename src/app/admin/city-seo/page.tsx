@@ -229,9 +229,11 @@ function CitySeoContent() {
             if (city.state) setStateName(city.state);
           }
 
+          const targetSlugLower = targetSlug.toLowerCase().trim();
           const seo = (seoRes.seo ?? []).find(
             (s: { slug: string; urlSlug?: string }) =>
-              s.slug === targetSlug || s.urlSlug === targetSlug
+              (s.slug && s.slug.toLowerCase().trim() === targetSlugLower) ||
+              (s.urlSlug && s.urlSlug.toLowerCase().trim() === targetSlugLower)
           );
           if (seo) {
             if (!name && seo.name) setName(seo.name);

@@ -16,6 +16,8 @@ type DynamicCity = {
   famousFood: string;
   seoDescription: string;
   source: "Custom" | "Static";
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type SeoInfo = {
@@ -102,18 +104,42 @@ export default function AdminCities() {
   }, [search]);
 
   // Debounced Fuzzy Filtered Cities (checks name, state, slug, region, country)
+  // Sorted so that cities with the latest update move to the last (bottom) of the list.
   const filteredCities = useMemo(() => {
     const q = debouncedSearch.trim();
-    if (!q) return allCities;
-    return allCities.filter(
-      (c) =>
-        fuzzyMatch(c.name, q) ||
-        (c.state && fuzzyMatch(c.state, q)) ||
-        fuzzyMatch(c.slug, q) ||
-        fuzzyMatch(c.region, q) ||
-        (c.country && fuzzyMatch(c.country, q))
-    );
-  }, [allCities, debouncedSearch]);
+    const list = !q
+      ? [...allCities]
+      : allCities.filter(
+          (c) =>
+            fuzzyMatch(c.name, q) ||
+            (c.state && fuzzyMatch(c.state, q)) ||
+            fuzzyMatch(c.slug, q) ||
+            fuzzyMatch(c.region, q) ||
+            (c.country && fuzzyMatch(c.country, q))
+        );
+
+    return list.sort((a, b) => {
+      const getCityTime = (c: DynamicCity) => {
+        const slugKey = (c.slug || "").trim().toLowerCase();
+        const seo = seoMap[c.slug] || seoMap[slugKey];
+        const seoTime = seo?.updatedAt ? new Date(seo.updatedAt).getTime() : 0;
+        const cityTime = c.updatedAt
+          ? new Date(c.updatedAt).getTime()
+          : c.createdAt
+          ? new Date(c.createdAt).getTime()
+          : 0;
+        return Math.max(seoTime, cityTime);
+      };
+
+      const timeA = getCityTime(a);
+      const timeB = getCityTime(b);
+
+      if (timeA !== timeB) {
+        return timeA - timeB; // Ascending: oldest or un-updated first, latest updated at the very end
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [allCities, debouncedSearch, seoMap]);
 
   const selectableIds = useMemo(
     () =>
@@ -161,7 +187,11 @@ export default function AdminCities() {
         const map: Record<string, SeoInfo> = {};
         (seoData.seo ?? []).forEach(
           (s: { slug: string; updatedAt?: string }) => {
-            map[s.slug] = { hasSeo: true, updatedAt: s.updatedAt };
+            if (s.slug) {
+              const info = { hasSeo: true, updatedAt: s.updatedAt };
+              map[s.slug] = info;
+              map[s.slug.toLowerCase()] = info;
+            }
           }
         );
         setSeoMap(map);
@@ -398,7 +428,7 @@ export default function AdminCities() {
             <tbody>
               {filteredCities.map((city) => {
                 const cityIdentifier = city._id || city.slug;
-                const seo = seoMap[city.slug];
+                const seo = seoMap[city.slug] || seoMap[(city.slug || "").toLowerCase()];
                 return (
                   <tr
                     key={`${city.source}-${cityIdentifier}`}
