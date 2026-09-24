@@ -426,7 +426,8 @@ async function CityContent({
               {popularKeywords.map((keyword, index) => (
                 <span
                   key={`${keyword}-${index}`}
-                  className="rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-950 transition hover:bg-gray-100 hover:border-gray-300 shadow-2xs"
+                  className="cursor-pointer select-none rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-gray-950 transition hover:bg-gray-100 hover:border-gray-300 shadow-2xs"
+                  style={{ cursor: "pointer" }}
                 >
                   {keyword}
                 </span>

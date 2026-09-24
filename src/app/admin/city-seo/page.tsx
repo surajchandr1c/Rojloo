@@ -1254,7 +1254,8 @@ function CitySeoContent() {
                           href={`/admin/dynamic-seo?city=${encodeURIComponent(
                             area.citySlug
                           )}&area=${encodeURIComponent(area.slug)}`}
-                          className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-gray-800 transition shadow-xs"
+                          className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-bold !text-white text-white hover:bg-gray-800 transition shadow-xs"
+                          style={{ color: "#ffffff" }}
                         >
                           Edit SEO
                         </Link>
