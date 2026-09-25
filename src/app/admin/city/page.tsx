@@ -363,31 +363,35 @@ export default function AdminCities() {
       </div>
 
       <div className="mt-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <input
             className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500 sm:w-72"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by city name"
           />
-          {selectedIds.size > 0 && (
-            <button
-              type="button"
-              onClick={removeSelected}
-              className="rounded-full bg-red-600 !text-white px-4 py-2.5 text-sm font-semibold hover:bg-red-700 transition"
-            >
-              Delete selected ({selectedIds.size})
-            </button>
-          )}
-          {allCities.length > 0 && (
-            <button
-              type="button"
-              onClick={deleteAll}
-              className="rounded-full bg-red-600 !text-white px-4 py-2.5 text-sm font-semibold hover:bg-red-700 transition"
-            >
-              Delete All ({allCities.length})
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            {selectedIds.size > 0 && (
+              <button
+                type="button"
+                onClick={removeSelected}
+                className="rounded-full bg-red-600 !text-white px-4 py-2.5 text-sm font-semibold hover:bg-red-700 transition shadow-xs cursor-pointer"
+                style={{ color: "#ffffff" }}
+              >
+                Delete selected ({selectedIds.size})
+              </button>
+            )}
+            {allCities.length > 0 && (
+              <button
+                type="button"
+                onClick={deleteAll}
+                className="rounded-full bg-red-600 !text-white px-4 py-2.5 text-sm font-semibold hover:bg-red-700 transition shadow-xs cursor-pointer"
+                style={{ color: "#ffffff" }}
+              >
+                Delete All ({allCities.length})
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
