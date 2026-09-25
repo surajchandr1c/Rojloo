@@ -295,7 +295,12 @@ async function LocalAreaContent({
                     )}
                   </div>
                   <div className="relative z-10 mt-4 flex flex-wrap gap-2">
-                    <ContactActions phone={ad.phone} whatsapp={ad.whatsapp} telegram={ad.telegram} />
+                    <ContactActions
+                      phone={ad.phone}
+                      whatsapp={ad.whatsapp}
+                      telegram={ad.telegram}
+                      cityName={ad.city || city.name}
+                    />
                   </div>
                 </Card>
               ))}
@@ -471,6 +476,7 @@ async function AdContent({ location, id }: { location: string; id: string }) {
                   phone={ad.phone}
                   whatsapp={ad.whatsapp}
                   telegram={ad.telegram}
+                  cityName={ad.city || cityName}
                 />
               </div>
 

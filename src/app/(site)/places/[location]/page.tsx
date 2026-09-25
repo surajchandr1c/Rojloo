@@ -353,6 +353,7 @@ async function CityContent({
                       phone={ad.phone}
                       whatsapp={ad.whatsapp}
                       telegram={ad.telegram}
+                      cityName={ad.city || city.name}
                     />
                   </div>
                 </Card>
