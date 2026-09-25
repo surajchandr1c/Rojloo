@@ -141,6 +141,7 @@ function CitySeoContent() {
   const isEdit = Boolean(editSlug);
 
   const jsonInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const [allCities, setAllCities] = useState<
     { name: string; slug: string; state?: string }[]
@@ -375,6 +376,73 @@ function CitySeoContent() {
       setError(e instanceof Error ? e.message : "Image upload failed.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleDeleteImage() {
+    if (!featuredImage) return;
+    if (!confirm("Are you sure you want to delete this featured image?")) return;
+
+    setFeaturedImage("");
+    setImageAlt("");
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+
+    const slug = activeSlug || editSlug;
+    if (slug) {
+      try {
+        setSaving(true);
+        const targetName = name.trim();
+        const finalUrlSlug = (
+          urlSlug.trim() ||
+          slugify(title) ||
+          slugify(targetName) ||
+          slug
+        ).toLowerCase();
+
+        const sRes = await fetch("/api/admin/city-seo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            slug,
+            name: targetName || slug,
+            title,
+            description,
+            keywords: primaryKeyword,
+            urlSlug: finalUrlSlug,
+            primaryKeyword,
+            popularSearches,
+            secondaryKeywords: popularSearches,
+            longTailKeywords: [],
+            canonicalUrl:
+              canonicalUrl.trim() ||
+              `https://rojloo.vercel.app/places/${finalUrlSlug}`,
+            featuredImage: "",
+            imageAlt: "",
+            content,
+            faqs,
+            status,
+          }),
+        });
+
+        if (sRes.ok) {
+          setSuccess("Featured image deleted and saved successfully!");
+          setTimeout(() => setSuccess(""), 4000);
+        } else {
+          setSuccess("Image removed from form. Click Save Draft or Publish to apply changes.");
+          setTimeout(() => setSuccess(""), 4000);
+        }
+      } catch {
+        setSuccess("Image removed from form. Click Save Draft or Publish to apply changes.");
+        setTimeout(() => setSuccess(""), 4000);
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      setSuccess("Featured image removed.");
+      setTimeout(() => setSuccess(""), 3000);
     }
   }
 
@@ -1336,11 +1404,29 @@ function CitySeoContent() {
               </Field>
 
               <div>
-                <span className="mb-1 block text-sm font-medium text-gray-900">Featured Image</span>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-900">Featured Image</span>
+                  {featuredImage && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteImage}
+                      disabled={saving || uploading}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold !text-white text-white hover:bg-red-700 disabled:opacity-60 transition shadow-xs cursor-pointer"
+                      style={{ color: "#ffffff" }}
+                      title="Delete this image"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete Image
+                    </button>
+                  )}
+                </div>
                 <input
+                  ref={imageInputRef}
                   type="file"
                   accept="image/*"
-                  disabled={uploading}
+                  disabled={uploading || saving}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleImage(file);
@@ -1350,12 +1436,44 @@ function CitySeoContent() {
                 {uploading && <span className="text-xs text-gray-700">Uploading...</span>}
                 {featuredImage && (
                   <div className="mt-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={featuredImage}
-                      alt={imageAlt || "Featured preview"}
-                      className="h-32 w-auto rounded-xl border border-gray-100 object-cover"
-                    />
+                    <div className="relative inline-block overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={featuredImage}
+                        alt={imageAlt || "Featured preview"}
+                        className="h-36 w-auto max-w-full rounded-xl object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleDeleteImage}
+                        disabled={saving || uploading}
+                        className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600 !text-white text-white shadow-md hover:bg-red-700 transition cursor-pointer"
+                        style={{ color: "#ffffff" }}
+                        title="Delete image"
+                        aria-label="Delete image"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDeleteImage}
+                        disabled={saving || uploading}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold !text-white text-white hover:bg-red-700 disabled:opacity-60 transition shadow-xs cursor-pointer"
+                        style={{ color: "#ffffff" }}
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete Image
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        Remove image from city guide
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
