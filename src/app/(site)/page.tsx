@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import Button from "@/components/ui/button";
 import SearchBar from "@/components/search-bar";
 import HomeFaq from "@/components/home-faq";
@@ -180,7 +179,7 @@ export default function Home() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
                 Suggested SEO phrases:
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 list-disc list-inside space-y-1.5 text-sm sm:text-base text-gray-900">
                 {[
                   "escort call girl in rojloo",
                   "call girls in rojloo",
@@ -188,15 +187,11 @@ export default function Home() {
                   "call girl listings in rojloo",
                   "local escort advertisements",
                 ].map((phrase) => (
-                  <Link
-                    key={phrase}
-                    href={`/places?q=${encodeURIComponent(phrase)}`}
-                    className="cursor-pointer select-none rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-gray-800 transition hover:bg-gray-100 hover:border-gray-400"
-                  >
-                    {phrase}
-                  </Link>
+                  <li key={phrase} className="leading-7">
+                    <strong className="font-bold text-gray-950">{phrase}</strong>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </article>
 
@@ -220,7 +215,7 @@ export default function Home() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
                 Suggested SEO phrases:
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 list-disc list-inside space-y-1.5 text-sm sm:text-base text-gray-900">
                 {[
                   "call girls in rojloo",
                   "call girl listings",
@@ -228,15 +223,11 @@ export default function Home() {
                   "local call girl listings",
                   "call girl services in rojloo",
                 ].map((phrase) => (
-                  <Link
-                    key={phrase}
-                    href={`/places?q=${encodeURIComponent(phrase)}`}
-                    className="cursor-pointer select-none rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-gray-800 transition hover:bg-gray-100 hover:border-gray-400"
-                  >
-                    {phrase}
-                  </Link>
+                  <li key={phrase} className="leading-7">
+                    <strong className="font-bold text-gray-950">{phrase}</strong>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </article>
 
@@ -260,7 +251,7 @@ export default function Home() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
                 Suggested SEO phrases:
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 list-disc list-inside space-y-1.5 text-sm sm:text-base text-gray-900">
                 {[
                   "Thai massage call girl",
                   "massage in rojloo",
@@ -270,15 +261,11 @@ export default function Home() {
                   "local massage services",
                   "body massage in rojloo",
                 ].map((phrase) => (
-                  <Link
-                    key={phrase}
-                    href={`/places?q=${encodeURIComponent(phrase)}`}
-                    className="cursor-pointer select-none rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-gray-800 transition hover:bg-gray-100 hover:border-gray-400"
-                  >
-                    {phrase}
-                  </Link>
+                  <li key={phrase} className="leading-7">
+                    <strong className="font-bold text-gray-950">{phrase}</strong>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </article>
 
@@ -302,7 +289,7 @@ export default function Home() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
                 Suggested SEO phrases:
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 list-disc list-inside space-y-1.5 text-sm sm:text-base text-gray-900">
                 {[
                   "night out listings",
                   "night meeting",
@@ -310,15 +297,11 @@ export default function Home() {
                   "night out in rojloo",
                   "local nightlife companion",
                 ].map((phrase) => (
-                  <Link
-                    key={phrase}
-                    href={`/places?q=${encodeURIComponent(phrase)}`}
-                    className="cursor-pointer select-none rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-gray-800 transition hover:bg-gray-100 hover:border-gray-400"
-                  >
-                    {phrase}
-                  </Link>
+                  <li key={phrase} className="leading-7">
+                    <strong className="font-bold text-gray-950">{phrase}</strong>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </article>
 
@@ -342,7 +325,7 @@ export default function Home() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
                 Suggested SEO phrases:
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 list-disc list-inside space-y-1.5 text-sm sm:text-base text-gray-900">
                 {[
                   "hotel party listings",
                   "hotel party services",
@@ -350,15 +333,11 @@ export default function Home() {
                   "private party listings",
                   "nightlife listings",
                 ].map((phrase) => (
-                  <Link
-                    key={phrase}
-                    href={`/places?q=${encodeURIComponent(phrase)}`}
-                    className="cursor-pointer select-none rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-gray-800 transition hover:bg-gray-100 hover:border-gray-400"
-                  >
-                    {phrase}
-                  </Link>
+                  <li key={phrase} className="leading-7">
+                    <strong className="font-bold text-gray-950">{phrase}</strong>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </article>
 
@@ -383,7 +362,7 @@ export default function Home() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
                 Suggested SEO phrases:
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 list-disc list-inside space-y-1.5 text-sm sm:text-base text-gray-900">
                 {[
                   "escort service rojloo",
                   "male escort",
@@ -392,15 +371,11 @@ export default function Home() {
                   "social companion",
                   "companion listings in rojloo",
                 ].map((phrase) => (
-                  <Link
-                    key={phrase}
-                    href={`/places?q=${encodeURIComponent(phrase)}`}
-                    className="cursor-pointer select-none rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs sm:text-sm font-medium text-gray-800 transition hover:bg-gray-100 hover:border-gray-400"
-                  >
-                    {phrase}
-                  </Link>
+                  <li key={phrase} className="leading-7">
+                    <strong className="font-bold text-gray-950">{phrase}</strong>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </article>
 
@@ -572,7 +547,7 @@ export default function Home() {
               <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700">
                 Suggested Internal Links:
               </p>
-              <div className="mt-3 flex flex-wrap gap-2.5">
+              <ul className="mt-3 list-disc list-inside space-y-1.5 text-sm sm:text-base text-gray-900">
                 {[
                   "Escort Call Girl in Rojloo",
                   "Call Girls in Rojloo",
@@ -585,15 +560,11 @@ export default function Home() {
                   "Night Out in Rojloo",
                   "Hotel Party in Rojloo",
                 ].map((linkName) => (
-                  <Link
-                    key={linkName}
-                    href={`/places?q=${encodeURIComponent(linkName)}`}
-                    className="cursor-pointer select-none rounded-full border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-gray-950 transition hover:bg-gray-100 hover:border-gray-400 shadow-2xs"
-                  >
-                    {linkName}
-                  </Link>
+                  <li key={linkName} className="leading-7">
+                    <strong className="font-bold text-gray-950">{linkName}</strong>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </article>
 
