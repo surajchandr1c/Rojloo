@@ -34,21 +34,21 @@ export default function Home() {
       {/* Part 1 — Homepage Hero */}
       <section className="bg-gray-200">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
-          <div className="mx-auto max-w-5xl text-center">
+          <div className="mx-auto max-w-6xl text-center">
             <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
               get you fun
             </p>
             <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight text-gray-950 break-words">
               Rojlo Mojlo Na Mile To Khojlo
             </h1>
-            <p className="mx-auto mt-4 max-w-5xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
+            <p className="mx-auto mt-4 max-w-none text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
               Find local listings for{" "}
               <strong>
                 escort call girl in rojloo, call girls in rojloo, massage in rojloo, body massage, male escort, male escort service, escort service rojloo
               </strong>
               , night outings, hotel parties, Thai massage, and other social experiences. Browse listings by location, discover available services, and connect directly with advertisers.
             </p>
-            <p className="mx-auto mt-3 max-w-5xl text-base sm:text-lg leading-7 sm:leading-8 text-gray-800">
+            <p className="mx-auto mt-3 max-w-none text-base sm:text-lg leading-7 sm:leading-8 text-gray-800">
               Explore listings based on your preferred location and experience. Each advertiser can provide their own information, availability, service details, and contact preferences.
             </p>
 
