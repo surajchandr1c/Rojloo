@@ -9,24 +9,79 @@ interface FaqItem {
 
 const faqs: FaqItem[] = [
   {
-    question: "How do I find services on Rojlo?",
+    question: "What can I find on Rojloo?",
     answer:
-      "On Rojlo, you can find services by browsing the 'Find Services' section, where you can explore various categories and listings.",
+      "You can find listings related to call girls in rojloo, escort call girl in rojloo, massage in rojloo, Thai massage call girl, body massage, male escort, male escort service, escort service rojloo, night outings, hotel parties, and other adult-oriented social experiences.",
   },
   {
-    question: "What types of listings can I find on Rojlo?",
+    question: "Can I search listings by location?",
     answer:
-      "Rojlo offers listings for call girls, places, and ads posted by individuals and businesses.",
+      "Yes. You can browse listings based on location and category where those filters are available.",
   },
   {
-    question: "How can I post an ad on Rojlo?",
+    question: "How do I contact an advertiser?",
     answer:
-      "To post an ad, you need to create an account and follow the guidelines provided on the platform.",
+      "Open the relevant listing and use the contact method provided by the advertiser.",
   },
   {
-    question: "Is there a fee for posting ads on Rojlo?",
+    question: "Can advertisers create their own listings?",
     answer:
-      "Yes, there may be fees associated with posting ads, depending on the type of listing and the duration of the posting.",
+      "Yes, registered advertisers can publish listings according to the platform's posting requirements.",
+  },
+  {
+    question: "Are all listings available all the time?",
+    answer:
+      "Availability can change. Contact the advertiser directly to confirm current availability and details.",
+  },
+  {
+    question: "What is a call girl listing?",
+    answer:
+      "A call girl listing provides information about an advertiser and the services or companionship they offer. Check the individual listing for specific details.",
+  },
+  {
+    question: "What is a Thai massage call girl listing?",
+    answer:
+      "It is a listing advertising Thai massage-related services. Check the individual listing for the specific service details provided by the advertiser.",
+  },
+  {
+    question: "Can I find listings in Rojloo?",
+    answer:
+      "Yes. You can browse listings available in rojloo through the relevant location and category pages.",
+  },
+  {
+    question: "What is a male escort service?",
+    answer:
+      "A male escort service listing provides information about male companionship or social services offered by an advertiser.",
+  },
+  {
+    question: "What should I check before contacting someone?",
+    answer:
+      "Review the complete listing, confirm the details directly with the advertiser, and avoid sharing unnecessary personal or financial information.",
+  },
+  {
+    question: "Can I browse listings without contacting an advertiser?",
+    answer:
+      "Yes. You can review publicly available listing information before deciding whether to contact an advertiser.",
+  },
+  {
+    question: "Can I search by category?",
+    answer:
+      "Yes, where category filtering is available, you can select the type of listing you are interested in.",
+  },
+  {
+    question: "Can advertisers update their listings?",
+    answer:
+      "Yes, advertisers can update their listing information according to the platform's available features.",
+  },
+  {
+    question: "Can I search listings in Rojloo?",
+    answer:
+      "Yes. You can explore available call girls in rojloo, escort call girl in rojloo, massage in rojloo, body massage, male escort, male escort service, and escort service rojloo listings.",
+  },
+  {
+    question: "How can I identify relevant listings?",
+    answer:
+      "Use the category, location, listing description, images, and other information supplied by the advertiser.",
   },
 ];
 
