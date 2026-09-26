@@ -211,31 +211,59 @@ export async function createLocalArea(data: {
   return localArea;
 }
 
-export async function deleteLocalArea(id: string): Promise<boolean> {
-  const trimmed = id.trim();
-  if (!trimmed) return false;
+export async function deleteLocalArea(
+  input: string | { id?: string; name?: string; cityName?: string }
+): Promise<boolean> {
+  let targetId = "";
+  let targetName = "";
+  let targetCity = "";
+
+  if (typeof input === "string") {
+    targetId = input.trim();
+  } else if (input && typeof input === "object") {
+    targetId = (input.id ?? "").trim();
+    targetName = (input.name ?? "").trim().toLowerCase();
+    targetCity = (input.cityName ?? "").trim().toLowerCase();
+  }
+
+  if (!targetId && !targetName) return false;
 
   const store = await readStore();
   store.localAreas = (store.localAreas ?? []) as unknown as typeof store.localAreas;
-  const trimmedLower = trimmed.toLowerCase();
-  const slugified = slugify(trimmed);
+  const targetIdLower = targetId.toLowerCase();
+  const cleanId = targetId.replace(/^mem_area_\d+_/, "").toLowerCase();
+  const slugified = slugify(targetId).toLowerCase();
 
-  const index = store.localAreas.findIndex((a) => {
+  const initialLength = store.localAreas.length;
+  store.localAreas = store.localAreas.filter((a) => {
     const area = a as LocalAreaRecord;
     const aId = String(area._id ?? "");
     const aSlug = String(area.slug ?? "").toLowerCase();
     const aName = String(area.name ?? "").trim().toLowerCase();
-    return (
-      aId === trimmed ||
-      aSlug === trimmedLower ||
-      aSlug === slugified ||
-      aName === trimmedLower
-    );
+    const aCity = String(area.cityName ?? "").trim().toLowerCase();
+
+    // If city is specified, require city to match
+    if (targetCity && aCity && aCity !== targetCity) {
+      return true;
+    }
+
+    const matchesId =
+      targetId &&
+      (aId === targetId ||
+        aSlug === targetIdLower ||
+        aSlug === slugified ||
+        aSlug === cleanId ||
+        aName === targetIdLower);
+
+    const matchesName =
+      targetName &&
+      (aName === targetName || aSlug === slugify(targetName));
+
+    return !(matchesId || matchesName);
   });
 
-  if (index < 0) return false;
+  if (store.localAreas.length === initialLength) return false;
 
-  store.localAreas.splice(index, 1);
   await writeStore(store);
   invalidateLocalAreasCache();
   return true;

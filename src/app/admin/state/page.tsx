@@ -12,10 +12,19 @@ type StateRecord = {
 type CityRow = {
   _id?: string;
   name: string;
+  slug?: string;
   region: string;
   state?: string;
   source?: "Custom" | "Static";
 };
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
 type LocalAreaRow = {
   _id?: string;
@@ -135,10 +144,11 @@ export default function AdminStates() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
+      const timestamp = Date.now();
       const [sRes, cRes, aRes] = await Promise.all([
-        fetch("/api/admin/states", { credentials: "include" }),
-        fetch("/api/admin/cities", { credentials: "include" }),
-        fetch("/api/admin/local-areas", { credentials: "include" }),
+        fetch(`/api/admin/states?t=${timestamp}`, { credentials: "include", cache: "no-store" }),
+        fetch(`/api/admin/cities?t=${timestamp}`, { credentials: "include", cache: "no-store" }),
+        fetch(`/api/admin/local-areas?t=${timestamp}`, { credentials: "include", cache: "no-store" }),
       ]);
       if (sRes.ok) setStates((await sRes.json()).states ?? []);
       if (cRes.ok) setCities((await cRes.json()).cities ?? []);
@@ -262,6 +272,7 @@ export default function AdminStates() {
   }, [states, cities, allLocalAreas, debouncedSearch]);
 
   const [deletingStateId, setDeletingStateId] = useState<string | null>(null);
+  const [deletingCityId, setDeletingCityId] = useState<string | null>(null);
   const [deletingAreaId, setDeletingAreaId] = useState<string | null>(null);
 
   async function addState(e: React.FormEvent) {
@@ -303,30 +314,148 @@ export default function AdminStates() {
   async function removeState(id?: string) {
     if (!id) return;
     if (!confirm("Delete this state?")) return;
+
+    // Find state to get name and slug
+    const stateToDelete = states.find(
+      (s) => s._id === id || s.slug === id || s.name.toLowerCase() === id.toLowerCase()
+    );
+    const targetStateName = stateToDelete?.name || id;
+    const targetStateSlug = stateToDelete?.slug || slugify(targetStateName);
+
+    // Save snapshots for rollback
+    const prevStates = states;
+    const prevCities = cities;
+    const prevAreas = allLocalAreas;
+
+    // 1. INSTANT OPTIMISTIC PURGE: Remove immediately from screen with 0ms delay!
+    setStates((prev) =>
+      prev.filter(
+        (s) =>
+          s._id !== id &&
+          s.slug !== id &&
+          s.name.toLowerCase() !== targetStateName.toLowerCase() &&
+          s.name.toLowerCase() !== id.toLowerCase()
+      )
+    );
+    setCities((prev) =>
+      prev.filter((c) => {
+        const cState = (c.state || "").trim().toLowerCase();
+        return (
+          cState !== targetStateName.toLowerCase() &&
+          slugify(cState) !== targetStateSlug.toLowerCase() &&
+          cState !== id.toLowerCase()
+        );
+      })
+    );
+    setAllLocalAreas((prev) =>
+      prev.filter((a) => {
+        const aState = (a.stateName || "").trim().toLowerCase();
+        return (
+          aState !== targetStateName.toLowerCase() &&
+          slugify(aState) !== targetStateSlug.toLowerCase() &&
+          aState !== id.toLowerCase()
+        );
+      })
+    );
+
+    setSelectedState("");
+    setSelectedCity("");
+    setSelectedLocalArea("");
     setDeletingStateId(id);
+    setError("");
+    setSuccess("");
+
     try {
       const res = await fetch("/api/admin/states", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        cache: "no-store",
         body: JSON.stringify({ id }),
       });
       if (!res.ok) {
+        setStates(prevStates);
+        setCities(prevCities);
+        setAllLocalAreas(prevAreas);
         const data = await res.json().catch(() => ({}));
         setError((data.error as string) || "Failed to delete state.");
         return;
       }
       setSuccess("State deleted successfully.");
-      // Optimistically remove state and cascade locally
-      setStates((prev) => prev.filter((s) => s._id !== id && s.slug !== id && s.name !== id));
-      setSelectedState("");
-      setSelectedCity("");
-      setSelectedLocalArea("");
       await load(true);
     } catch {
+      setStates(prevStates);
+      setCities(prevCities);
+      setAllLocalAreas(prevAreas);
       setError("Failed to delete state.");
     } finally {
       setDeletingStateId(null);
+    }
+  }
+
+  // Delete City Handler with Instant Optimistic Purge
+  async function handleDeleteCity(id?: string, cityName?: string, stateName?: string) {
+    if (!id) return;
+    const targetName = cityName || id;
+    if (!confirm(`Delete city "${targetName}"?`)) return;
+
+    const cityToDelete = cities.find(
+      (c) =>
+        c._id === id ||
+        c.slug === id ||
+        c.name.toLowerCase() === targetName.toLowerCase()
+    );
+    const targetCitySlug = cityToDelete?.slug || slugify(targetName);
+
+    // Save snapshots for rollback
+    const prevCities = cities;
+    const prevAreas = allLocalAreas;
+
+    // 1. INSTANT OPTIMISTIC PURGE: Remove immediately from screen with 0ms delay!
+    setCities((prev) =>
+      prev.filter(
+        (c) =>
+          c._id !== id &&
+          c.slug !== id &&
+          (!c.slug || c.slug.toLowerCase() !== targetCitySlug.toLowerCase()) &&
+          c.name.toLowerCase() !== targetName.toLowerCase()
+      )
+    );
+    setAllLocalAreas((prev) =>
+      prev.filter(
+        (a) =>
+          a.cityName.toLowerCase() !== targetName.toLowerCase() &&
+          a.citySlug.toLowerCase() !== targetCitySlug.toLowerCase()
+      )
+    );
+
+    setDeletingCityId(id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch("/api/admin/cities", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        cache: "no-store",
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        setCities(prevCities);
+        setAllLocalAreas(prevAreas);
+        const data = await res.json().catch(() => ({}));
+        setError((data.error as string) || "Failed to delete city.");
+        return;
+      }
+      setSuccess(`City "${targetName}" deleted successfully.`);
+      await load(true);
+    } catch {
+      setCities(prevCities);
+      setAllLocalAreas(prevAreas);
+      setError("Failed to delete city.");
+    } finally {
+      setDeletingCityId(null);
     }
   }
 
@@ -471,34 +600,50 @@ export default function AdminStates() {
     }
   }
 
-  // Local Area Delete
-  async function handleDeleteLocalArea(id?: string) {
-    if (!id) return;
-    if (!confirm("Delete this local area?")) return;
-    setDeletingAreaId(id);
+  // Local Area Delete with Instant Optimistic Purge
+  async function handleDeleteLocalArea(id?: string, cityName?: string, name?: string) {
+    if (!id && !name) return;
+    const targetName = name || id || "";
+    const targetCity = cityName || "";
+    if (!confirm(`Delete local area "${targetName}"?`)) return;
+
+    const prevAreas = allLocalAreas;
+
+    // 1. INSTANT OPTIMISTIC PURGE: Remove immediately from screen with 0ms delay!
+    setAllLocalAreas((prev) =>
+      prev.filter((a) => {
+        const matchesId = id && (a._id === id || a.slug === id);
+        const matchesNameAndCity =
+          targetName &&
+          a.name.toLowerCase() === targetName.toLowerCase() &&
+          (!targetCity || a.cityName.toLowerCase() === targetCity.toLowerCase());
+        return !(matchesId || matchesNameAndCity);
+      })
+    );
+
+    setDeletingAreaId(id || targetName);
     setError("");
     setSuccess("");
-    // Optimistic removal locally
-    setAllLocalAreas((prev) => prev.filter((a) => a._id !== id));
 
     try {
       const res = await fetch("/api/admin/local-areas", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ id }),
+        cache: "no-store",
+        body: JSON.stringify({ id, name: targetName, cityName: targetCity }),
       });
       if (!res.ok) {
+        setAllLocalAreas(prevAreas);
         const data = await res.json().catch(() => ({}));
         setError((data.error as string) || "Failed to delete local area.");
-        await load(true);
         return;
       }
-      setSuccess("Local area deleted.");
+      setSuccess(`Local area "${targetName}" deleted.`);
       await load(true);
     } catch {
+      setAllLocalAreas(prevAreas);
       setError("Failed to delete local area.");
-      await load(true);
     } finally {
       setDeletingAreaId(null);
     }
@@ -1324,9 +1469,11 @@ export default function AdminStates() {
                   matchingCities={matchingCities}
                   expandedCities={expandedCities}
                   isDeletingState={deletingStateId === (state._id || state.slug || state.name)}
+                  deletingCityId={deletingCityId}
                   deletingAreaId={deletingAreaId}
                   onToggleState={() => toggleState(stateKey)}
                   onToggleCity={toggleCity}
+                  onDeleteCity={handleDeleteCity}
                   onDeleteLocalArea={handleDeleteLocalArea}
                   onChanged={() => load(true)}
                   onRemoveState={removeState}
@@ -1472,9 +1619,11 @@ function StateHierarchyCard({
   matchingCities,
   expandedCities,
   isDeletingState = false,
+  deletingCityId: externalDeletingCityId = null,
   deletingAreaId = null,
   onToggleState,
   onToggleCity,
+  onDeleteCity,
   onDeleteLocalArea,
   onChanged,
   onRemoveState,
@@ -1495,10 +1644,12 @@ function StateHierarchyCard({
   }>;
   expandedCities: Set<string>;
   isDeletingState?: boolean;
+  deletingCityId?: string | null;
   deletingAreaId?: string | null;
   onToggleState: () => void;
   onToggleCity: (cityKey: string) => void;
-  onDeleteLocalArea: (id?: string) => Promise<void>;
+  onDeleteCity?: (id?: string, cityName?: string, stateName?: string) => Promise<void> | void;
+  onDeleteLocalArea: (id?: string, cityName?: string, name?: string) => Promise<void>;
   onChanged: (silent?: boolean) => Promise<void> | void;
   onRemoveState: (id?: string) => void;
   onUpdateStateName: (id: string, oldName: string, newName: string) => Promise<void>;
@@ -1510,6 +1661,7 @@ function StateHierarchyCard({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [deletingCityId, setDeletingCityId] = useState<string | null>(null);
+  const activeDeletingCityId = externalDeletingCityId ?? deletingCityId;
 
   const totalAreasInState = matchingCities.reduce(
     (acc, curr) => acc + curr.cityAreas.length,
@@ -1715,10 +1867,14 @@ function StateHierarchyCard({
                       stateName={state.name}
                       cityAreas={cityAreas}
                       isExpanded={isCityExpanded}
-                      isDeletingCity={deletingCityId === (city._id || city.name)}
+                      isDeletingCity={activeDeletingCityId === (city._id || city.slug || city.name)}
                       deletingAreaId={deletingAreaId}
                       onToggleCity={() => onToggleCity(cityKey)}
-                      onDeleteCity={() => removeCity(city._id || city.name)}
+                      onDeleteCity={() =>
+                        onDeleteCity
+                          ? onDeleteCity(city._id || city.slug || city.name, city.name, state.name)
+                          : removeCity(city._id || city.name)
+                      }
                       onDeleteLocalArea={onDeleteLocalArea}
                       onChanged={onChanged}
                       onUpdateCityName={onUpdateCityName}
@@ -1757,7 +1913,7 @@ function CityHierarchyItem({
   deletingAreaId?: string | null;
   onToggleCity: () => void;
   onDeleteCity: () => void;
-  onDeleteLocalArea: (id?: string) => Promise<void>;
+  onDeleteLocalArea: (id?: string, cityName?: string, name?: string) => Promise<void>;
   onChanged: (silent?: boolean) => Promise<void> | void;
   onUpdateCityName: (id: string, oldName: string, stateName: string, newName: string) => Promise<void>;
   onUpdateLocalAreaName: (id: string | undefined, oldName: string, cityName: string, newName: string) => Promise<void>;
@@ -1865,7 +2021,8 @@ function CityHierarchyItem({
             ) : (
               <ul className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                 {cityAreas.map((area) => {
-                  const isDeletingThisArea = deletingAreaId === area._id;
+                  const areaKey = area._id || area.slug || area.name;
+                  const isDeletingThisArea = deletingAreaId === areaKey || deletingAreaId === area._id;
                   return (
                     <li
                       key={area._id ?? area.slug}
@@ -1889,7 +2046,7 @@ function CityHierarchyItem({
                       <button
                         type="button"
                         disabled={isDeletingThisArea}
-                        onClick={() => onDeleteLocalArea(area._id)}
+                        onClick={() => onDeleteLocalArea(areaKey, city.name, area.name)}
                         className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 !text-white hover:bg-red-700 font-bold text-xs transition-colors disabled:opacity-50"
                         title={`Delete ${area.name}`}
                         aria-label={`Delete ${area.name}`}

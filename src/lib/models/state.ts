@@ -211,7 +211,14 @@ export async function deleteState(id: string): Promise<boolean> {
   }
 
   // Record in deletedStates
-  const stateKeys = [stateName.toLowerCase(), stateSlug.toLowerCase()].filter(Boolean);
+  const stateKeys = [
+    stateName.toLowerCase(),
+    stateSlug.toLowerCase(),
+    trimmedLower,
+    cleanSlugLower,
+    slugify(stateName).toLowerCase(),
+  ].filter(Boolean);
+
   for (const k of stateKeys) {
     if (!store.deletedStates.some((s) => s.toLowerCase() === k)) {
       store.deletedStates.push(k);
@@ -227,25 +234,37 @@ export async function deleteState(id: string): Promise<boolean> {
   }>;
   const removedCities = cities.filter((c) => {
     const cState = String(c.state ?? "").trim().toLowerCase();
-    return cState === stateName.toLowerCase() || slugify(cState) === stateSlug;
+    return (
+      stateKeys.includes(cState) ||
+      stateKeys.includes(slugify(cState))
+    );
   });
   store.cities = cities.filter((c) => {
     const cState = String(c.state ?? "").trim().toLowerCase();
-    return cState !== stateName.toLowerCase() && slugify(cState) !== stateSlug;
+    return (
+      !stateKeys.includes(cState) &&
+      !stateKeys.includes(slugify(cState))
+    );
   }) as unknown as typeof store.cities;
 
-  // Add all removed custom city slugs and static city slugs to deletedCities
+  // Add all removed custom city slugs, names, and static city slugs/names to deletedCities
   for (const c of removedCities) {
-    if (c.slug && !store.deletedCities.includes(c.slug)) {
-      store.deletedCities.push(c.slug);
+    if (c.slug && !store.deletedCities.includes(c.slug.toLowerCase())) {
+      store.deletedCities.push(c.slug.toLowerCase());
+    }
+    if (c.name && !store.deletedCities.includes(c.name.trim().toLowerCase())) {
+      store.deletedCities.push(c.name.trim().toLowerCase());
     }
   }
   for (const c of cityPlaces) {
     if (c.state) {
       const cState = c.state.trim().toLowerCase();
-      if (cState === stateName.toLowerCase() || slugify(cState) === stateSlug) {
-        if (!store.deletedCities.includes(c.slug)) {
-          store.deletedCities.push(c.slug);
+      if (stateKeys.includes(cState) || stateKeys.includes(slugify(cState))) {
+        if (!store.deletedCities.includes(c.slug.toLowerCase())) {
+          store.deletedCities.push(c.slug.toLowerCase());
+        }
+        if (!store.deletedCities.includes(c.name.trim().toLowerCase())) {
+          store.deletedCities.push(c.name.trim().toLowerCase());
         }
       }
     }
@@ -256,14 +275,17 @@ export async function deleteState(id: string): Promise<boolean> {
     _id?: string;
     stateName?: string;
     stateSlug?: string;
+    cityName?: string;
   }>;
   store.localAreas = localAreas.filter((a) => {
     const aState = String(a.stateName ?? "").trim().toLowerCase();
     const aSlug = String(a.stateSlug ?? "").toLowerCase();
-    return aState !== stateName.toLowerCase() && aSlug !== stateSlug;
+    return !stateKeys.includes(aState) && !stateKeys.includes(aSlug);
   }) as unknown as typeof store.localAreas;
 
   await writeStore(store);
+  invalidateCityCache();
+  invalidateLocalAreasCache();
   return true;
 }
 
@@ -299,6 +321,8 @@ export async function deleteAllLocations(): Promise<{
   store.deletedCities = Array.from(existingDelCities);
 
   await writeStore(store);
+  invalidateCityCache();
+  invalidateLocalAreasCache();
 
   return {
     deletedStates: allStates.length,

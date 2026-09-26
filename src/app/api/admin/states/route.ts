@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { listStates, createState, updateState, deleteState, deleteAllLocations } from "@/lib/models/state";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 
+export const dynamic = "force-dynamic";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (!ctx || (!canAccess(ctx, "state") && !canAccess(ctx, "city"))) {
@@ -9,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   const states = await listStates();
-  return NextResponse.json({ states });
+  return NextResponse.json({ states }, { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(request: NextRequest) {
@@ -30,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const state = await createState({ name: String(name) });
-    return NextResponse.json({ success: true, state }, { status: 201 });
+    return NextResponse.json({ success: true, state }, { status: 201, headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error("createState failed:", error);
     return NextResponse.json(
@@ -60,7 +68,7 @@ export async function DELETE(request: NextRequest) {
         success: true,
         summary,
         message: "All states, cities, and local areas have been deleted successfully.",
-      });
+      }, { headers: NO_CACHE_HEADERS });
     } catch (error) {
       console.error("deleteAllLocations failed:", error);
       return NextResponse.json(
@@ -79,7 +87,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "State not found." }, { status: 404 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true }, { headers: NO_CACHE_HEADERS });
 }
 
 export async function PATCH(request: NextRequest) {

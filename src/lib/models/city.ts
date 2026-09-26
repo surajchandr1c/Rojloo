@@ -42,8 +42,11 @@ export async function listCities(): Promise<CityRecord[]> {
     const stateName = (c.state ?? "").trim().toLowerCase();
     const stateSlug = slugify(c.state ?? "");
 
-    // Skip if city slug is deleted
-    if (deleted.has(slug.toLowerCase())) continue;
+    // Skip if city slug or name is deleted
+    if (
+      deleted.has(slug.toLowerCase()) ||
+      deleted.has(c.name.trim().toLowerCase())
+    ) continue;
     // Skip if state is deleted
     if (stateName && (deletedStates.has(stateName) || deletedStates.has(stateSlug))) {
       continue;
@@ -165,7 +168,7 @@ export async function listAllCities(): Promise<CombinedCity[]> {
       const slug = c.slug.toLowerCase();
       const stateName = (c.state ?? "").trim().toLowerCase();
       const stateSlug = slugify(c.state ?? "");
-      if (deleted.has(slug)) return false;
+      if (deleted.has(slug) || deleted.has(c.name.trim().toLowerCase())) return false;
       if (
         stateName &&
         (deletedStates.has(stateName) || deletedStates.has(stateSlug))
@@ -349,13 +352,20 @@ export async function deleteCity(id: string): Promise<boolean> {
     return false;
   }
 
-  // Record deleted slug in deletedCities
-  const slugToRecord = (deletedSlug || slugified).toLowerCase();
-  if (
-    slugToRecord &&
-    !store.deletedCities.some((s) => s.toLowerCase() === slugToRecord)
-  ) {
-    store.deletedCities.push(slugToRecord);
+  // Record all identifiers in deletedCities
+  const cleanId = trimmed.replace(/^mem_city_/, "").toLowerCase();
+  const keysToRecord = [
+    deletedSlug.toLowerCase(),
+    slugified.toLowerCase(),
+    trimmedLower,
+    cleanId,
+    deletedName.toLowerCase().trim(),
+  ].filter(Boolean);
+
+  for (const k of keysToRecord) {
+    if (!store.deletedCities.some((s) => s.toLowerCase() === k)) {
+      store.deletedCities.push(k);
+    }
   }
 
   // Clean up local areas for this city
@@ -370,13 +380,16 @@ export async function deleteCity(id: string): Promise<boolean> {
       const aName = String(a.cityName ?? "").trim().toLowerCase();
       return (
         (!deletedSlug || aSlug !== deletedSlug.toLowerCase()) &&
-        (!deletedName || aName !== deletedName.toLowerCase())
+        (!deletedName || aName !== deletedName.toLowerCase().trim()) &&
+        !keysToRecord.includes(aSlug) &&
+        !keysToRecord.includes(aName)
       );
     }) as unknown as typeof store.localAreas;
   }
 
   await writeStore(store);
   invalidateCityCache();
+  invalidateLocalAreasCache();
   return true;
 }
 

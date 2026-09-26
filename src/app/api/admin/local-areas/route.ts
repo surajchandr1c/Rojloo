@@ -7,6 +7,14 @@ import {
 } from "@/lib/models/localArea";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 
+export const dynamic = "force-dynamic";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (
@@ -27,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const localAreas = await listLocalAreas({ cityName, citySlug, stateName });
-    return NextResponse.json({ localAreas });
+    return NextResponse.json({ localAreas }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error("listLocalAreas failed:", error);
     return NextResponse.json(
@@ -66,7 +74,10 @@ export async function POST(request: NextRequest) {
       cityName: String(cityName),
       stateName: stateName ? String(stateName) : undefined,
     });
-    return NextResponse.json({ success: true, localArea }, { status: 201 });
+    return NextResponse.json(
+      { success: true, localArea },
+      { status: 201, headers: NO_CACHE_HEADERS }
+    );
   } catch (error) {
     console.error("createLocalArea failed:", error);
     return NextResponse.json(
@@ -84,22 +95,29 @@ export async function DELETE(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const id = body?.id;
-  if (!id) {
+  const name = body?.name;
+  const cityName = body?.cityName;
+
+  if (!id && !name) {
     return NextResponse.json(
-      { error: "Local area id is required." },
+      { error: "Local area id or name is required." },
       { status: 400 }
     );
   }
 
   try {
-    const ok = await deleteLocalArea(String(id));
+    const ok = await deleteLocalArea({
+      id: id ? String(id) : undefined,
+      name: name ? String(name) : undefined,
+      cityName: cityName ? String(cityName) : undefined,
+    });
     if (!ok) {
       return NextResponse.json(
         { error: "Local area not found." },
         { status: 404 }
       );
     }
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error("deleteLocalArea failed:", error);
     return NextResponse.json(
