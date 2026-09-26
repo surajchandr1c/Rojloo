@@ -9,7 +9,9 @@ import {
   StaticSeoImage,
   StaticContentBlock,
   StaticSeoStatus,
+  StaticSeo,
   STATIC_PAGES,
+  DEFAULT_STATIC_SEO_DATA,
 } from "@/lib/types/static-seo";
 
 function uid(): string {
@@ -29,37 +31,18 @@ function StaticSeoContent() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Per-tab cache of SEO records
-  const [seoMap, setSeoMap] = useState<
-    Record<
-      StaticPageKey,
-      {
-        title: string;
-        description: string;
-        keywords: string;
-        images: StaticSeoImage[];
-        content: StaticContentBlock[];
-        status: StaticSeoStatus;
-        updatedAt?: string;
-      }
-    >
-  >({
-    home: { title: "", description: "", keywords: "", images: [], content: [], status: "draft" },
-    terms: { title: "", description: "", keywords: "", images: [], content: [], status: "draft" },
-    "return-policy": { title: "", description: "", keywords: "", images: [], content: [], status: "draft" },
-    "refund-policy": { title: "", description: "", keywords: "", images: [], content: [], status: "draft" },
-    "privacy-policy": { title: "", description: "", keywords: "", images: [], content: [], status: "draft" },
-    disclaimer: { title: "", description: "", keywords: "", images: [], content: [], status: "draft" },
-    contact: { title: "", description: "", keywords: "", images: [], content: [], status: "draft" },
-  });
+  // Per-tab cache of SEO records initialized with extracted page content
+  const [seoMap, setSeoMap] = useState<Record<StaticPageKey, StaticSeo>>(DEFAULT_STATIC_SEO_DATA);
+
+  const initData = DEFAULT_STATIC_SEO_DATA[validKey];
 
   // Current tab active form state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [keywords, setKeywords] = useState("");
-  const [images, setImages] = useState<StaticSeoImage[]>([]);
-  const [content, setContent] = useState<StaticContentBlock[]>([]);
-  const [status, setStatus] = useState<StaticSeoStatus>("draft");
+  const [title, setTitle] = useState(initData?.title || "");
+  const [description, setDescription] = useState(initData?.description || "");
+  const [keywords, setKeywords] = useState(initData?.keywords || "");
+  const [images, setImages] = useState<StaticSeoImage[]>(initData?.images || []);
+  const [content, setContent] = useState<StaticContentBlock[]>(initData?.content || []);
+  const [status, setStatus] = useState<StaticSeoStatus>(initData?.status || "published");
 
   // Upload states
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
@@ -68,7 +51,7 @@ function StaticSeoContent() {
   const fileInputRef1 = useRef<HTMLInputElement | null>(null);
   const fileInputRef2 = useRef<HTMLInputElement | null>(null);
 
-  // Fetch all static SEO records on mount
+  // Fetch all static SEO records on mount and merge with extracted defaults
   useEffect(() => {
     let cancelled = false;
     async function loadData() {
@@ -81,19 +64,37 @@ function StaticSeoContent() {
         }
         const data = await res.json();
         if (!cancelled && data?.seo) {
-          setSeoMap((prev) => ({
-            ...prev,
-            ...data.seo,
-          }));
+          const merged: Record<StaticPageKey, StaticSeo> = { ...DEFAULT_STATIC_SEO_DATA };
 
-          const cur = data.seo[activeTab];
+          for (const p of STATIC_PAGES) {
+            const serverDoc = data.seo[p.key];
+            const defDoc = DEFAULT_STATIC_SEO_DATA[p.key];
+            if (serverDoc) {
+              merged[p.key] = {
+                ...defDoc,
+                ...serverDoc,
+                content:
+                  serverDoc.content && serverDoc.content.length > 0
+                    ? serverDoc.content
+                    : defDoc.content,
+                title: serverDoc.title || defDoc.title,
+                description: serverDoc.description || defDoc.description,
+                keywords: serverDoc.keywords || defDoc.keywords,
+                status: serverDoc.status || defDoc.status || "published",
+              };
+            }
+          }
+
+          setSeoMap(merged);
+
+          const cur = merged[activeTab];
           if (cur) {
             setTitle(cur.title || "");
             setDescription(cur.description || "");
             setKeywords(cur.keywords || "");
             setImages(cur.images || []);
             setContent(cur.content || []);
-            setStatus(cur.status || "draft");
+            setStatus(cur.status || "published");
           }
         }
       } catch (err: unknown) {
@@ -110,12 +111,12 @@ function StaticSeoContent() {
     };
   }, []);
 
-  // When activeTab changes, populate current form from seoMap
+  // When activeTab changes, save current state to seoMap and load new tab
   const handleTabChange = (key: StaticPageKey) => {
-    // Save current form state to seoMap first
     setSeoMap((prev) => ({
       ...prev,
       [activeTab]: {
+        pageKey: activeTab,
         title,
         description,
         keywords,
@@ -126,25 +127,37 @@ function StaticSeoContent() {
     }));
 
     setActiveTab(key);
-    const target = seoMap[key];
+    const target = seoMap[key] || DEFAULT_STATIC_SEO_DATA[key];
     if (target) {
       setTitle(target.title || "");
       setDescription(target.description || "");
       setKeywords(target.keywords || "");
       setImages(target.images || []);
       setContent(target.content || []);
-      setStatus(target.status || "draft");
+      setStatus(target.status || "published");
     } else {
       setTitle("");
       setDescription("");
       setKeywords("");
       setImages([]);
       setContent([]);
-      setStatus("draft");
+      setStatus("published");
     }
     setSuccessMsg(null);
     setErrorMsg(null);
     router.replace(`/admin/static-seo?tab=${key}`, { scroll: false });
+  };
+
+  // Re-extract default content from the original page
+  const handleResetToExtracted = () => {
+    const def = DEFAULT_STATIC_SEO_DATA[activeTab];
+    if (!def) return;
+    setTitle(def.title || "");
+    setDescription(def.description || "");
+    setKeywords(def.keywords || "");
+    setContent([...def.content]);
+    setStatus(def.status || "published");
+    setSuccessMsg(`Extracted original content restored for ${activePageMeta?.label}! Click "Save Changes" to apply.`);
   };
 
   // Add content block
@@ -221,7 +234,6 @@ function StaticSeoContent() {
     setImages((prev) => {
       const copy = [...prev];
       if (slotIndex === 0) {
-        // Remove slot 0, shift slot 1 or keep
         if (copy.length > 1) {
           return [copy[1]];
         }
@@ -282,19 +294,19 @@ function StaticSeoContent() {
   const img2 = images[1];
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-5">
+    <main className="p-4 sm:p-6 md:p-8 lg:p-10 max-w-7xl mx-auto min-w-0 space-y-8 pb-28">
+      {/* Header with generous margin and action buttons */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200/90 pb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-950">
             Static SEO Management
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Add, update, or remove SEO content, headings, paragraphs, and alternating layout images for static pages.
+          <p className="mt-1.5 text-sm text-gray-600 max-w-2xl leading-relaxed">
+            Manage extracted and custom SEO content, headings, paragraphs, and alternating layout images for static pages.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             href={activeHref}
             target="_blank"
@@ -311,7 +323,7 @@ function StaticSeoContent() {
             type="button"
             disabled={saving || loading}
             onClick={handleSave}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-50"
           >
             {saving ? (
               <>
@@ -328,48 +340,50 @@ function StaticSeoContent() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex overflow-x-auto border-b border-gray-200 gap-1 pb-px no-scrollbar">
-        {STATIC_PAGES.map((page) => {
-          const isActive = activeTab === page.key;
-          const pageRecord = seoMap[page.key];
-          const isPublished = pageRecord?.status === "published";
-          const blockCount = pageRecord?.content?.length || 0;
-          const imgCount = pageRecord?.images?.length || 0;
+      {/* Tabs Bar with generous padding and pill design */}
+      <div className="rounded-2xl bg-gray-200/70 p-2 shadow-inner">
+        <div className="flex overflow-x-auto gap-1.5 no-scrollbar">
+          {STATIC_PAGES.map((page) => {
+            const isActive = activeTab === page.key;
+            const pageRecord = seoMap[page.key];
+            const isPublished = pageRecord?.status === "published";
+            const blockCount = pageRecord?.content?.length || 0;
+            const imgCount = pageRecord?.images?.length || 0;
 
-          return (
-            <button
-              key={page.key}
-              type="button"
-              onClick={() => handleTabChange(page.key)}
-              className={`flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-bold border-b-2 transition ${
-                isActive
-                  ? "border-gray-950 text-gray-950 bg-gray-100/70 rounded-t-xl"
-                  : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-              }`}
-            >
-              <span>{page.label}</span>
-              <span
-                className={`inline-block h-2 w-2 rounded-full ${
-                  isPublished ? "bg-emerald-500" : "bg-amber-400"
+            return (
+              <button
+                key={page.key}
+                type="button"
+                onClick={() => handleTabChange(page.key)}
+                className={`flex items-center gap-2.5 whitespace-nowrap px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition ${
+                  isActive
+                    ? "bg-white text-gray-950 shadow-md ring-1 ring-black/5"
+                    : "text-gray-600 hover:text-gray-950 hover:bg-white/60"
                 }`}
-                title={isPublished ? "Published" : "Draft"}
-              />
-              {(blockCount > 0 || imgCount > 0) && (
-                <span className="rounded-full bg-gray-200/80 px-1.5 py-0.5 text-[10px] font-medium text-gray-700">
-                  {blockCount}b{imgCount > 0 ? ` • ${imgCount}img` : ""}
-                </span>
-              )}
-            </button>
-          );
-        })}
+              >
+                <span>{page.label}</span>
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${
+                    isPublished ? "bg-emerald-500" : "bg-amber-400"
+                  }`}
+                  title={isPublished ? "Published" : "Draft"}
+                />
+                {blockCount > 0 && (
+                  <span className="rounded-full bg-gray-200/90 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
+                    {blockCount} {blockCount === 1 ? "block" : "blocks"}{imgCount > 0 ? ` • ${imgCount} img` : ""}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Notifications */}
       {successMsg && (
-        <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
-          <div className="flex items-center gap-2">
-            <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <svg className="h-5 w-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <span>{successMsg}</span>
@@ -377,7 +391,7 @@ function StaticSeoContent() {
           <button
             type="button"
             onClick={() => setSuccessMsg(null)}
-            className="text-emerald-700 hover:text-emerald-950"
+            className="text-emerald-700 hover:text-emerald-950 px-2 py-1 text-base font-bold"
           >
             ×
           </button>
@@ -385,9 +399,9 @@ function StaticSeoContent() {
       )}
 
       {errorMsg && (
-        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-800">
-          <div className="flex items-center gap-2">
-            <svg className="h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-800 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <svg className="h-5 w-5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{errorMsg}</span>
@@ -395,7 +409,7 @@ function StaticSeoContent() {
           <button
             type="button"
             onClick={() => setErrorMsg(null)}
-            className="text-rose-700 hover:text-rose-950"
+            className="text-rose-700 hover:text-rose-950 px-2 py-1 text-base font-bold"
           >
             ×
           </button>
@@ -403,65 +417,77 @@ function StaticSeoContent() {
       )}
 
       {loading ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-gray-500">
+        <div className="rounded-3xl border border-gray-200 bg-white p-14 text-center text-gray-500 shadow-sm">
           <svg className="mx-auto h-8 w-8 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
           </svg>
-          <p className="mt-3 text-sm">Loading SEO configuration...</p>
+          <p className="mt-3 text-sm font-medium">Loading extracted SEO content...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Editing Area (8 cols) */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Page Status & Quick Switch */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="lg:col-span-8 space-y-8">
+            {/* Page Status & Info Card */}
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-7 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-gray-950">
-                    Target Page: <span className="text-blue-600">{activePageMeta?.label}</span> ({activeHref})
+                  <h2 className="text-lg font-bold text-gray-950">
+                    Selected Page: <span className="text-blue-600">{activePageMeta?.label}</span>
+                    <span className="text-xs font-normal text-gray-500 ml-2">({activeHref})</span>
                   </h2>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    Toggle publication status and configure bottom SEO section.
+                  <p className="text-xs text-gray-600 mt-1">
+                    Pre-extracted live content loaded. Edit blocks or publish changes directly.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-gray-700">Status:</span>
-                  <div className="flex rounded-xl bg-gray-100 p-1 border border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setStatus("draft")}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                        status === "draft"
-                          ? "bg-amber-400 text-gray-950 shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      Draft
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStatus("published")}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                        status === "published"
-                          ? "bg-emerald-600 text-white shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      Published
-                    </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleResetToExtracted}
+                    title="Reload extracted default content for this page"
+                    className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                  >
+                    ↺ Re-extract Default
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-700">Status:</span>
+                    <div className="flex rounded-xl bg-gray-100 p-1 border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setStatus("draft")}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                          status === "draft"
+                            ? "bg-amber-400 text-gray-950 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Draft
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStatus("published")}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                          status === "published"
+                            ? "bg-emerald-600 text-white shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Published
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Images Management Section (2 slots) */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <div>
                   <h2 className="text-lg font-bold text-gray-950">Section Images (Max 2)</h2>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-gray-600 mt-0.5">
                     Upload up to 2 alternating images. Image 1 displays on the right; Image 2 displays on the left.
                   </p>
                 </div>
@@ -471,21 +497,21 @@ function StaticSeoContent() {
               </div>
 
               {/* Informational Banner */}
-              <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-blue-900">
-                <p className="font-semibold text-blue-950">Frontend Layout Rules:</p>
-                <ul className="mt-1 list-disc list-inside space-y-0.5 text-blue-800">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-xs text-blue-900 space-y-1">
+                <p className="font-bold text-blue-950">Frontend Alternating Layout Rules:</p>
+                <ul className="list-disc list-inside space-y-1 text-blue-800">
                   <li><strong>Image 1</strong>: Content appears on the <strong>Left</strong>, Image 1 on the <strong>Right</strong>.</li>
                   <li><strong>Image 2</strong>: Image 2 appears on the <strong>Left</strong>, Content on the <strong>Right</strong>.</li>
-                  <li>When 2 images are added, content blocks are automatically divided between Section 1 and Section 2.</li>
+                  <li>When 2 images are added, content blocks are automatically distributed between Section 1 and Section 2.</li>
                 </ul>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Image Slot 1 */}
-                <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
-                  <div className="flex items-center justify-between pb-2 mb-3 border-b border-gray-200">
+                <div className="rounded-2xl border border-gray-200 p-5 bg-gray-50/70">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-200">
                     <span className="text-sm font-bold text-gray-900">
-                      Image 1 <span className="text-xs font-normal text-gray-600">(Right Side)</span>
+                      Image 1 <span className="text-xs font-normal text-gray-500">(Right Side)</span>
                     </span>
                     {img1?.url && (
                       <button
@@ -500,7 +526,7 @@ function StaticSeoContent() {
 
                   {img1?.url ? (
                     <div className="space-y-3">
-                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-gray-200 bg-white">
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
                         <img
                           src={img1.url}
                           alt={img1.alt || "Image 1"}
@@ -514,12 +540,12 @@ function StaticSeoContent() {
                           value={img1.alt || ""}
                           placeholder="Describe this image for SEO..."
                           onChange={(e) => updateImageAlt(0, e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 outline-none focus:border-gray-500"
+                          className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-gray-500"
                         />
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-6 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-white p-6 text-center">
                       <input
                         ref={fileInputRef1}
                         type="file"
@@ -540,7 +566,7 @@ function StaticSeoContent() {
                         type="button"
                         disabled={uploadingSlot === 0}
                         onClick={() => fileInputRef1.current?.click()}
-                        className="mt-3 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-black disabled:opacity-50"
+                        className="mt-3 rounded-xl bg-gray-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black disabled:opacity-50"
                       >
                         {uploadingSlot === 0 ? `Uploading (${uploadProgress}%)` : "Select & Upload"}
                       </button>
@@ -549,10 +575,10 @@ function StaticSeoContent() {
                 </div>
 
                 {/* Image Slot 2 */}
-                <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
-                  <div className="flex items-center justify-between pb-2 mb-3 border-b border-gray-200">
+                <div className="rounded-2xl border border-gray-200 p-5 bg-gray-50/70">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-200">
                     <span className="text-sm font-bold text-gray-900">
-                      Image 2 <span className="text-xs font-normal text-gray-600">(Left Side)</span>
+                      Image 2 <span className="text-xs font-normal text-gray-500">(Left Side)</span>
                     </span>
                     {img2?.url && (
                       <button
@@ -567,7 +593,7 @@ function StaticSeoContent() {
 
                   {img2?.url ? (
                     <div className="space-y-3">
-                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-gray-200 bg-white">
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
                         <img
                           src={img2.url}
                           alt={img2.alt || "Image 2"}
@@ -581,12 +607,12 @@ function StaticSeoContent() {
                           value={img2.alt || ""}
                           placeholder="Describe this image for SEO..."
                           onChange={(e) => updateImageAlt(1, e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 outline-none focus:border-gray-500"
+                          className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-gray-500"
                         />
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-6 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-white p-6 text-center">
                       <input
                         ref={fileInputRef2}
                         type="file"
@@ -607,7 +633,7 @@ function StaticSeoContent() {
                         type="button"
                         disabled={uploadingSlot === 1}
                         onClick={() => fileInputRef2.current?.click()}
-                        className="mt-3 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-black disabled:opacity-50"
+                        className="mt-3 rounded-xl bg-gray-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black disabled:opacity-50"
                       >
                         {uploadingSlot === 1 ? `Uploading (${uploadProgress}%)` : "Select & Upload"}
                       </button>
@@ -618,12 +644,14 @@ function StaticSeoContent() {
             </div>
 
             {/* Content Blocks Editor */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-950">Content Blocks</h2>
-                  <p className="text-xs text-gray-600">
-                    Add H2 headings, H3 subheadings, and paragraphs. Wrap keywords in <code>**keyword**</code> for bold text.
+                  <h2 className="text-lg font-bold text-gray-950">
+                    Content Blocks ({content.length})
+                  </h2>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Extracted headings &amp; paragraphs. Wrap keywords in <code>**keyword**</code> for bold text.
                   </p>
                 </div>
 
@@ -631,21 +659,21 @@ function StaticSeoContent() {
                   <button
                     type="button"
                     onClick={() => addBlock("h2")}
-                    className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
+                    className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
                   >
                     + H2 Heading
                   </button>
                   <button
                     type="button"
                     onClick={() => addBlock("h3")}
-                    className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
+                    className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
                   >
                     + H3 Subheading
                   </button>
                   <button
                     type="button"
                     onClick={() => addBlock("p")}
-                    className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
+                    className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
                   >
                     + Paragraph
                   </button>
@@ -653,23 +681,23 @@ function StaticSeoContent() {
               </div>
 
               {content.length === 0 ? (
-                <div className="my-8 rounded-xl border border-dashed border-gray-300 p-8 text-center">
+                <div className="my-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
                   <p className="text-sm font-semibold text-gray-700">No content blocks yet</p>
                   <p className="mt-1 text-xs text-gray-500">
-                    Click the buttons above to add H2 headings, H3 subheadings, or paragraphs.
+                    Click the buttons above or click &ldquo;Re-extract Default&rdquo; to restore original page copy.
                   </p>
                 </div>
               ) : (
-                <div className="mt-6 space-y-4">
+                <div className="space-y-4">
                   {content.map((block, index) => {
                     return (
                       <div
                         key={block.id}
-                        className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 transition focus-within:border-gray-400 focus-within:bg-white"
+                        className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5 transition focus-within:border-gray-400 focus-within:bg-white focus-within:shadow-sm"
                       >
-                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-500">#{index + 1}</span>
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-200/80">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xs font-bold text-gray-400">#{index + 1}</span>
                             <select
                               value={block.type}
                               onChange={(e) =>
@@ -677,7 +705,7 @@ function StaticSeoContent() {
                                   type: e.target.value as "h2" | "h3" | "p",
                                 })
                               }
-                              className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-bold text-gray-900 outline-none"
+                              className="rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-bold text-gray-900 outline-none"
                             >
                               <option value="h2">H2 Heading</option>
                               <option value="h3">H3 Subheading</option>
@@ -685,13 +713,13 @@ function StaticSeoContent() {
                             </select>
                           </div>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
                               disabled={index === 0}
                               onClick={() => moveBlock(index, "up")}
                               title="Move Up"
-                              className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30"
+                              className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30"
                             >
                               ↑
                             </button>
@@ -700,7 +728,7 @@ function StaticSeoContent() {
                               disabled={index === content.length - 1}
                               onClick={() => moveBlock(index, "down")}
                               title="Move Down"
-                              className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30"
+                              className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30"
                             >
                               ↓
                             </button>
@@ -708,7 +736,7 @@ function StaticSeoContent() {
                               type="button"
                               onClick={() => deleteBlock(block.id)}
                               title="Delete Block"
-                              className="rounded p-1 text-rose-600 hover:bg-rose-50 hover:text-rose-800"
+                              className="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-800"
                             >
                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -728,7 +756,7 @@ function StaticSeoContent() {
                               : "Enter paragraph text (tip: **bold keywords**)..."
                           }
                           onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                          className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:border-gray-500"
+                          className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-gray-900 outline-none focus:border-gray-500 leading-relaxed"
                         />
                       </div>
                     );
@@ -739,43 +767,43 @@ function StaticSeoContent() {
           </div>
 
           {/* Right Sidebar: Meta fields & Live Layout Preview (4 cols) */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-8">
             {/* Meta tags card */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
-              <h2 className="text-base font-bold text-gray-950 border-b border-gray-100 pb-2">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-7 shadow-sm space-y-5">
+              <h2 className="text-base font-bold text-gray-950 border-b border-gray-100 pb-3">
                 Page Metadata
               </h2>
 
               <div>
-                <div className="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1">
+                <div className="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1.5">
                   <span>Meta Title</span>
-                  <span className="text-gray-500">{title.length} chars</span>
+                  <span className="text-gray-400">{title.length} chars</span>
                 </div>
                 <input
                   type="text"
                   value={title}
-                  placeholder="e.g. Call Girls in Rojloo | Rojloo"
+                  placeholder="e.g. Terms and Conditions | Rojlo"
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 outline-none focus:border-gray-500"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-xs text-gray-900 outline-none focus:border-gray-500"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1">
+                <div className="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1.5">
                   <span>Meta Description</span>
-                  <span className="text-gray-500">{description.length} chars</span>
+                  <span className="text-gray-400">{description.length} chars</span>
                 </div>
                 <textarea
                   rows={3}
                   value={description}
                   placeholder="Enter meta description for search engines..."
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 outline-none focus:border-gray-500"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-xs text-gray-900 outline-none focus:border-gray-500 leading-relaxed"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1">
+                <div className="flex justify-between items-center text-xs font-semibold text-gray-700 mb-1.5">
                   <span>Keywords</span>
                 </div>
                 <input
@@ -783,53 +811,53 @@ function StaticSeoContent() {
                   value={keywords}
                   placeholder="comma, separated, keywords"
                   onChange={(e) => setKeywords(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-900 outline-none focus:border-gray-500"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-xs text-gray-900 outline-none focus:border-gray-500"
                 />
               </div>
             </div>
 
             {/* Layout Visualizer */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
-              <h2 className="text-base font-bold text-gray-950 border-b border-gray-100 pb-2">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-7 shadow-sm space-y-4">
+              <h2 className="text-base font-bold text-gray-950 border-b border-gray-100 pb-3">
                 Layout Structure
               </h2>
 
               <p className="text-xs text-gray-600">
-                Visual diagram of how content and images will render on the live page:
+                Visual diagram of how content and images render on the live page:
               </p>
 
               <div className="space-y-3 text-[11px] font-mono">
                 {/* Block 1 */}
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-2.5">
-                  <div className="text-xs font-bold text-gray-800 mb-1.5 flex items-center justify-between">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <div className="text-xs font-bold text-gray-800 mb-2 flex items-center justify-between">
                     <span>Section 1</span>
-                    <span className="text-[10px] text-gray-500">Image 1 Right</span>
+                    <span className="text-[10px] text-gray-500 font-sans font-medium">Image 1 Right</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded bg-blue-100/70 p-2 text-blue-900 font-semibold text-center">
+                    <div className="rounded-lg bg-blue-100/70 p-2.5 text-blue-900 font-semibold text-center font-sans">
                       Content (Left)
                     </div>
-                    <div className={`rounded p-2 font-semibold text-center ${
+                    <div className={`rounded-lg p-2.5 font-semibold text-center font-sans ${
                       img1?.url ? "bg-emerald-100 text-emerald-900" : "bg-gray-200 text-gray-600"
                     }`}>
-                      {img1?.url ? "✓ Image 1 (Right)" : "No Image 1"}
+                      {img1?.url ? "✓ Image 1" : "No Image 1"}
                     </div>
                   </div>
                 </div>
 
                 {/* Block 2 */}
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-2.5">
-                  <div className="text-xs font-bold text-gray-800 mb-1.5 flex items-center justify-between">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <div className="text-xs font-bold text-gray-800 mb-2 flex items-center justify-between">
                     <span>Section 2</span>
-                    <span className="text-[10px] text-gray-500">Image 2 Left</span>
+                    <span className="text-[10px] text-gray-500 font-sans font-medium">Image 2 Left</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className={`rounded p-2 font-semibold text-center ${
+                    <div className={`rounded-lg p-2.5 font-semibold text-center font-sans ${
                       img2?.url ? "bg-emerald-100 text-emerald-900" : "bg-gray-200 text-gray-600"
                     }`}>
-                      {img2?.url ? "✓ Image 2 (Left)" : "No Image 2"}
+                      {img2?.url ? "✓ Image 2" : "No Image 2"}
                     </div>
-                    <div className="rounded bg-blue-100/70 p-2 text-blue-900 font-semibold text-center">
+                    <div className="rounded-lg bg-blue-100/70 p-2.5 text-blue-900 font-semibold text-center font-sans">
                       Content (Right)
                     </div>
                   </div>
@@ -841,7 +869,7 @@ function StaticSeoContent() {
                   type="button"
                   disabled={saving || loading}
                   onClick={handleSave}
-                  className="w-full rounded-xl bg-gray-900 py-2.5 text-xs font-bold text-white transition hover:bg-black disabled:opacity-50"
+                  className="w-full rounded-xl bg-gray-950 py-3 text-xs font-bold text-white transition hover:bg-black disabled:opacity-50 shadow-sm"
                 >
                   {saving ? "Saving Changes..." : "Save SEO Content"}
                 </button>
@@ -850,7 +878,7 @@ function StaticSeoContent() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
@@ -858,7 +886,7 @@ export default function StaticSeoAdminPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-8 text-center text-gray-500">
+        <div className="p-12 text-center text-gray-500">
           Loading Static SEO...
         </div>
       }

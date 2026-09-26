@@ -34,6 +34,7 @@ export const ADMIN_SECTIONS = [
 
 export function sectionFromHref(href: string): string | null {
   if (href === "/admin") return "dashboard";
+  if (href === "/admin/static" || href.startsWith("/admin/static/")) return "static-seo";
   const match = ADMIN_SECTIONS.find(
     (s) =>
       s.key !== "dashboard" &&
