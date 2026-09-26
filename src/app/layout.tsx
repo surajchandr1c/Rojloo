@@ -103,7 +103,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <JsonLd data={globalSchema} />
       </head>
-      <body className="min-h-full bg-gray-50 text-gray-950">
+      <body className="min-h-full bg-gray-50 text-gray-950 font-sans">
         {children}
       </body>
     </html>
