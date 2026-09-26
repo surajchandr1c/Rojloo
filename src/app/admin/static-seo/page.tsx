@@ -46,6 +46,10 @@ function StaticSeoContent() {
   const [faqs, setFaqs] = useState<StaticFaqItem[]>(initData?.faqs || []);
   const [status, setStatus] = useState<StaticSeoStatus>(initData?.status || "published");
 
+  // Section collapse states
+  const [contentOpen, setContentOpen] = useState(true);
+  const [faqsOpen, setFaqsOpen] = useState(true);
+
   // Upload states
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -379,40 +383,24 @@ function StaticSeoContent() {
         </div>
       </div>
 
-      {/* Tabs Bar with generous padding and pill design */}
+      {/* Tabs Bar with hidden scrollbar and clean page names */}
       <div className="rounded-2xl bg-gray-200/70 p-2 shadow-inner">
-        <div className="flex overflow-x-auto gap-1.5 no-scrollbar">
+        <div className="flex overflow-x-auto gap-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {STATIC_PAGES.map((page) => {
             const isActive = activeTab === page.key;
-            const pageRecord = seoMap[page.key];
-            const isPublished = pageRecord?.status === "published";
-            const blockCount = pageRecord?.content?.length || 0;
-            const faqCount = pageRecord?.faqs?.length || 0;
-            const imgCount = pageRecord?.images?.length || 0;
 
             return (
               <button
                 key={page.key}
                 type="button"
                 onClick={() => handleTabChange(page.key)}
-                className={`flex items-center gap-2.5 whitespace-nowrap px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition ${
+                className={`whitespace-nowrap px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl transition ${
                   isActive
                     ? "bg-white text-gray-950 shadow-md ring-1 ring-black/5"
                     : "text-gray-600 hover:text-gray-950 hover:bg-white/60"
                 }`}
               >
-                <span>{page.label}</span>
-                <span
-                  className={`inline-block h-2 w-2 rounded-full ${
-                    isPublished ? "bg-emerald-500" : "bg-amber-400"
-                  }`}
-                  title={isPublished ? "Published" : "Draft"}
-                />
-                {(blockCount > 0 || faqCount > 0) && (
-                  <span className="rounded-full bg-gray-200/90 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
-                    {blockCount}b{faqCount > 0 ? ` • ${faqCount}faq` : ""}{imgCount > 0 ? ` • ${imgCount}img` : ""}
-                  </span>
-                )}
+                {page.label}
               </button>
             );
           })}
@@ -534,16 +522,6 @@ function StaticSeoContent() {
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
                   {images.filter((img) => Boolean(img.url)).length} / 2 Added
                 </span>
-              </div>
-
-              {/* Informational Banner */}
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-xs text-blue-900 space-y-1">
-                <p className="font-bold text-blue-950">Frontend Alternating Layout Rules:</p>
-                <ul className="list-disc list-inside space-y-1 text-blue-800">
-                  <li><strong>Image 1</strong>: Content appears on the <strong>Left</strong>, Image 1 on the <strong>Right</strong>.</li>
-                  <li><strong>Image 2</strong>: Image 2 appears on the <strong>Left</strong>, Content on the <strong>Right</strong>.</li>
-                  <li>When 2 images are added, content blocks are automatically distributed between Section 1 and Section 2.</li>
-                </ul>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -698,29 +676,63 @@ function StaticSeoContent() {
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => addBlock("h2")}
+                    onClick={() => {
+                      addBlock("h2");
+                      setContentOpen(true);
+                    }}
                     className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
                   >
                     + H2 Heading
                   </button>
                   <button
                     type="button"
-                    onClick={() => addBlock("h3")}
+                    onClick={() => {
+                      addBlock("h3");
+                      setContentOpen(true);
+                    }}
                     className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
                   >
                     + H3 Subheading
                   </button>
                   <button
                     type="button"
-                    onClick={() => addBlock("p")}
+                    onClick={() => {
+                      addBlock("p");
+                      setContentOpen(true);
+                    }}
                     className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
                   >
                     + Paragraph
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setContentOpen((prev) => !prev)}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-gray-700 transition hover:bg-gray-200 hover:text-gray-950"
+                    title={contentOpen ? "Close Content Blocks" : "Expand Content Blocks"}
+                    aria-label={contentOpen ? "Close Content Blocks" : "Expand Content Blocks"}
+                  >
+                    <svg
+                      className={`h-4 w-4 transition-transform duration-200 ${contentOpen ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              {content.length === 0 ? (
+              {!contentOpen ? (
+                <div
+                  onClick={() => setContentOpen(true)}
+                  className="cursor-pointer rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center transition hover:bg-gray-100"
+                >
+                  <p className="text-xs font-semibold text-gray-600">
+                    Content blocks are closed ({content.length} blocks). Click here or the arrow above to expand.
+                  </p>
+                </div>
+              ) : content.length === 0 ? (
                 <div className="my-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
                   <p className="text-sm font-semibold text-gray-700">No content blocks yet</p>
                   <p className="mt-1 text-xs text-gray-500">
@@ -817,16 +829,46 @@ function StaticSeoContent() {
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={addFaq}
-                  className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-2 text-xs font-bold text-gray-900 transition hover:bg-gray-100 self-start sm:self-auto"
-                >
-                  + Add FAQ
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      addFaq();
+                      setFaqsOpen(true);
+                    }}
+                    className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-2 text-xs font-bold text-gray-900 transition hover:bg-gray-100"
+                  >
+                    + Add FAQ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFaqsOpen((prev) => !prev)}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-gray-700 transition hover:bg-gray-200 hover:text-gray-950"
+                    title={faqsOpen ? "Close All FAQs" : "Expand All FAQs"}
+                    aria-label={faqsOpen ? "Close All FAQs" : "Expand All FAQs"}
+                  >
+                    <svg
+                      className={`h-4 w-4 transition-transform duration-200 ${faqsOpen ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
-              {faqs.length === 0 ? (
+              {!faqsOpen ? (
+                <div
+                  onClick={() => setFaqsOpen(true)}
+                  className="cursor-pointer rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center transition hover:bg-gray-100"
+                >
+                  <p className="text-xs font-semibold text-gray-600">
+                    All FAQs are closed ({faqs.length} FAQs). Click here or the arrow above to expand.
+                  </p>
+                </div>
+              ) : faqs.length === 0 ? (
                 <div className="my-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
                   <p className="text-sm font-semibold text-gray-700">No FAQs added yet</p>
                   <p className="mt-1 text-xs text-gray-500">
@@ -1008,17 +1050,6 @@ function StaticSeoContent() {
                     <div className="rounded-lg bg-blue-100/70 p-2.5 text-blue-900 font-semibold text-center font-sans">
                       Content (Right)
                     </div>
-                  </div>
-                </div>
-
-                {/* FAQs visual block */}
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                  <div className="text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
-                    <span>Bottom Section</span>
-                    <span className="text-[10px] text-gray-500 font-sans font-medium">{faqs.length} FAQs</span>
-                  </div>
-                  <div className="rounded-lg bg-purple-100/70 p-2.5 text-purple-900 font-semibold text-center font-sans">
-                    FAQ Accordion
                   </div>
                 </div>
               </div>
