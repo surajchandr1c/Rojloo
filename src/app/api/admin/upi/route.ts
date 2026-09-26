@@ -10,6 +10,9 @@ import {
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     if (request.nextUrl.searchParams.get("mode") === "payment") {
@@ -27,21 +30,8 @@ export async function GET(request: NextRequest) {
     }
 
     const upis = await listUPIs();
-    const defaultUpi = {
-      _id: "default-upi",
-      upiId: "surajkumar40407@ybl",
-      name: "suraj",
-      qrCode: "/surajkumar40407@ybl.jpeg",
-      active: true,
-      createdAt: new Date().toISOString(),
-    };
-
-    const hasDefaultUpi = upis.some(
-      (upi) => upi.upiId.toLowerCase() === defaultUpi.upiId.toLowerCase()
-    );
-
     return NextResponse.json({
-      upis: hasDefaultUpi ? upis : [defaultUpi, ...upis],
+      upis,
       success: true,
     });
   } catch (error) {
@@ -74,11 +64,12 @@ export async function POST(request: NextRequest) {
     }
 
     const activeFlag = formData.get("active");
-    const active = activeFlag === null ? true : String(activeFlag) === "true";
+    const active =
+      activeFlag === null ? true : String(activeFlag) === "true";
 
     let qrCodeUrl = "";
 
-    // Handle QR code image upload
+    // Handle QR code image upload if a file was provided
     if (qrCodeFile && qrCodeFile.size > 0) {
       try {
         const buffer = await qrCodeFile.arrayBuffer();
@@ -100,16 +91,16 @@ export async function POST(request: NextRequest) {
     if (id) {
       // Update existing UPI
       upi = await updateUPI(id, {
-        upiId: String(upiId),
-        name: String(name),
+        upiId: String(upiId).trim(),
+        name: String(name).trim(),
         qrCode: qrCodeUrl || undefined,
         active,
       });
     } else {
       // Create new UPI
       upi = await createUPI({
-        upiId: String(upiId),
-        name: String(name),
+        upiId: String(upiId).trim(),
+        name: String(name).trim(),
         qrCode: qrCodeUrl,
         active,
       });

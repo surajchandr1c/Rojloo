@@ -5,9 +5,9 @@ function cleanEnv(val?: string): string {
 }
 
 export const DEFAULT_UPI = {
-  upiId: cleanEnv(process.env.DEFAULT_UPI_ID) || "payments@rojlo.com",
-  name: cleanEnv(process.env.DEFAULT_UPI_NAME) || "Rojlo Payments",
-  qrCode: cleanEnv(process.env.DEFAULT_UPI_QR) || "/qr-placeholder.png",
+  upiId: cleanEnv(process.env.DEFAULT_UPI_ID) || "surajkumar40407@ybl",
+  name: cleanEnv(process.env.DEFAULT_UPI_NAME) || "suraj",
+  qrCode: cleanEnv(process.env.DEFAULT_UPI_QR) || "/surajkumar40407@ybl.jpeg",
 } as const;
 
 export type UPIRecord = {
@@ -37,6 +37,11 @@ export async function ensureDefaultUPI(): Promise<UPIRecord | null> {
     ) ?? null;
   }
 
+  // If admin has previously managed/cleared UPIs, do not forcefully resurrect
+  if ((store as Record<string, unknown>).upiInitialized && upis.length > 0) {
+    return null;
+  }
+
   const defaultUPI: UPIRecord = {
     _id: "default-upi",
     ...DEFAULT_UPI,
@@ -54,26 +59,45 @@ export async function ensureDefaultUPI(): Promise<UPIRecord | null> {
 
 export async function listUPIs(): Promise<UPIRecord[]> {
   const store = await readStore();
-  const upis: UPIRecord[] = ((store.upis ?? []) as unknown as UPIRecord[]).map((upi) => ({
+  let upis: UPIRecord[] = ((store.upis ?? []) as unknown as UPIRecord[]).map((upi) => ({
     ...upi,
     active: upi.active !== false,
   }));
 
-  if (upis.length === 0) {
+  if (upis.length === 0 && !(store as Record<string, unknown>).upiInitialized) {
     const defaultUPI = await ensureDefaultUPI();
-    return defaultUPI ? [defaultUPI] : [];
+    if (defaultUPI) {
+      upis = [defaultUPI];
+    }
   }
 
-  const hasDefault = upis.some(
-    (upi) => upi.upiId.toLowerCase() === DEFAULT_UPI.upiId.toLowerCase()
-  );
+  // Deduplicate by lowercase upiId and ensure unique _id across all records
+  const seenUpiIds = new Set<string>();
+  const seenIds = new Set<string>();
+  const uniqueUpis: UPIRecord[] = [];
 
-  if (!hasDefault) {
-    const defaultUPI = await ensureDefaultUPI();
-    return defaultUPI ? [defaultUPI, ...upis] : upis;
+  for (const u of upis) {
+    const upiIdKey = (u.upiId || "").trim().toLowerCase();
+    if (!upiIdKey || seenUpiIds.has(upiIdKey)) {
+      continue;
+    }
+    seenUpiIds.add(upiIdKey);
+
+    let idKey = (u._id || "").trim();
+    if (!idKey || seenIds.has(idKey)) {
+      idKey = `upi_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      u._id = idKey;
+    }
+    seenIds.add(idKey);
+    uniqueUpis.push(u);
   }
 
-  return upis.sort((a, b) => {
+  if (uniqueUpis.length !== upis.length) {
+    store.upis = uniqueUpis;
+    await writeStore(store);
+  }
+
+  return uniqueUpis.sort((a, b) => {
     const ta = new Date(a.createdAt).getTime();
     const tb = new Date(b.createdAt).getTime();
     return tb - ta;
@@ -90,10 +114,10 @@ export async function createUPI(upi: {
   const upis = (store.upis ?? []) as unknown as UPIRecord[];
 
   const newUPI: UPIRecord = {
-    _id: Date.now().toString(),
-    upiId: upi.upiId,
-    name: upi.name,
-    qrCode: upi.qrCode,
+    _id: `upi_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    upiId: upi.upiId.trim(),
+    name: upi.name.trim(),
+    qrCode: upi.qrCode || DEFAULT_UPI.qrCode,
     active: upi.active !== false,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -101,6 +125,7 @@ export async function createUPI(upi: {
 
   upis.push(newUPI);
   store.upis = upis;
+  (store as Record<string, unknown>).upiInitialized = true;
   await writeStore(store);
 
   return newUPI;
@@ -113,20 +138,45 @@ export async function updateUPI(
   const store = await readStore();
   const upis = (store.upis ?? []) as unknown as UPIRecord[];
 
-  const index = upis.findIndex((u) => u._id === id);
-  if (index === -1) return null;
+  let index = upis.findIndex((u) => u._id === id);
+  if (index === -1 && (id === "default-upi" || id.includes("@"))) {
+    index = upis.findIndex(
+      (u) =>
+        u.upiId.toLowerCase() === id.toLowerCase() ||
+        u.upiId.toLowerCase() === DEFAULT_UPI.upiId.toLowerCase()
+    );
+  }
+
+  if (index === -1) {
+    // If updating a record that wasn't found in store, create and persist it
+    const newUPI: UPIRecord = {
+      _id: id || `upi_${Date.now()}`,
+      upiId: (updates.upiId || DEFAULT_UPI.upiId).trim(),
+      name: (updates.name || DEFAULT_UPI.name).trim(),
+      qrCode: updates.qrCode || DEFAULT_UPI.qrCode,
+      active: updates.active !== false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    upis.push(newUPI);
+    store.upis = upis;
+    (store as Record<string, unknown>).upiInitialized = true;
+    await writeStore(store);
+    return newUPI;
+  }
 
   const upi = upis[index];
   upis[index] = {
     ...upi,
-    upiId: updates.upiId ?? upi.upiId,
-    name: updates.name ?? upi.name,
-    qrCode: updates.qrCode ?? upi.qrCode,
+    upiId: updates.upiId !== undefined ? updates.upiId.trim() : upi.upiId,
+    name: updates.name !== undefined ? updates.name.trim() : upi.name,
+    qrCode: updates.qrCode !== undefined && updates.qrCode ? updates.qrCode : upi.qrCode,
     active: typeof updates.active === "boolean" ? updates.active : upi.active !== false,
     updatedAt: new Date(),
   };
 
   store.upis = upis;
+  (store as Record<string, unknown>).upiInitialized = true;
   await writeStore(store);
   return upis[index];
 }
@@ -142,11 +192,21 @@ export async function deleteUPI(id: string): Promise<boolean> {
   const store = await readStore();
   const upis = (store.upis ?? []) as unknown as UPIRecord[];
 
-  const index = upis.findIndex((u) => u._id === id);
-  if (index === -1) return false;
+  let index = upis.findIndex((u) => u._id === id);
+  if (index === -1) {
+    index = upis.findIndex(
+      (u) =>
+        u.upiId.toLowerCase() === id.toLowerCase() ||
+        (id === "default-upi" && u.upiId.toLowerCase() === DEFAULT_UPI.upiId.toLowerCase())
+    );
+  }
 
-  upis.splice(index, 1);
+  if (index !== -1) {
+    upis.splice(index, 1);
+  }
+
   store.upis = upis;
+  (store as Record<string, unknown>).upiInitialized = true;
   await writeStore(store);
 
   return true;
@@ -187,5 +247,12 @@ export async function getUPIById(id: string): Promise<UPIRecord | null> {
   const store = await readStore();
   const upis = (store.upis ?? []) as unknown as UPIRecord[];
 
-  return upis.find((u) => u._id === id) || null;
+  return (
+    upis.find(
+      (u) =>
+        u._id === id ||
+        u.upiId.toLowerCase() === id.toLowerCase() ||
+        (id === "default-upi" && u.upiId.toLowerCase() === DEFAULT_UPI.upiId.toLowerCase())
+    ) || null
+  );
 }

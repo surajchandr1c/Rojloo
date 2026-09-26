@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
           listAllCities().catch(() => []),
           listStates().catch(() => []),
           listSubAdmins().then((admins) => admins.length).catch(() => 0),
-          db.collection("upis").countDocuments().catch(() => 0),
+          listUPIs().then((upis) => upis.length).catch(() => 0),
           db.collection("coupons").find({}, { projection: { active: 1 } }).toArray().catch(() => []),
           db.collection("payment_requests").aggregate([
             {
