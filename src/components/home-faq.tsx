@@ -4,84 +4,51 @@ import { useState } from "react";
 
 interface FaqItem {
   question: string;
-  answer: string;
+  answer: React.ReactNode;
 }
 
 const faqs: FaqItem[] = [
   {
     question: "What can I find on Rojloo?",
-    answer:
-      "You can find listings related to call girls in rojloo, escort call girl in rojloo, massage in rojloo, Thai massage call girl, body massage, male escort, male escort service, escort service rojloo, night outings, hotel parties, and other adult-oriented social experiences.",
+    answer: (
+      <>
+        You can find adult-oriented social listings covering{" "}
+        <strong>
+          call girls in Rojloo, escort call girl in Rojloo, escort service Rojloo, male escort, male escort service, night out, night meetings, hotel parties, Thai massage call girl, massage in Rojloo, and body massage
+        </strong>
+        .
+      </>
+    ),
   },
   {
-    question: "Can I search listings by location?",
+    question: "Can I post my own advertisement?",
     answer:
-      "Yes. You can browse listings based on location and category where those filters are available.",
+      "Yes. Users can create advertisements describing their available services or social offerings, subject to the platform's rules and applicable laws.",
+  },
+  {
+    question: "How can I find listings in Rojloo?",
+    answer:
+      "Use the location or city filters available on Rojloo to browse advertisements relevant to your area.",
+  },
+  {
+    question: "Are Thai massage and body massage listings available?",
+    answer: (
+      <>
+        Yes. Depending on the location, users may find listings for{" "}
+        <strong>Thai massage call girl, massage in Rojloo, and body massage</strong>{" "}
+        services.
+      </>
+    ),
   },
   {
     question: "How do I contact an advertiser?",
     answer:
-      "Open the relevant listing and use the contact method provided by the advertiser.",
+      "Open a listing to review the available information and use the contact method provided by the advertiser. Always verify details and agree on arrangements before meeting.",
   },
   {
-    question: "Can advertisers create their own listings?",
+    question: "Is Rojloo available for adults only?",
     answer:
-      "Yes, registered advertisers can publish listings according to the platform's posting requirements.",
-  },
-  {
-    question: "Are all listings available all the time?",
-    answer:
-      "Availability can change. Contact the advertiser directly to confirm current availability and details.",
-  },
-  {
-    question: "What is a call girl listing?",
-    answer:
-      "A call girl listing provides information about an advertiser and the services or companionship they offer. Check the individual listing for specific details.",
-  },
-  {
-    question: "What is a Thai massage call girl listing?",
-    answer:
-      "It is a listing advertising Thai massage-related services. Check the individual listing for the specific service details provided by the advertiser.",
-  },
-  {
-    question: "Can I find listings in Rojloo?",
-    answer:
-      "Yes. You can browse listings available in rojloo through the relevant location and category pages.",
-  },
-  {
-    question: "What is a male escort service?",
-    answer:
-      "A male escort service listing provides information about male companionship or social services offered by an advertiser.",
-  },
-  {
-    question: "What should I check before contacting someone?",
-    answer:
-      "Review the complete listing, confirm the details directly with the advertiser, and avoid sharing unnecessary personal or financial information.",
-  },
-  {
-    question: "Can I browse listings without contacting an advertiser?",
-    answer:
-      "Yes. You can review publicly available listing information before deciding whether to contact an advertiser.",
-  },
-  {
-    question: "Can I search by category?",
-    answer:
-      "Yes, where category filtering is available, you can select the type of listing you are interested in.",
-  },
-  {
-    question: "Can advertisers update their listings?",
-    answer:
-      "Yes, advertisers can update their listing information according to the platform's available features.",
-  },
-  {
-    question: "Can I search listings in Rojloo?",
-    answer:
-      "Yes. You can explore available call girls in rojloo, escort call girl in rojloo, massage in rojloo, body massage, male escort, male escort service, and escort service rojloo listings.",
-  },
-  {
-    question: "How can I identify relevant listings?",
-    answer:
-      "Use the category, location, listing description, images, and other information supplied by the advertiser.",
+      "The platform is intended for adults. Users should comply with applicable age requirements, local laws, and the platform's terms when creating or responding to listings.",
   },
 ];
 
@@ -95,15 +62,9 @@ export default function HomeFaq() {
 
   return (
     <article className="pt-2">
-      <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-gray-700">
-        Common Inquiries
-      </p>
-      <h2 className="mt-2 text-2xl sm:text-3xl font-black text-gray-950">
+      <h2 className="text-2xl sm:text-3xl font-black text-gray-950">
         Frequently Asked Questions
       </h2>
-      <p className="mt-2 text-sm sm:text-base text-gray-700 font-medium">
-        Everything you need to know about using Rojlo, posting listings, and exploring city services.
-      </p>
 
       <div className="mt-6 divide-y divide-gray-200">
         {faqs.map((faq, index) => {
