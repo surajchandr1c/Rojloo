@@ -1,12 +1,14 @@
 import React from "react";
 import Image from "next/image";
 import { getStaticSeo, StaticPageKey, StaticContentBlock } from "@/lib/models/static-seo";
+import StaticFaqAccordion from "./static-faq-accordion";
 import { cn } from "@/lib/cn";
 
 interface StaticSeoSectionProps {
   pageKey: StaticPageKey;
   className?: string;
   inCard?: boolean;
+  showFaqs?: boolean;
 }
 
 function renderFormattedText(text: string) {
@@ -61,6 +63,7 @@ export async function StaticSeoSection({
   pageKey,
   className,
   inCard = true,
+  showFaqs,
 }: StaticSeoSectionProps) {
   const seo = await getStaticSeo(pageKey);
 
@@ -68,8 +71,10 @@ export async function StaticSeoSection({
     return null;
   }
 
-  const { images = [], content = [] } = seo;
-  if (images.length === 0 && content.length === 0) {
+  const { images = [], content = [], faqs = [] } = seo;
+  const shouldRenderFaqs = showFaqs !== undefined ? showFaqs : pageKey !== "home";
+
+  if (images.length === 0 && content.length === 0 && (!shouldRenderFaqs || faqs.length === 0)) {
     return null;
   }
 
@@ -177,12 +182,17 @@ export async function StaticSeoSection({
     ? "mx-auto w-full max-w-6xl rounded-[2rem] bg-gray-100/85 p-5 sm:p-8 md:p-10 shadow-lg shadow-gray-200/40"
     : "mx-auto w-full max-w-6xl";
 
+  const hasFaqs = Boolean(seo.faqs && seo.faqs.length > 0);
+
   return (
     <section
       aria-label="Additional Information"
       className={cn("mt-12 sm:mt-16 w-full", className)}
     >
-      <div className={containerClasses}>{bodyContent}</div>
+      <div className={containerClasses}>
+        {bodyContent}
+        {shouldRenderFaqs && hasFaqs && <StaticFaqAccordion faqs={faqs} />}
+      </div>
     </section>
   );
 }

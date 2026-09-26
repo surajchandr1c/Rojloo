@@ -4,6 +4,7 @@ import Button from "@/components/ui/button";
 import SearchBar from "@/components/search-bar";
 import HomeFaq from "@/components/home-faq";
 import { StaticSeoSection } from "@/components/seo/static-seo-section";
+import { getStaticSeo } from "@/lib/models/static-seo";
 import { serviceCards } from "@/lib/services";
 import { siteConfig } from "@/lib/config/site";
 
@@ -29,7 +30,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const homeSeo = await getStaticSeo("home");
   return (
     <main>
       {/* Part 1 — Homepage Hero */}
@@ -203,7 +205,7 @@ export default function Home() {
             </p>
           </article>
 
-          <HomeFaq />
+          <HomeFaq items={homeSeo?.faqs} />
         </div>
       </section>
 

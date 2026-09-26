@@ -7,6 +7,7 @@ import {
   StaticPageKey,
   StaticSeoImage,
   StaticContentBlock,
+  StaticFaqItem,
   StaticSeoStatus,
   StaticSeo,
   STATIC_PAGES,
@@ -17,6 +18,7 @@ export type {
   StaticPageKey,
   StaticSeoImage,
   StaticContentBlock,
+  StaticFaqItem,
   StaticSeoStatus,
   StaticSeo,
 };
@@ -58,6 +60,24 @@ function normalizeStaticSeoDoc(raw: Record<string, unknown>): StaticSeo {
     });
   }
 
+  const faqs: StaticFaqItem[] = [];
+  if (Array.isArray(raw.faqs)) {
+    raw.faqs.forEach((f, i) => {
+      if (f && typeof f === "object") {
+        const item = f as Record<string, unknown>;
+        const question = String(item.question || "").trim();
+        const answer = String(item.answer || "").trim();
+        if (question || answer) {
+          faqs.push({
+            id: String(item.id || `faq_${Date.now()}_${i}`),
+            question,
+            answer,
+          });
+        }
+      }
+    });
+  }
+
   return {
     pageKey,
     title: raw.title ? String(raw.title).trim() : "",
@@ -65,6 +85,7 @@ function normalizeStaticSeoDoc(raw: Record<string, unknown>): StaticSeo {
     keywords: raw.keywords ? String(raw.keywords).trim() : "",
     images: images.slice(0, 2), // maximum 2 images
     content,
+    faqs,
     status: raw.status === "published" ? "published" : "draft",
     updatedAt: raw.updatedAt ? String(raw.updatedAt) : new Date().toISOString(),
   };
@@ -110,6 +131,7 @@ export async function getAllStaticSeo(): Promise<Record<StaticPageKey, StaticSeo
         keywords: existing?.keywords || def?.keywords || "",
         images: existing?.images && existing.images.length > 0 ? existing.images : (def?.images || []),
         content: existing?.content && existing.content.length > 0 ? existing.content : (def?.content || []),
+        faqs: existing?.faqs && existing.faqs.length > 0 ? existing.faqs : (def?.faqs || []),
         status: existing?.status || def?.status || "published",
         updatedAt: existing?.updatedAt || new Date().toISOString(),
       };
@@ -175,6 +197,7 @@ export const getStaticSeo = cache(async function (
         keywords: result?.keywords || def.keywords || "",
         images: result?.images && result.images.length > 0 ? result.images : def.images,
         content: result?.content && result.content.length > 0 ? result.content : def.content,
+        faqs: result?.faqs && result.faqs.length > 0 ? result.faqs : def.faqs,
         status: result?.status || def.status || "published",
         updatedAt: result?.updatedAt || new Date().toISOString(),
       };
@@ -196,6 +219,7 @@ export async function upsertStaticSeo(data: {
   keywords?: string;
   images?: StaticSeoImage[];
   content?: StaticContentBlock[];
+  faqs?: StaticFaqItem[];
   status?: StaticSeoStatus;
 }): Promise<StaticSeo> {
   const targetKey = data.pageKey.toLowerCase().trim() as StaticPageKey;
@@ -217,6 +241,13 @@ export async function upsertStaticSeo(data: {
       type: (["h2", "h3", "p"].includes(b.type) ? b.type : "p") as "h2" | "h3" | "p",
       text: String(b.text || "").trim(),
     })),
+    faqs: (data.faqs ?? [])
+      .map((f, i) => ({
+        id: f.id || `faq_${Date.now()}_${i}`,
+        question: String(f.question || "").trim(),
+        answer: String(f.answer || "").trim(),
+      }))
+      .filter((f) => Boolean(f.question || f.answer)),
     status: data.status === "published" ? "published" : "draft",
     updatedAt: new Date().toISOString(),
   };

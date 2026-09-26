@@ -2,23 +2,17 @@
 
 import { useState } from "react";
 
-interface FaqItem {
+export interface FaqItemProp {
+  id?: string;
   question: string;
-  answer: React.ReactNode;
+  answer: string | React.ReactNode;
 }
 
-const faqs: FaqItem[] = [
+const defaultFaqs: FaqItemProp[] = [
   {
     question: "What can I find on Rojloo?",
-    answer: (
-      <>
-        You can find adult-oriented social listings covering{" "}
-        <strong>
-          call girls in Rojloo, escort call girl in Rojloo, escort service Rojloo, male escort, male escort service, night out, night meetings, hotel parties, Thai massage call girl, massage in Rojloo, and body massage
-        </strong>
-        .
-      </>
-    ),
+    answer:
+      "You can find adult-oriented social listings covering **call girls in Rojloo, escort call girl in Rojloo, escort service Rojloo, male escort, male escort service, night out, night meetings, hotel parties, Thai massage call girl, massage in Rojloo, and body massage**.",
   },
   {
     question: "Can I post my own advertisement?",
@@ -32,13 +26,8 @@ const faqs: FaqItem[] = [
   },
   {
     question: "Are Thai massage and body massage listings available?",
-    answer: (
-      <>
-        Yes. Depending on the location, users may find listings for{" "}
-        <strong>Thai massage call girl, massage in Rojloo, and body massage</strong>{" "}
-        services.
-      </>
-    ),
+    answer:
+      "Yes. Depending on the location, users may find listings for **Thai massage call girl, massage in Rojloo, and body massage** services.",
   },
   {
     question: "How do I contact an advertiser?",
@@ -52,11 +41,31 @@ const faqs: FaqItem[] = [
   },
 ];
 
-export default function HomeFaq() {
+function renderFormattedAnswer(ans: string | React.ReactNode) {
+  if (typeof ans !== "string") return ans;
+  const parts = ans.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return (
+        <strong key={index} className="font-bold text-gray-950">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
+export default function HomeFaq({
+  items,
+}: {
+  items?: FaqItemProp[];
+}) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
+  const list = items && items.length > 0 ? items : defaultFaqs;
+
   const toggleFaq = (index: number) => {
-    // Accordion mutex: click active to close, click another to open that one and close the previous
     setOpenIndex((prev) => (prev === index ? null : index));
   };
 
@@ -67,10 +76,10 @@ export default function HomeFaq() {
       </h2>
 
       <div className="mt-6 divide-y divide-gray-200">
-        {faqs.map((faq, index) => {
+        {list.map((faq, index) => {
           const isOpen = openIndex === index;
           return (
-            <div key={index} className="py-4 sm:py-5">
+            <div key={faq.id || index} className="py-4 sm:py-5">
               <button
                 type="button"
                 onClick={() => toggleFaq(index)}
@@ -103,9 +112,9 @@ export default function HomeFaq() {
               </button>
 
               {isOpen && (
-                <div className="mt-3 pr-8 text-sm sm:text-base leading-7 text-gray-800">
-                  <p>{faq.answer}</p>
-                </div>
+                <p className="mt-3 text-base sm:text-lg leading-7 sm:leading-8 text-gray-800 whitespace-pre-line">
+                  {renderFormattedAnswer(faq.answer)}
+                </p>
               )}
             </div>
           );

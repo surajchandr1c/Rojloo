@@ -18,6 +18,12 @@ export type StaticContentBlock = {
   text: string;
 };
 
+export type StaticFaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 export type StaticSeoStatus = "draft" | "published";
 
 export type StaticSeo = {
@@ -27,6 +33,7 @@ export type StaticSeo = {
   keywords?: string;
   images: StaticSeoImage[]; // Up to 2 images
   content: StaticContentBlock[];
+  faqs: StaticFaqItem[];
   status: StaticSeoStatus;
   updatedAt?: string;
 };
@@ -128,6 +135,44 @@ export const DEFAULT_STATIC_SEO_DATA: Record<StaticPageKey, StaticSeo> = {
         text: "Rojloo makes it simple to search and discover relevant listings by location and category. Whether you are interested in **call girls in Rojloo, escort call girl in Rojloo, escort service Rojloo, male escort, male escort service, Thai massage call girl, massage in Rojloo, or body massage**, you can explore advertisements and connect with suitable providers.",
       },
     ],
+    faqs: [
+      {
+        id: "hfaq_1",
+        question: "What can I find on Rojloo?",
+        answer:
+          "You can find adult-oriented social listings covering **call girls in Rojloo, escort call girl in Rojloo, escort service Rojloo, male escort, male escort service, night out, night meetings, hotel parties, Thai massage call girl, massage in Rojloo, and body massage**.",
+      },
+      {
+        id: "hfaq_2",
+        question: "Can I post my own advertisement?",
+        answer:
+          "Yes. Users can create advertisements describing their available services or social offerings, subject to the platform's rules and applicable laws.",
+      },
+      {
+        id: "hfaq_3",
+        question: "How can I find listings in Rojloo?",
+        answer:
+          "Use the location or city filters available on Rojloo to browse advertisements relevant to your area.",
+      },
+      {
+        id: "hfaq_4",
+        question: "Are Thai massage and body massage listings available?",
+        answer:
+          "Yes. Depending on the location, users may find listings for **Thai massage call girl, massage in Rojloo, and body massage** services.",
+      },
+      {
+        id: "hfaq_5",
+        question: "How do I contact an advertiser?",
+        answer:
+          "Open a listing to review the available information and use the contact method provided by the advertiser. Always verify details and agree on arrangements before meeting.",
+      },
+      {
+        id: "hfaq_6",
+        question: "Is Rojloo available for adults only?",
+        answer:
+          "The platform is intended for adults. Users should comply with applicable age requirements, local laws, and the platform's terms when creating or responding to listings.",
+      },
+    ],
   },
   terms: {
     pageKey: "terms",
@@ -209,6 +254,20 @@ export const DEFAULT_STATIC_SEO_DATA: Record<StaticPageKey, StaticSeo> = {
         text: "We may update these Terms from time to time. Continued use of Rojlo after changes are posted constitutes acceptance of the revised terms.",
       },
     ],
+    faqs: [
+      {
+        id: "tfaq_1",
+        question: "Who can use the Rojloo platform?",
+        answer:
+          "You must be at least 18 years of age and legally permitted under applicable local laws to view and use adult-oriented marketplace listings.",
+      },
+      {
+        id: "tfaq_2",
+        question: "What responsibilities do advertisers have?",
+        answer:
+          "Advertisers are exclusively responsible for ensuring that all posted details, imagery, and services are lawful, factual, and strictly compliant with local regulations.",
+      },
+    ],
   },
   "return-policy": {
     pageKey: "return-policy",
@@ -249,6 +308,20 @@ export const DEFAULT_STATIC_SEO_DATA: Record<StaticPageKey, StaticSeo> = {
         text: "Certain digital items, consumed services, and promotional coin purchases are non-returnable unless required by applicable law.",
       },
     ],
+    faqs: [
+      {
+        id: "retfaq_1",
+        question: "Can I return promotional coins once purchased?",
+        answer:
+          "Promotional coin balances that have already been allocated, spent, or consumed on ad boosts are non-returnable.",
+      },
+      {
+        id: "retfaq_2",
+        question: "How do I file a return inquiry?",
+        answer:
+          "Please contact our customer support team with your registered account number and transaction ID for prompt assistance.",
+      },
+    ],
   },
   "refund-policy": {
     pageKey: "refund-policy",
@@ -287,6 +360,20 @@ export const DEFAULT_STATIC_SEO_DATA: Record<StaticPageKey, StaticSeo> = {
         id: "ref_6",
         type: "p",
         text: "Coin purchases used to promote listings are generally non-refundable once consumed, unless required by applicable law.",
+      },
+    ],
+    faqs: [
+      {
+        id: "reffaq_1",
+        question: "When are refunds processed?",
+        answer:
+          "Refunds for verified duplicate or erroneous transactions are typically credited within 5 to 7 business days via your original payment provider.",
+      },
+      {
+        id: "reffaq_2",
+        question: "What if a payment fails but coins are not credited?",
+        answer:
+          "If your bank deducted payment but coins were not credited, submit your UTR / transaction reference for instant reconciliation.",
       },
     ],
   },
@@ -339,6 +426,20 @@ export const DEFAULT_STATIC_SEO_DATA: Record<StaticPageKey, StaticSeo> = {
         text: "You can request access to or deletion of your account data by contacting our support team.",
       },
     ],
+    faqs: [
+      {
+        id: "prifaq_1",
+        question: "Is my personal contact information safe?",
+        answer:
+          "Yes. We prioritize user privacy and employ secure server encryption. We never sell your personal information to third-party brokers.",
+      },
+      {
+        id: "prifaq_2",
+        question: "Can I request account and data removal?",
+        answer:
+          "Yes. Users can request complete account deletion and ad removal by contacting our dedicated support team.",
+      },
+    ],
   },
   disclaimer: {
     pageKey: "disclaimer",
@@ -379,6 +480,20 @@ export const DEFAULT_STATIC_SEO_DATA: Record<StaticPageKey, StaticSeo> = {
         text: "Users are responsible for verifying listings, service details, and the conduct of other users before transacting.",
       },
     ],
+    faqs: [
+      {
+        id: "discfaq_1",
+        question: "Does Rojlo endorse specific advertisers?",
+        answer:
+          "No. Rojlo operates solely as a discovery venue. Users must exercise their own discretion and verify claims independently.",
+      },
+      {
+        id: "discfaq_2",
+        question: "What should I do if a listing looks suspicious?",
+        answer:
+          "Do not engage with the listing and report it to our moderation team immediately using our contact channels.",
+      },
+    ],
   },
   contact: {
     pageKey: "contact",
@@ -417,6 +532,20 @@ export const DEFAULT_STATIC_SEO_DATA: Record<StaticPageKey, StaticSeo> = {
         id: "cont_6",
         type: "p",
         text: "You can reach our telephone support desk at +91 98765 43210 during normal business hours for rapid escalation.",
+      },
+    ],
+    faqs: [
+      {
+        id: "cfaq_1",
+        question: "What are customer care operational hours?",
+        answer:
+          "Email support is monitored 24/7. Telephone helpline support is available Monday through Saturday from 10:00 AM to 6:00 PM IST.",
+      },
+      {
+        id: "cfaq_2",
+        question: "How quickly will I receive an email response?",
+        answer:
+          "Standard inquiries are reviewed and answered within 2 to 4 hours during business days.",
       },
     ],
   },

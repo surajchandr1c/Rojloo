@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const { pageKey, title, description, keywords, images, content, status } =
+  const { pageKey, title, description, keywords, images, content, faqs, status } =
     body ?? {};
 
   const cleanKey = String(pageKey || "").trim().toLowerCase() as StaticPageKey;
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
     keywords: typeof keywords === "string" ? keywords : undefined,
     images: Array.isArray(images) ? images : [],
     content: Array.isArray(content) ? content : [],
+    faqs: Array.isArray(faqs) ? faqs : [],
     status: status === "published" ? "published" : "draft",
   });
 

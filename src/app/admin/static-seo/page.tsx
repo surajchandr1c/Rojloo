@@ -8,6 +8,7 @@ import {
   StaticPageKey,
   StaticSeoImage,
   StaticContentBlock,
+  StaticFaqItem,
   StaticSeoStatus,
   StaticSeo,
   STATIC_PAGES,
@@ -42,6 +43,7 @@ function StaticSeoContent() {
   const [keywords, setKeywords] = useState(initData?.keywords || "");
   const [images, setImages] = useState<StaticSeoImage[]>(initData?.images || []);
   const [content, setContent] = useState<StaticContentBlock[]>(initData?.content || []);
+  const [faqs, setFaqs] = useState<StaticFaqItem[]>(initData?.faqs || []);
   const [status, setStatus] = useState<StaticSeoStatus>(initData?.status || "published");
 
   // Upload states
@@ -77,6 +79,10 @@ function StaticSeoContent() {
                   serverDoc.content && serverDoc.content.length > 0
                     ? serverDoc.content
                     : defDoc.content,
+                faqs:
+                  serverDoc.faqs && serverDoc.faqs.length > 0
+                    ? serverDoc.faqs
+                    : defDoc.faqs,
                 title: serverDoc.title || defDoc.title,
                 description: serverDoc.description || defDoc.description,
                 keywords: serverDoc.keywords || defDoc.keywords,
@@ -94,6 +100,7 @@ function StaticSeoContent() {
             setKeywords(cur.keywords || "");
             setImages(cur.images || []);
             setContent(cur.content || []);
+            setFaqs(cur.faqs || []);
             setStatus(cur.status || "published");
           }
         }
@@ -122,6 +129,7 @@ function StaticSeoContent() {
         keywords,
         images,
         content,
+        faqs,
         status,
       },
     }));
@@ -134,6 +142,7 @@ function StaticSeoContent() {
       setKeywords(target.keywords || "");
       setImages(target.images || []);
       setContent(target.content || []);
+      setFaqs(target.faqs || []);
       setStatus(target.status || "published");
     } else {
       setTitle("");
@@ -141,6 +150,7 @@ function StaticSeoContent() {
       setKeywords("");
       setImages([]);
       setContent([]);
+      setFaqs([]);
       setStatus("published");
     }
     setSuccessMsg(null);
@@ -148,7 +158,7 @@ function StaticSeoContent() {
     router.replace(`/admin/static-seo?tab=${key}`, { scroll: false });
   };
 
-  // Re-extract default content from the original page
+  // Re-extract default content & FAQs from the original page
   const handleResetToExtracted = () => {
     const def = DEFAULT_STATIC_SEO_DATA[activeTab];
     if (!def) return;
@@ -156,11 +166,12 @@ function StaticSeoContent() {
     setDescription(def.description || "");
     setKeywords(def.keywords || "");
     setContent([...def.content]);
+    setFaqs([...def.faqs]);
     setStatus(def.status || "published");
-    setSuccessMsg(`Extracted original content restored for ${activePageMeta?.label}! Click "Save Changes" to apply.`);
+    setSuccessMsg(`Extracted original content & FAQs restored for ${activePageMeta?.label}! Click "Save Changes" to apply.`);
   };
 
-  // Add content block
+  // Content Block handlers
   const addBlock = (type: "h2" | "h3" | "p") => {
     const newBlock: StaticContentBlock = {
       id: uid(),
@@ -170,14 +181,12 @@ function StaticSeoContent() {
     setContent((prev) => [...prev, newBlock]);
   };
 
-  // Update block text or type
   const updateBlock = (id: string, updates: Partial<StaticContentBlock>) => {
     setContent((prev) =>
       prev.map((b) => (b.id === id ? { ...b, ...updates } : b))
     );
   };
 
-  // Move block up or down
   const moveBlock = (index: number, direction: "up" | "down") => {
     setContent((prev) => {
       const copy = [...prev];
@@ -190,9 +199,40 @@ function StaticSeoContent() {
     });
   };
 
-  // Delete block
   const deleteBlock = (id: string) => {
     setContent((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  // FAQ handlers
+  const addFaq = () => {
+    const newFaq: StaticFaqItem = {
+      id: `faq_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      question: "",
+      answer: "",
+    };
+    setFaqs((prev) => [...prev, newFaq]);
+  };
+
+  const updateFaq = (id: string, updates: Partial<StaticFaqItem>) => {
+    setFaqs((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
+    );
+  };
+
+  const moveFaq = (index: number, direction: "up" | "down") => {
+    setFaqs((prev) => {
+      const copy = [...prev];
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= copy.length) return prev;
+      const temp = copy[index];
+      copy[index] = copy[targetIndex];
+      copy[targetIndex] = temp;
+      return copy;
+    });
+  };
+
+  const deleteFaq = (id: string) => {
+    setFaqs((prev) => prev.filter((f) => f.id !== id));
   };
 
   // Image Upload handler
@@ -218,7 +258,6 @@ function StaticSeoContent() {
     }
   };
 
-  // Update image alt text
   const updateImageAlt = (slotIndex: number, alt: string) => {
     setImages((prev) => {
       const copy = [...prev];
@@ -229,7 +268,6 @@ function StaticSeoContent() {
     });
   };
 
-  // Delete image
   const deleteImage = (slotIndex: number) => {
     setImages((prev) => {
       const copy = [...prev];
@@ -258,6 +296,7 @@ function StaticSeoContent() {
       keywords,
       images: images.filter((img) => Boolean(img.url)).slice(0, 2),
       content,
+      faqs: faqs.filter((f) => Boolean(f.question?.trim() || f.answer?.trim())),
       status,
     };
 
@@ -279,7 +318,7 @@ function StaticSeoContent() {
         [activeTab]: data.seo,
       }));
 
-      setSuccessMsg(`Saved SEO content for "${activePageMeta?.label}" successfully!`);
+      setSuccessMsg(`Saved SEO content & FAQs for "${activePageMeta?.label}" successfully!`);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Error saving content");
     } finally {
@@ -302,7 +341,7 @@ function StaticSeoContent() {
             Static SEO Management
           </h1>
           <p className="mt-1.5 text-sm text-gray-600 max-w-2xl leading-relaxed">
-            Manage extracted and custom SEO content, headings, paragraphs, and alternating layout images for static pages.
+            Manage extracted and custom SEO content, headings, paragraphs, FAQs, and alternating layout images for static pages.
           </p>
         </div>
 
@@ -348,6 +387,7 @@ function StaticSeoContent() {
             const pageRecord = seoMap[page.key];
             const isPublished = pageRecord?.status === "published";
             const blockCount = pageRecord?.content?.length || 0;
+            const faqCount = pageRecord?.faqs?.length || 0;
             const imgCount = pageRecord?.images?.length || 0;
 
             return (
@@ -368,9 +408,9 @@ function StaticSeoContent() {
                   }`}
                   title={isPublished ? "Published" : "Draft"}
                 />
-                {blockCount > 0 && (
+                {(blockCount > 0 || faqCount > 0) && (
                   <span className="rounded-full bg-gray-200/90 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
-                    {blockCount} {blockCount === 1 ? "block" : "blocks"}{imgCount > 0 ? ` • ${imgCount} img` : ""}
+                    {blockCount}b{faqCount > 0 ? ` • ${faqCount}faq` : ""}{imgCount > 0 ? ` • ${imgCount}img` : ""}
                   </span>
                 )}
               </button>
@@ -764,6 +804,114 @@ function StaticSeoContent() {
                 </div>
               )}
             </div>
+
+            {/* FAQs Editor Section (Directly Below Content Blocks) */}
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-950">
+                    Frequently Asked Questions (FAQs) ({faqs.length})
+                  </h2>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Extracted from frontend. Add, edit, reorder, or delete question and answer accordion items.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addFaq}
+                  className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-2 text-xs font-bold text-gray-900 transition hover:bg-gray-100 self-start sm:self-auto"
+                >
+                  + Add FAQ
+                </button>
+              </div>
+
+              {faqs.length === 0 ? (
+                <div className="my-8 rounded-2xl border border-dashed border-gray-300 p-8 text-center">
+                  <p className="text-sm font-semibold text-gray-700">No FAQs added yet</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Click &ldquo;+ Add FAQ&rdquo; above or &ldquo;Re-extract Default&rdquo; to load the default FAQs.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {faqs.map((faq, index) => {
+                    return (
+                      <div
+                        key={faq.id}
+                        className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5 transition focus-within:border-gray-400 focus-within:bg-white focus-within:shadow-sm space-y-3"
+                      >
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200/80">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-400">FAQ #{index + 1}</span>
+                            <span className="rounded-md bg-blue-100/70 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+                              Question &amp; Answer
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => moveFaq(index, "up")}
+                              title="Move Up"
+                              className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === faqs.length - 1}
+                              onClick={() => moveFaq(index, "down")}
+                              title="Move Down"
+                              className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30"
+                            >
+                              ↓
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteFaq(faq.id)}
+                              title="Delete FAQ"
+                              className="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-800"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1">
+                            Question
+                          </label>
+                          <input
+                            type="text"
+                            value={faq.question}
+                            placeholder="e.g. What can I find on Rojloo?"
+                            onChange={(e) => updateFaq(faq.id, { question: e.target.value })}
+                            className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-sm font-semibold text-gray-950 outline-none focus:border-gray-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1">
+                            Answer
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={faq.answer}
+                            placeholder="Enter detailed answer (tip: wrap in **keyword** for bold text)..."
+                            onChange={(e) => updateFaq(faq.id, { answer: e.target.value })}
+                            className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-gray-900 outline-none focus:border-gray-500 leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Sidebar: Meta fields & Live Layout Preview (4 cols) */}
@@ -823,7 +971,7 @@ function StaticSeoContent() {
               </h2>
 
               <p className="text-xs text-gray-600">
-                Visual diagram of how content and images render on the live page:
+                Visual diagram of how content, images, and FAQs render on the live page:
               </p>
 
               <div className="space-y-3 text-[11px] font-mono">
@@ -862,6 +1010,17 @@ function StaticSeoContent() {
                     </div>
                   </div>
                 </div>
+
+                {/* FAQs visual block */}
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <div className="text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                    <span>Bottom Section</span>
+                    <span className="text-[10px] text-gray-500 font-sans font-medium">{faqs.length} FAQs</span>
+                  </div>
+                  <div className="rounded-lg bg-purple-100/70 p-2.5 text-purple-900 font-semibold text-center font-sans">
+                    FAQ Accordion
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2">
@@ -871,7 +1030,7 @@ function StaticSeoContent() {
                   onClick={handleSave}
                   className="w-full rounded-xl bg-gray-950 py-3 text-xs font-bold text-white transition hover:bg-black disabled:opacity-50 shadow-sm"
                 >
-                  {saving ? "Saving Changes..." : "Save SEO Content"}
+                  {saving ? "Saving Changes..." : "Save SEO & FAQs"}
                 </button>
               </div>
             </div>
