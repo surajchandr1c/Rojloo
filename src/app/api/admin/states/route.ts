@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listStates, createState, deleteState, deleteAllLocations } from "@/lib/models/state";
+import { listStates, createState, updateState, deleteState, deleteAllLocations } from "@/lib/models/state";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 
 export async function GET(request: NextRequest) {
@@ -80,4 +80,36 @@ export async function DELETE(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
+}
+
+export async function PATCH(request: NextRequest) {
+  const ctx = await getAdminContext(request);
+  if (!ctx || (!canAccess(ctx, "state") && !canAccess(ctx, "city"))) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const { id, oldName, newName } = body ?? {};
+
+  if ((!id && !oldName) || !newName || typeof newName !== "string" || !newName.trim()) {
+    return NextResponse.json(
+      { error: "State ID or name and new name are required." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const updated = await updateState({
+      id: id ? String(id) : undefined,
+      oldName: oldName ? String(oldName) : undefined,
+      newName: String(newName).trim(),
+    });
+    return NextResponse.json({ success: true, state: updated });
+  } catch (error) {
+    console.error("updateState failed:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to update state." },
+      { status: 500 }
+    );
+  }
 }

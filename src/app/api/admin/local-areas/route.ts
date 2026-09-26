@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   listLocalAreas,
   createLocalArea,
+  updateLocalAreaName,
   deleteLocalArea,
 } from "@/lib/models/localArea";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
@@ -103,6 +104,39 @@ export async function DELETE(request: NextRequest) {
     console.error("deleteLocalArea failed:", error);
     return NextResponse.json(
       { error: "Failed to delete local area." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const ctx = await getAdminContext(request);
+  if (!ctx || (!canAccess(ctx, "city") && !canAccess(ctx, "state"))) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const { id, oldName, cityName, newName } = body ?? {};
+
+  if ((!id && !oldName) || !newName || typeof newName !== "string" || !newName.trim()) {
+    return NextResponse.json(
+      { error: "Local area ID or name and new name are required." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const updated = await updateLocalAreaName({
+      id: id ? String(id) : undefined,
+      oldName: oldName ? String(oldName) : undefined,
+      cityName: cityName ? String(cityName) : undefined,
+      newName: String(newName).trim(),
+    });
+    return NextResponse.json({ success: true, localArea: updated });
+  } catch (error) {
+    console.error("updateLocalAreaName failed:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to update local area." },
       { status: 500 }
     );
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   listAllCities,
   createCity,
+  updateCityName,
   deleteCity,
   deleteCities,
 } from "@/lib/models/city";
@@ -106,4 +107,37 @@ export async function DELETE(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
+}
+
+export async function PATCH(request: NextRequest) {
+  const ctx = await getAdminContext(request);
+  if (!ctx || !canAccess(ctx, "city")) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const { id, oldName, stateName, newName } = body ?? {};
+
+  if ((!id && !oldName) || !newName || typeof newName !== "string" || !newName.trim()) {
+    return NextResponse.json(
+      { error: "City ID or name and new name are required." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const updated = await updateCityName({
+      id: id ? String(id) : undefined,
+      oldName: oldName ? String(oldName) : undefined,
+      stateName: stateName ? String(stateName) : undefined,
+      newName: String(newName).trim(),
+    });
+    return NextResponse.json({ success: true, city: updated });
+  } catch (error) {
+    console.error("updateCityName failed:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to update city." },
+      { status: 500 }
+    );
+  }
 }

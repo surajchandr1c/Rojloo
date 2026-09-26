@@ -579,3 +579,70 @@ export async function exportLocationsJson(): Promise<LocationsExportSchema> {
   return result;
 }
 
+export async function updateLocalAreaName(data: {
+  id?: string;
+  oldName?: string;
+  cityName?: string;
+  newName: string;
+}): Promise<LocalAreaRecord> {
+  const trimmedNewName = data.newName.trim();
+  if (!trimmedNewName) {
+    throw new Error("Local area name cannot be empty.");
+  }
+
+  const store = await readStore();
+  store.localAreas = store.localAreas ?? [];
+  const localAreas = store.localAreas as unknown as LocalAreaRecord[];
+  const newSlug = slugify(trimmedNewName) || `area-${Date.now()}`;
+  const trimmedId = data.id?.trim() ?? "";
+  const trimmedOldName = data.oldName?.trim() ?? "";
+  const trimmedCity = data.cityName?.trim().toLowerCase() ?? "";
+
+  const index = localAreas.findIndex((a) => {
+    const aId = String(a._id ?? "");
+    const aSlug = String(a.slug ?? "").toLowerCase();
+    const aName = String(a.name ?? "").trim().toLowerCase();
+    const aCity = String(a.cityName ?? "").trim().toLowerCase();
+    const aCitySlug = String(a.citySlug ?? "").toLowerCase();
+
+    const matchesId = trimmedId && (aId === trimmedId || aSlug === trimmedId.toLowerCase());
+    const matchesName = trimmedOldName && aName === trimmedOldName.toLowerCase();
+    const matchesCity = !trimmedCity || aCity === trimmedCity || aCitySlug === slugify(trimmedCity);
+
+    return (matchesId || matchesName) && matchesCity;
+  });
+
+  if (index < 0) {
+    throw new Error("Local area not found.");
+  }
+
+  const area = localAreas[index];
+  const oldAreaName = area.name;
+  const oldAreaSlug = area.slug;
+
+  area.name = trimmedNewName;
+  area.slug = newSlug;
+
+  // Cascade to ads
+  if (Array.isArray(store.ads)) {
+    const oldNameLower = oldAreaName.toLowerCase();
+    const oldSlugLower = oldAreaSlug.toLowerCase();
+    for (const ad of store.ads) {
+      if (ad && typeof ad === "object") {
+        const adArea = String(ad.localArea ?? "").trim().toLowerCase();
+        if (
+          (oldNameLower && adArea === oldNameLower) ||
+          (oldSlugLower && slugify(adArea) === oldSlugLower)
+        ) {
+          ad.localArea = trimmedNewName;
+        }
+      }
+    }
+  }
+
+  await writeStore(store);
+  invalidateLocalAreasCache();
+
+  return area;
+}
+

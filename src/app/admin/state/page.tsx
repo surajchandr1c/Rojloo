@@ -314,6 +314,87 @@ export default function AdminStates() {
     }
   }
 
+  // Update State Name
+  async function handleUpdateStateName(id: string, oldName: string, newName: string) {
+    if (!newName.trim() || newName.trim() === oldName.trim()) return;
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/admin/states", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id, oldName, newName: newName.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data.error as string) || "Failed to update state name.");
+        return;
+      }
+      setSuccess(`State updated to "${newName.trim()}".`);
+      if (selectedState.toLowerCase() === oldName.toLowerCase()) {
+        setSelectedState(newName.trim());
+      }
+      await load();
+    } catch {
+      setError("Failed to update state name.");
+    }
+  }
+
+  // Update City Name
+  async function handleUpdateCityName(id: string, oldName: string, stateName: string, newName: string) {
+    if (!newName.trim() || newName.trim() === oldName.trim()) return;
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/admin/cities", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id, oldName, stateName, newName: newName.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data.error as string) || "Failed to update city name.");
+        return;
+      }
+      setSuccess(`City updated to "${newName.trim()}".`);
+      if (selectedCity.toLowerCase() === oldName.toLowerCase()) {
+        setSelectedCity(newName.trim());
+      }
+      await load();
+    } catch {
+      setError("Failed to update city name.");
+    }
+  }
+
+  // Update Local Area Name
+  async function handleUpdateLocalAreaName(id: string | undefined, oldName: string, cityName: string, newName: string) {
+    if (!newName.trim() || newName.trim() === oldName.trim()) return;
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/admin/local-areas", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id, oldName, cityName, newName: newName.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data.error as string) || "Failed to update local area name.");
+        return;
+      }
+      setSuccess(`Local area updated to "${newName.trim()}".`);
+      if (selectedLocalArea.toLowerCase() === oldName.toLowerCase()) {
+        setSelectedLocalArea(newName.trim());
+      }
+      await load();
+    } catch {
+      setError("Failed to update local area name.");
+    }
+  }
+
   // Local Area Delete
   async function handleDeleteLocalArea(id?: string) {
     if (!id) return;
@@ -1122,6 +1203,9 @@ export default function AdminStates() {
                   onDeleteLocalArea={handleDeleteLocalArea}
                   onChanged={load}
                   onRemoveState={removeState}
+                  onUpdateStateName={handleUpdateStateName}
+                  onUpdateCityName={handleUpdateCityName}
+                  onUpdateLocalAreaName={handleUpdateLocalAreaName}
                 />
               );
             })}
@@ -1129,6 +1213,124 @@ export default function AdminStates() {
         )}
       </div>
     </main>
+  );
+}
+
+function InlineEditableName({
+  value,
+  onSave,
+  className = "",
+  inputClassName = "",
+  title = "Click to edit name",
+  tag: Tag = "span",
+  showPencil = true,
+}: {
+  value: string;
+  onSave: (newName: string) => Promise<void> | void;
+  className?: string;
+  inputClassName?: string;
+  title?: string;
+  tag?: "span" | "h2" | "div";
+  showPencil?: boolean;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [text, setText] = useState(value);
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setText(value);
+    }
+  }, [value, isEditing]);
+
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [isEditing]);
+
+  const commit = async () => {
+    const trimmed = text.trim();
+    if (!trimmed || trimmed === value.trim()) {
+      setText(value);
+      setIsEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(trimmed);
+    } catch {
+      setText(value);
+    } finally {
+      setSaving(false);
+      setIsEditing(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setText(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <input
+          ref={inputRef}
+          value={text}
+          disabled={saving}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={commit}
+          className={`rounded-lg border-2 border-blue-500 bg-white px-2 py-0.5 outline-none shadow-xs text-gray-950 font-medium ${inputClassName}`}
+        />
+        {saving && (
+          <span className="text-[11px] text-blue-600 animate-pulse font-medium">
+            Saving...
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  return (
+    <Tag
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      title={title}
+      className={`group/edit cursor-pointer inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 hover:bg-gray-100 transition-colors ${className}`}
+    >
+      <span>{value}</span>
+      {showPencil && (
+        <svg
+          className="w-3.5 h-3.5 text-gray-400 group-hover/edit:text-blue-600 transition-colors opacity-60 group-hover/edit:opacity-100 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+          />
+        </svg>
+      )}
+    </Tag>
   );
 }
 
@@ -1143,6 +1345,9 @@ function StateHierarchyCard({
   onDeleteLocalArea,
   onChanged,
   onRemoveState,
+  onUpdateStateName,
+  onUpdateCityName,
+  onUpdateLocalAreaName,
 }: {
   state: StateRecord;
   isExpanded: boolean;
@@ -1161,6 +1366,9 @@ function StateHierarchyCard({
   onDeleteLocalArea: (id?: string) => Promise<void>;
   onChanged: () => void;
   onRemoveState: (id?: string) => void;
+  onUpdateStateName: (id: string, oldName: string, newName: string) => Promise<void>;
+  onUpdateCityName: (id: string, oldName: string, stateName: string, newName: string) => Promise<void>;
+  onUpdateLocalAreaName: (id: string | undefined, oldName: string, cityName: string, newName: string) => Promise<void>;
 }) {
   const [cityName, setCityName] = useState("");
   const [country, setCountry] = useState("India");
@@ -1240,12 +1448,16 @@ function StateHierarchyCard({
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h2
-                onClick={onToggleState}
-                className="cursor-pointer text-xl font-black text-gray-950 hover:text-gray-700"
-              >
-                {state.name}
-              </h2>
+              <InlineEditableName
+                tag="h2"
+                value={state.name}
+                onSave={(newName) =>
+                  onUpdateStateName(state._id || state.slug || state.name, state.name, newName)
+                }
+                className="text-xl font-black text-gray-950 hover:text-blue-600"
+                inputClassName="text-lg font-black min-w-[180px]"
+                title="Click to edit state name"
+              />
               <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-900">
                 {matchingCities.length} {matchingCities.length === 1 ? "City" : "Cities"}
               </span>
@@ -1343,6 +1555,8 @@ function StateHierarchyCard({
                       onDeleteCity={() => removeCity(city._id || city.name)}
                       onDeleteLocalArea={onDeleteLocalArea}
                       onChanged={onChanged}
+                      onUpdateCityName={onUpdateCityName}
+                      onUpdateLocalAreaName={onUpdateLocalAreaName}
                     />
                   );
                 }
@@ -1364,6 +1578,8 @@ function CityHierarchyItem({
   onDeleteCity,
   onDeleteLocalArea,
   onChanged,
+  onUpdateCityName,
+  onUpdateLocalAreaName,
 }: {
   city: CityRow;
   stateName: string;
@@ -1373,6 +1589,8 @@ function CityHierarchyItem({
   onDeleteCity: () => void;
   onDeleteLocalArea: (id?: string) => Promise<void>;
   onChanged: () => void;
+  onUpdateCityName: (id: string, oldName: string, stateName: string, newName: string) => Promise<void>;
+  onUpdateLocalAreaName: (id: string | undefined, oldName: string, cityName: string, newName: string) => Promise<void>;
 }) {
   const [newArea, setNewArea] = useState("");
   const [addingArea, setAddingArea] = useState(false);
@@ -1422,12 +1640,16 @@ function CityHierarchyItem({
           >
             {isExpanded ? "▼" : "▶"}
           </button>
-          <span
-            onClick={onToggleCity}
-            className="cursor-pointer font-bold text-sm text-gray-950 hover:text-gray-700"
-          >
-            {city.name}
-          </span>
+          <InlineEditableName
+            tag="span"
+            value={city.name}
+            onSave={(newName) =>
+              onUpdateCityName(city._id || city.name, city.name, stateName, newName)
+            }
+            className="font-bold text-sm text-gray-950 hover:text-blue-600"
+            inputClassName="text-sm font-bold min-w-[140px]"
+            title="Click to edit city name"
+          />
           <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-900 border border-gray-100">
             {cityAreas.length} {cityAreas.length === 1 ? "Area" : "Areas"}
           </span>
@@ -1462,9 +1684,18 @@ function CityHierarchyItem({
                     key={area._id ?? area.slug}
                     className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-950 shadow-2xs"
                   >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <span className="text-gray-500 font-bold">•</span>
-                      <span className="font-medium truncate">{area.name}</span>
+                    <span className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span className="text-gray-400 font-bold shrink-0">•</span>
+                      <InlineEditableName
+                        tag="span"
+                        value={area.name}
+                        onSave={(newName) =>
+                          onUpdateLocalAreaName(area._id, area.name, city.name, newName)
+                        }
+                        className="font-medium text-xs text-gray-950 truncate max-w-full hover:text-blue-600"
+                        inputClassName="text-xs font-medium w-full"
+                        title="Click to edit local area name"
+                      />
                     </span>
                     <button
                       type="button"

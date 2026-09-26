@@ -2,6 +2,8 @@ import "server-only";
 
 import { readStore, writeStore } from "../persist";
 import { cityPlaces } from "../places";
+import { invalidateCityCache } from "./city";
+import { invalidateLocalAreasCache } from "./localArea";
 
 export type StateRecord = {
   _id?: string;
@@ -302,6 +304,186 @@ export async function deleteAllLocations(): Promise<{
     deletedStates: allStates.length,
     deletedCities: allCities.length + customCitySlugs.length,
     deletedLocalAreas: allAreasCount,
+  };
+}
+
+export async function updateState(data: {
+  id?: string;
+  oldName?: string;
+  newName: string;
+}): Promise<StateRecord> {
+  const trimmedNewName = data.newName.trim();
+  if (!trimmedNewName) {
+    throw new Error("State name cannot be empty.");
+  }
+
+  const store = await readStore();
+  store.states = store.states ?? [];
+  store.deletedStates = store.deletedStates ?? [];
+  store.cities = store.cities ?? [];
+  store.localAreas = store.localAreas ?? [];
+
+  const states = store.states as unknown as StateRecord[];
+  const newSlug = slugify(trimmedNewName) || `state-${Date.now()}`;
+  const trimmedId = data.id?.trim() ?? "";
+  const trimmedOldName = data.oldName?.trim() ?? "";
+
+  // 1. Find existing state
+  let oldName = trimmedOldName;
+  let oldSlug = "";
+
+  const customIndex = states.findIndex((s) => {
+    const sId = String(s._id ?? "");
+    const sName = String(s.name ?? "").trim().toLowerCase();
+    const sSlug = String(s.slug ?? "").toLowerCase();
+    return (
+      (trimmedId && (sId === trimmedId || sSlug === trimmedId.toLowerCase())) ||
+      (trimmedOldName && sName === trimmedOldName.toLowerCase())
+    );
+  });
+
+  if (customIndex >= 0) {
+    const found = states[customIndex];
+    oldName = found.name;
+    oldSlug = found.slug || slugify(oldName);
+    found.name = trimmedNewName;
+    found.slug = newSlug;
+  } else {
+    // Check if it matches a static state
+    const cleanId = trimmedId.replace(/^static_state_/, "");
+    const match =
+      DEFAULT_INDIAN_STATES.find(
+        (s) =>
+          (trimmedOldName && s.toLowerCase() === trimmedOldName.toLowerCase()) ||
+          (cleanId && (slugify(s) === cleanId.toLowerCase() || s.toLowerCase() === cleanId.toLowerCase()))
+      ) ||
+      cityPlaces.find(
+        (c) =>
+          c.state &&
+          ((trimmedOldName && c.state.toLowerCase() === trimmedOldName.toLowerCase()) ||
+            (cleanId && (slugify(c.state) === cleanId.toLowerCase() || c.state.toLowerCase() === cleanId.toLowerCase())))
+      )?.state;
+
+    if (match) {
+      oldName = match;
+      oldSlug = slugify(match);
+    } else if (trimmedOldName) {
+      oldName = trimmedOldName;
+      oldSlug = slugify(trimmedOldName);
+    } else {
+      oldName = trimmedId;
+      oldSlug = slugify(trimmedId);
+    }
+
+    // Add as custom state
+    const newState: StateRecord = {
+      _id: `mem_state_${states.length + 1}_${Date.now()}`,
+      name: trimmedNewName,
+      slug: newSlug,
+      createdAt: new Date(),
+    };
+    states.push(newState);
+  }
+
+  // Mark old state name & slug in deletedStates so old static state won't appear
+  if (oldName && oldName.toLowerCase() !== trimmedNewName.toLowerCase()) {
+    const oldKeys = [oldName.toLowerCase(), oldSlug.toLowerCase()].filter(Boolean);
+    for (const k of oldKeys) {
+      if (!store.deletedStates.some((s) => s.toLowerCase() === k)) {
+        store.deletedStates.push(k);
+      }
+    }
+  }
+
+  // Ensure new state is not marked deleted
+  const newNameLower = trimmedNewName.toLowerCase();
+  const newSlugLower = newSlug.toLowerCase();
+  store.deletedStates = store.deletedStates.filter((s) => {
+    const v = s.trim().toLowerCase();
+    return v !== newNameLower && v !== newSlugLower;
+  });
+
+  // Cascade update cities
+  if (oldName) {
+    const oldNameLower = oldName.toLowerCase();
+    const oldSlugLower = oldSlug.toLowerCase();
+
+    // 1) Update existing custom cities
+    const cities = store.cities as Array<{
+      _id?: string;
+      name: string;
+      slug: string;
+      state?: string;
+      region?: string;
+      famousFood?: string;
+      seoDescription?: string;
+      createdAt?: Date | string;
+    }>;
+
+    for (const c of cities) {
+      const cState = String(c.state ?? "").trim().toLowerCase();
+      if (cState === oldNameLower || slugify(cState) === oldSlugLower) {
+        c.state = trimmedNewName;
+      }
+    }
+
+    // 2) If any static cities were under oldName, clone them into store.cities with new state
+    for (const sc of cityPlaces) {
+      if (!sc.state) continue;
+      const scState = sc.state.trim().toLowerCase();
+      if (scState === oldNameLower || slugify(scState) === oldSlugLower) {
+        const alreadyCustom = cities.some((c) => c.slug.toLowerCase() === sc.slug.toLowerCase());
+        if (!alreadyCustom) {
+          cities.push({
+            _id: `mem_city_${sc.slug}`,
+            name: sc.name,
+            slug: sc.slug,
+            state: trimmedNewName,
+            region: sc.region || trimmedNewName,
+            famousFood: sc.famousFood || "",
+            seoDescription: sc.seoDescription || "",
+            createdAt: new Date(),
+          });
+        }
+      }
+    }
+
+    // 3) Cascade update local areas
+    const localAreas = store.localAreas as Array<{
+      stateName?: string;
+      stateSlug?: string;
+    }>;
+    for (const a of localAreas) {
+      const aState = String(a.stateName ?? "").trim().toLowerCase();
+      const aSlug = String(a.stateSlug ?? "").toLowerCase();
+      if (aState === oldNameLower || aSlug === oldSlugLower) {
+        a.stateName = trimmedNewName;
+        a.stateSlug = newSlug;
+      }
+    }
+
+    // 4) Update ads
+    if (Array.isArray(store.ads)) {
+      for (const ad of store.ads) {
+        if (ad && typeof ad === "object") {
+          const adState = String(ad.state ?? "").trim().toLowerCase();
+          if (adState === oldNameLower || slugify(adState) === oldSlugLower) {
+            ad.state = trimmedNewName;
+          }
+        }
+      }
+    }
+  }
+
+  await writeStore(store);
+  invalidateCityCache();
+  invalidateLocalAreasCache();
+
+  return {
+    _id: trimmedId || `mem_state_${newSlug}`,
+    name: trimmedNewName,
+    slug: newSlug,
+    createdAt: new Date(),
   };
 }
 
