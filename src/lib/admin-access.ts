@@ -15,6 +15,7 @@ export const ADMIN_SECTIONS = [
   { key: "city", name: "City" },
   { key: "city-seo", name: "City SEO" },
   { key: "dynamic-seo", name: "Dynamic SEO" },
+  { key: "static-seo", name: "Static SEO" },
   { key: "local-area-seo", name: "Local Area SEO" },
   { key: "ads", name: "Ads" },
   { key: "users", name: "Users" },

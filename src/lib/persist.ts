@@ -41,6 +41,7 @@ type StoreData = {
   notFoundLogs: StoreRecord[];
   vipUsers?: StoreRecord[];
   vipPhoneOverrides?: StoreRecord[];
+  staticSeo?: StoreRecord[];
   [key: string]: unknown;
 };
 
@@ -83,6 +84,7 @@ function defaults(): StoreData {
     notFoundLogs: [],
     vipUsers: [],
     vipPhoneOverrides: [],
+    staticSeo: [],
   };
 }
 
@@ -116,6 +118,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
     notFoundLogs: raw.notFoundLogs ?? [],
     vipUsers: raw.vipUsers ?? [],
     vipPhoneOverrides: raw.vipPhoneOverrides ?? [],
+    staticSeo: raw.staticSeo ?? [],
   };
   data.users = data.users.map((user) => ({
     ...user,

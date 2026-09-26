@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SectionPanel } from "@/components/ui/card";
+import { StaticSeoSection } from "@/components/seo/static-seo-section";
 import { siteConfig } from "@/lib/config/site";
 
 export const metadata: Metadata = {
@@ -59,6 +60,7 @@ export default function ReturnPolicy() {
           </section>
         </div>
       </SectionPanel>
+      <StaticSeoSection pageKey="return-policy" />
     </main>
   );
 }

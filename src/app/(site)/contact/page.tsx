@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Card, SectionPanel } from "@/components/ui/card";
+import { StaticSeoSection } from "@/components/seo/static-seo-section";
 import { siteInfo } from "@/lib/site";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -79,6 +80,7 @@ export default function Contact() {
           </Card>
         </div>
       </SectionPanel>
+      <StaticSeoSection pageKey="contact" />
     </main>
   );
 }

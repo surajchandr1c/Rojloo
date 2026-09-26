@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SectionPanel } from "@/components/ui/card";
+import { StaticSeoSection } from "@/components/seo/static-seo-section";
 import { siteConfig } from "@/lib/config/site";
 
 export const metadata: Metadata = {
@@ -81,6 +82,7 @@ export default function Terms() {
           ))}
         </div>
       </SectionPanel>
+      <StaticSeoSection pageKey="terms" />
     </main>
   );
 }

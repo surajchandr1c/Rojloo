@@ -3,6 +3,7 @@ import Image from "next/image";
 import Button from "@/components/ui/button";
 import SearchBar from "@/components/search-bar";
 import HomeFaq from "@/components/home-faq";
+import { StaticSeoSection } from "@/components/seo/static-seo-section";
 import { serviceCards } from "@/lib/services";
 import { siteConfig } from "@/lib/config/site";
 
@@ -205,6 +206,10 @@ export default function Home() {
           <HomeFaq />
         </div>
       </section>
+
+      <div className="px-4 sm:px-6 lg:px-8">
+        <StaticSeoSection pageKey="home" />
+      </div>
     </main>
   );
 }
