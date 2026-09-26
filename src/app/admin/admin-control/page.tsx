@@ -5,22 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { Eyebrow } from "@/components/ui/eyebrow";
 
-const PERMISSION_OPTIONS = [
-  { key: "dashboard", label: "Dashboard" },
-  { key: "state", label: "State" },
-  { key: "city", label: "City" },
-  { key: "city-seo", label: "City SEO" },
-  { key: "dynamic-seo", label: "Dynamic SEO" },
-  { key: "ads", label: "Ads" },
-  { key: "users", label: "Users" },
-  { key: "upi", label: "UPI" },
-  { key: "coupon", label: "Coupon" },
-  { key: "payment-request", label: "Payment Request" },
-  { key: "payment-history", label: "Payment History" },
-  { key: "set-coins", label: "Set Coins" },
-  { key: "promotion-packages", label: "Promotion Package" },
-  { key: "vip", label: "VIP" },
-];
+import { SUBADMIN_PERMISSION_OPTIONS } from "@/lib/constants/subadmin-permissions";
 
 export default function AdminControl() {
   const router = useRouter();
@@ -155,7 +140,7 @@ export default function AdminControl() {
               Assign access
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {PERMISSION_OPTIONS.map((option) => (
+              {SUBADMIN_PERMISSION_OPTIONS.map((option) => (
                 <label
                   key={option.key}
                   className="flex items-center gap-2 text-sm text-gray-900"
@@ -164,7 +149,7 @@ export default function AdminControl() {
                     type="checkbox"
                     checked={permissions.includes(option.key)}
                     onChange={() => togglePermission(option.key)}
-                    className="h-4 w-4 accent-[]"
+                    className="h-4 w-4 rounded accent-gray-950"
                   />
                   {option.label}
                 </label>
@@ -172,13 +157,13 @@ export default function AdminControl() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-gray-700">{error}</p>}
-          {success && <p className="text-sm text-gray-700">{success}</p>}
+          {error && <p className="text-sm text-rose-600 font-semibold">{error}</p>}
+          {success && <p className="text-sm text-emerald-600 font-semibold">{success}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-full bg-[] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[] disabled:opacity-60"
+            className="mt-2 rounded-xl bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-black transition disabled:opacity-60"
           >
             {loading ? "Creating..." : "Create Sub Admin"}
           </button>

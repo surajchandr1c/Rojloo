@@ -3,6 +3,7 @@ import { getAdminContext } from "@/lib/admin-access";
 import {
   listSubAdmins,
   createSubAdmin,
+  updateSubAdmin,
   deleteSubAdmin,
 } from "@/lib/models/admin-user";
 
@@ -65,6 +66,54 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create admin.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const ctx = await getAdminContext(request);
+  if (!ctx) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (ctx.role !== "main") {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const id = body?.id;
+  if (!id) {
+    return NextResponse.json({ error: "Sub-admin ID is required." }, { status: 400 });
+  }
+
+  const permissions = Array.isArray(body?.permissions)
+    ? body.permissions.map(String)
+    : undefined;
+  const password =
+    typeof body?.password === "string" && body.password.trim()
+      ? body.password.trim()
+      : undefined;
+  const email =
+    typeof body?.email === "string" && body.email.trim()
+      ? body.email.trim()
+      : undefined;
+
+  try {
+    const updated = await updateSubAdmin(String(id), {
+      permissions,
+      password,
+      email,
+    });
+    return NextResponse.json({
+      success: true,
+      admin: {
+        _id: updated._id,
+        email: updated.email,
+        permissions: updated.permissions,
+        lastLogin: updated.lastLogin,
+        createdAt: updated.createdAt,
+      },
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to update sub-admin.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

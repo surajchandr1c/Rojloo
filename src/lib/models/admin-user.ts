@@ -157,6 +157,64 @@ export async function deleteSubAdmin(id: string): Promise<boolean> {
   return true;
 }
 
+export type UpdateSubAdminInput = {
+  email?: string;
+  password?: string;
+  permissions?: string[];
+};
+
+export async function updateSubAdmin(
+  id: string,
+  updates: UpdateSubAdminInput
+): Promise<SubAdmin> {
+  const store = await readStore();
+  const admins = (store.admins ?? []) as SubAdmin[];
+  const idx = admins.findIndex((a) => a._id === id);
+  if (idx === -1) {
+    throw new Error("Sub-admin not found.");
+  }
+  const current = admins[idx];
+  if (current.role === "main") {
+    throw new Error("Cannot modify main admin via sub-admin control.");
+  }
+
+  let email = current.email;
+  if (updates.email && updates.email.trim()) {
+    const newEmail = updates.email.trim().toLowerCase();
+    const duplicate = admins.find(
+      (a) => a._id !== id && a.email.toLowerCase() === newEmail
+    );
+    if (duplicate) {
+      throw new Error("An admin with this email already exists.");
+    }
+    email = newEmail;
+  }
+
+  let passwordHash = current.passwordHash;
+  if (updates.password && updates.password.trim()) {
+    if (updates.password.length < 6) {
+      throw new Error("Password must be at least 6 characters.");
+    }
+    passwordHash = await hashPasswordSecure(updates.password);
+  }
+
+  const permissions = Array.isArray(updates.permissions)
+    ? updates.permissions.map(String)
+    : current.permissions;
+
+  const updated: SubAdmin = {
+    ...current,
+    email,
+    passwordHash,
+    permissions,
+  };
+
+  admins[idx] = updated;
+  store.admins = admins;
+  await writeStore(store);
+  return updated;
+}
+
 export async function verifyAdmin(
   email: string,
   password: string
