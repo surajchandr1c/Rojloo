@@ -663,64 +663,67 @@ function StaticSeoContent() {
 
             {/* Content Blocks Editor */}
             <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-7 shadow-sm space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
-                <div>
-                  <h2 className="text-lg font-bold text-gray-950">
-                    Content Blocks ({content.length})
-                  </h2>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    Extracted headings &amp; paragraphs. Wrap keywords in <code>**keyword**</code> for bold text.
-                  </p>
+              <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+                <div className="space-y-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-950">
+                      Content Blocks ({content.length})
+                    </h2>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Extracted headings &amp; paragraphs. Wrap keywords in <code>**keyword**</code> for bold text.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addBlock("h2");
+                        setContentOpen(true);
+                      }}
+                      className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
+                    >
+                      + H2 Heading
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addBlock("h3");
+                        setContentOpen(true);
+                      }}
+                      className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
+                    >
+                      + H3 Subheading
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addBlock("p");
+                        setContentOpen(true);
+                      }}
+                      className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
+                    >
+                      + Paragraph
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      addBlock("h2");
-                      setContentOpen(true);
-                    }}
-                    className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
+                <button
+                  type="button"
+                  onClick={() => setContentOpen((prev) => !prev)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-gray-700 transition hover:bg-gray-200 hover:text-gray-950"
+                  title={contentOpen ? "Close Content Blocks" : "Expand Content Blocks"}
+                  aria-label={contentOpen ? "Close Content Blocks" : "Expand Content Blocks"}
+                >
+                  <svg
+                    className={`h-4 w-4 transition-transform duration-200 ${contentOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    + H2 Heading
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      addBlock("h3");
-                      setContentOpen(true);
-                    }}
-                    className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
-                  >
-                    + H3 Subheading
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      addBlock("p");
-                      setContentOpen(true);
-                    }}
-                    className="rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition hover:bg-gray-100"
-                  >
-                    + Paragraph
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setContentOpen((prev) => !prev)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-300 bg-gray-50 text-gray-700 transition hover:bg-gray-200 hover:text-gray-950"
-                    title={contentOpen ? "Close Content Blocks" : "Expand Content Blocks"}
-                    aria-label={contentOpen ? "Close Content Blocks" : "Expand Content Blocks"}
-                  >
-                    <svg
-                      className={`h-4 w-4 transition-transform duration-200 ${contentOpen ? "rotate-180" : ""}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               </div>
 
               {!contentOpen ? (
