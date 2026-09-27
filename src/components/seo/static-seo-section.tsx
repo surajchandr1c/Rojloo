@@ -172,15 +172,15 @@ export async function StaticSeoSection({
   } else {
     // Case 4: No images, only content blocks
     bodyContent = (
-      <div className="space-y-4 max-w-4xl mx-auto">
+      <div className="space-y-4 w-full">
         {content.map(renderBlock)}
       </div>
     );
   }
 
   const containerClasses = inCard
-    ? "mx-auto w-full max-w-6xl rounded-[2rem] bg-gray-100/85 p-5 sm:p-8 md:p-10 shadow-lg shadow-gray-200/40"
-    : "mx-auto w-full max-w-6xl";
+    ? "mx-auto w-full max-w-7xl rounded-[2rem] bg-gray-100/85 p-5 sm:p-8 md:p-10 shadow-lg shadow-gray-200/40"
+    : "mx-auto w-full max-w-7xl";
 
   const hasFaqs = Boolean(seo.faqs && seo.faqs.length > 0);
 
