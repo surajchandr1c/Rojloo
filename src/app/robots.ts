@@ -17,6 +17,7 @@ export default function robots(): MetadataRoute.Robots {
           "/api",
           "/api/*",
           "/login",
+          "/login/*",
           "/post-ad",
           "/post-ad/*",
           "/*?*preview=*",
