@@ -178,6 +178,16 @@ export default function PostAdForm({ adId }: { adId?: string }) {
       return;
     }
 
+    if (!/^\d{10}$/.test(form.phone)) {
+      setFormError("Phone number must be exactly 10 digits.");
+      return;
+    }
+
+    if (!/^\d{10}$/.test(form.whatsapp)) {
+      setFormError("WhatsApp number must be exactly 10 digits.");
+      return;
+    }
+
     setFormLoading(true);
 
     const payload = { ...form, id: editingId ?? undefined };

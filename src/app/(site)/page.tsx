@@ -134,83 +134,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Content Section below Ready to get started */}
-      <section className="px-4 pb-16 sm:px-6">
-        <div className="mx-auto max-w-6xl space-y-10 sm:space-y-12">
-          <article>
-            <h2 className="text-2xl sm:text-3xl font-black text-gray-950">
-              Call Girls in Rojloo, Escort Call Girl &amp; Companionship Services
-            </h2>
-            <div className="mt-4 space-y-4 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
-              <p>
-                Finding the right social experience can be easier when you have access to a platform where people can discover and post local listings. <strong>Rojloo</strong> brings together listings for <strong>call girls in Rojloo, escort call girl in Rojloo, escort service Rojloo, male escort, male escort service, night out plans, night meetings, hotel parties, Thai massage call girl, massage in Rojloo, and body massage</strong> in one convenient place.
-              </p>
-              <p>
-                Whether you are looking for a <strong>call girl in Rojloo</strong>, planning a night out, exploring local massage and wellness options, or looking to connect with people offering social services, users can browse available ads and choose listings based on their preferences and location.
-              </p>
-            </div>
-          </article>
-
-          <article>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-950">
-              Escort Call Girl in Rojloo &amp; Social Connection
-            </h3>
-            <p className="mt-3 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
-              Rojloo allows adults to discover listings related to social meetings and companionship. Users can explore available advertisements, review the information provided by advertisers, and contact them directly to discuss arrangements.
-            </p>
-          </article>
-
-          <article>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-950">
-              Escort Service Rojloo &amp; Male Escort Service
-            </h3>
-            <p className="mt-3 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
-              Looking for companionship for dinner, events, conversations, or an evening out? Browse <strong>escort service Rojloo</strong>, <strong>male escort</strong>, and <strong>male escort service</strong> listings to find options that match your interests and location.
-            </p>
-          </article>
-
-          <article>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-950">
-              Night Out &amp; Night Meeting
-            </h3>
-            <p className="mt-3 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
-              Make your evening plans easier by discovering local listings for <strong>night out</strong> and <strong>night meeting</strong> experiences. Users can browse advertisements and connect with people offering social companionship for evenings and events.
-            </p>
-          </article>
-
-          <article>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-950">
-              Hotel Party &amp; Social Events
-            </h3>
-            <p className="mt-3 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
-              Users can also discover listings related to hotel parties and private social gatherings. Always review the listing details and communicate directly with the advertiser before making arrangements.
-            </p>
-          </article>
-
-          <article>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-950">
-              Thai Massage Call Girl, Massage in Rojloo &amp; Body Massage
-            </h3>
-            <p className="mt-3 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
-              Explore listings for <strong>Thai massage call girl, massage in Rojloo, and body massage</strong>. Massage listings can provide information about available services, location, timings, and contact details so users can make informed choices.
-            </p>
-          </article>
-
-          <article>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-950">
-              Find Local Listings Easily
-            </h3>
-            <p className="mt-3 text-base sm:text-lg leading-7 sm:leading-8 text-gray-900">
-              Rojloo makes it simple to search and discover relevant listings by location and category. Whether you are interested in <strong>call girls in Rojloo, escort call girl in Rojloo, escort service Rojloo, male escort, male escort service, Thai massage call girl, massage in Rojloo, or body massage</strong>, you can explore advertisements and connect with suitable providers.
-            </p>
-          </article>
-
-          <HomeFaq items={homeSeo?.faqs} />
-        </div>
-      </section>
-
       <div className="px-4 sm:px-6 lg:px-8">
-        <StaticSeoSection pageKey="home" />
+        <StaticSeoSection pageKey="home" inCard={false} />
       </div>
     </main>
   );

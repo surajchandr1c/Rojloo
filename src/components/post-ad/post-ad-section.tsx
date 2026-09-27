@@ -418,8 +418,10 @@ export default function PostAdSection({
             </label>
             <TextInput
               value={form.pincode ?? ""}
-              onChange={(e) => update("pincode", e.target.value)}
+              onChange={(e) => update("pincode", e.target.value.replace(/\D/g, ""))}
               placeholder="Pin code"
+              inputMode="numeric"
+              pattern="[0-9]*"
             />
           </div>
         </div>
@@ -563,8 +565,11 @@ export default function PostAdSection({
           </label>
           <TextInput
             value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            placeholder="Contact number"
+            onChange={(e) => update("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+            placeholder="10-digit phone number"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
             required
           />
         </div>
@@ -575,8 +580,11 @@ export default function PostAdSection({
           </label>
           <TextInput
             value={form.whatsapp}
-            onChange={(e) => update("whatsapp", e.target.value)}
-            placeholder="WhatsApp number"
+            onChange={(e) => update("whatsapp", e.target.value.replace(/\D/g, "").slice(0, 10))}
+            placeholder="10-digit WhatsApp number"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
             required
           />
         </div>
@@ -587,8 +595,10 @@ export default function PostAdSection({
           </label>
           <TextInput
             value={form.telegram}
-            onChange={(e) => update("telegram", e.target.value)}
-            placeholder="Telegram username (optional)"
+            onChange={(e) => update("telegram", e.target.value.replace(/\D/g, ""))}
+            placeholder="Telegram number (optional)"
+            inputMode="numeric"
+            pattern="[0-9]*"
           />
         </div>
       </section>

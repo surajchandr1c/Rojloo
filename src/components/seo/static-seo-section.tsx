@@ -72,7 +72,7 @@ export async function StaticSeoSection({
   }
 
   const { images = [], content = [], faqs = [] } = seo;
-  const shouldRenderFaqs = showFaqs !== undefined ? showFaqs : pageKey !== "home";
+  const shouldRenderFaqs = showFaqs !== undefined ? showFaqs : true;
 
   if (images.length === 0 && content.length === 0 && (!shouldRenderFaqs || faqs.length === 0)) {
     return null;
