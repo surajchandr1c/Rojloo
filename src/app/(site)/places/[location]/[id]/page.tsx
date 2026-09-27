@@ -413,8 +413,8 @@ async function AdContent({ location, id }: { location: string; id: string }) {
   return (
     <main>
       <JsonLd data={[breadcrumbSchema, serviceSchema]} />
-      <section className="px-4 py-10 sm:px-6 lg:px-8">
-        <SectionPanel>
+      <section className="px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <SectionPanel className="!max-w-7xl !p-4 sm:!p-6 lg:!p-8">
           <Breadcrumbs
             items={[
               { label: "Home", href: "/" },
@@ -425,13 +425,13 @@ async function AdContent({ location, id }: { location: string; id: string }) {
           />
 
           {isDeleted && (
-            <p className="mt-4 rounded-[1rem] bg-gray-100 p-4 text-gray-900">
+            <p className="mt-3 rounded-[1rem] bg-gray-100 p-3 text-sm text-gray-900">
               This ad has been deleted. The information below is archived.
             </p>
           )}
 
           {!isPubliclyVisible && !isDeleted && (
-            <div className="mt-4 rounded-2xl border border-gray-300 bg-gray-50 p-4 text-xs sm:text-sm text-gray-950 font-medium flex items-start gap-2.5">
+            <div className="mt-3 rounded-2xl border border-gray-300 bg-gray-50 p-3 text-xs sm:text-sm text-gray-950 font-medium flex items-start gap-2.5">
               <span className="text-base shrink-0">⚠️</span>
               <div>
                 <p className="font-bold">Listing Hidden from City Search Results</p>
@@ -442,54 +442,56 @@ async function AdContent({ location, id }: { location: string; id: string }) {
             </div>
           )}
 
-          <div className="mt-4">
-            <Eyebrow>{ad.category}</Eyebrow>
-          </div>
-          <h1 className="mt-3 flex flex-wrap items-baseline gap-2 sm:gap-3 text-2xl sm:text-3xl md:text-4xl font-black text-gray-950 break-words">
-            <span>{ad.name}</span>
-            {ad.age && (
-              <span className="text-xl sm:text-2xl font-semibold text-gray-500">
-                Age: {ad.age}
-              </span>
-            )}
-          </h1>
-
-          {ad.about && (
-            <p className="mt-4 whitespace-pre-line leading-7 text-gray-900">
-              {ad.about}
-            </p>
-          )}
-
-          <div className="mt-6 grid gap-8 md:grid-cols-2">
-            <div className="order-1 relative">
+          <div className="mt-4 grid gap-6 lg:gap-8 md:grid-cols-2 items-start">
+            <div className="order-1 relative md:sticky md:top-20">
               <span className="absolute right-3 top-3 z-10 rounded-full bg-gray-950/80 px-3 py-1 text-xs font-semibold text-white">
                 {cityName}
               </span>
               <AdGallery images={ad.images ?? []} name={ad.name} />
             </div>
 
-            <div className="order-2">
-              <h2 className="text-xl font-bold text-gray-950">Contact me</h2>
+            <div className="order-2 flex flex-col justify-start">
+              <div>
+                <Eyebrow>{ad.category}</Eyebrow>
+              </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                <ContactActions
-                  phone={ad.phone}
-                  whatsapp={ad.whatsapp}
-                  telegram={ad.telegram}
-                  cityName={ad.city || cityName}
-                />
+              <h1 className="mt-2 flex flex-wrap items-baseline gap-2 sm:gap-3 text-2xl sm:text-3xl lg:text-4xl font-black text-gray-950 break-words">
+                <span>{ad.name}</span>
+                {ad.age && (
+                  <span className="text-lg sm:text-xl font-semibold text-gray-500">
+                    Age: {ad.age}
+                  </span>
+                )}
+              </h1>
+
+              {ad.about && (
+                <p className="mt-2.5 whitespace-pre-line text-sm sm:text-base leading-relaxed text-gray-800">
+                  {ad.about}
+                </p>
+              )}
+
+              <div className="mt-3.5">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500">Contact me</h2>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <ContactActions
+                    phone={ad.phone}
+                    whatsapp={ad.whatsapp}
+                    telegram={ad.telegram}
+                    cityName={ad.city || cityName}
+                  />
+                </div>
               </div>
 
               {ad.toServe && ad.toServe.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-bold text-gray-950">
+                <div className="mt-3.5">
+                  <h3 className="text-sm font-bold text-gray-950">
                     To Serve
                   </h3>
-                  <div className="mt-1 flex flex-wrap gap-2">
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {ad.toServe.map((s) => (
                       <span
                         key={s}
-                        className="rounded-full bg-gray-100 px-2.5 py-1 text-sm font-semibold text-gray-700"
+                        className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700"
                       >
                         {s}
                       </span>
@@ -499,15 +501,15 @@ async function AdContent({ location, id }: { location: string; id: string }) {
               )}
 
               {ad.placeOfService && ad.placeOfService.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-bold text-gray-950">
+                <div className="mt-3.5">
+                  <h3 className="text-sm font-bold text-gray-950">
                     Place Of Service
                   </h3>
-                  <div className="mt-1 flex flex-wrap gap-2">
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {ad.placeOfService.map((s) => (
                       <span
                         key={s}
-                        className="rounded-full bg-gray-100 px-2.5 py-1 text-sm font-semibold text-gray-700"
+                        className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700"
                       >
                         {s}
                       </span>
@@ -515,32 +517,32 @@ async function AdContent({ location, id }: { location: string; id: string }) {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
 
-          <div className="mt-8">
-            <h3 className="text-lg font-bold text-gray-950">Service Rates</h3>
-            <div className="mt-3 overflow-x-auto rounded-2xl border border-gray-100">
-              <table className="w-full min-w-[340px] text-left text-sm">
-                <thead className="bg-gray-50 text-gray-950">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Duration</th>
-                    <th className="px-4 py-3 font-semibold">Incall Rate</th>
-                    <th className="px-4 py-3 font-semibold">Outcall Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {serviceRates.map((rate) => (
-                    <tr key={rate.duration} className="border-t border-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-950">
-                        {rate.duration}
-                      </td>
-                      <td className="px-4 py-3 text-gray-900">₹{rate.incall}</td>
-                      <td className="px-4 py-3 text-gray-900">₹{rate.outcall}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="mt-4">
+                <h3 className="text-sm font-bold text-gray-950">Service Rates</h3>
+                <div className="mt-2 overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                  <table className="w-full min-w-[280px] text-left text-sm">
+                    <thead className="bg-gray-50 text-gray-950">
+                      <tr>
+                        <th className="px-3.5 py-2 font-semibold">Duration</th>
+                        <th className="px-3.5 py-2 font-semibold">Incall Rate</th>
+                        <th className="px-3.5 py-2 font-semibold">Outcall Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {serviceRates.map((rate) => (
+                        <tr key={rate.duration} className="border-t border-gray-100">
+                          <td className="px-3.5 py-1.5 font-medium text-gray-950">
+                            {rate.duration}
+                          </td>
+                          <td className="px-3.5 py-1.5 text-gray-900">₹{rate.incall}</td>
+                          <td className="px-3.5 py-1.5 text-gray-900">₹{rate.outcall}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 

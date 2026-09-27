@@ -98,11 +98,11 @@ export default function NavBar() {
           <span>rojlo</span>
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-1.5 md:gap-3 md:flex">
+        <nav className="ml-auto hidden items-center gap-1.5 lg:gap-3 lg:flex">
           {isLoggedIn && (
             <Link
               href="/post-ad/buy-coin"
-              className="flex items-center gap-1 rounded-full border border-white/20 bg-gray-800 px-2.5 py-1 md:px-3 md:py-1.5 text-xs md:text-sm font-bold text-white shadow-sm transition-colors hover:bg-gray-700 shrink-0"
+              className="flex items-center gap-1 rounded-full border border-white/20 bg-gray-800 px-2.5 py-1 lg:px-3 lg:py-1.5 text-xs lg:text-sm font-bold text-white shadow-sm transition-colors hover:bg-gray-700 shrink-0"
             >
               <span aria-hidden="true">🪙</span>
               <span>{Number(user?.coins ?? 0)}</span>
@@ -116,7 +116,7 @@ export default function NavBar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-colors shrink-0 ${
+                className={`rounded-full px-2.5 py-1.5 lg:px-4 lg:py-2 text-xs lg:text-sm font-medium transition-colors shrink-0 ${
                   active
                     ? "bg-gray-800 text-white"
                     : "text-white hover:bg-gray-800 hover:text-white"
@@ -131,22 +131,22 @@ export default function NavBar() {
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex items-center gap-2 rounded-full bg-gray-800 px-2 py-1 md:px-2.5 md:py-1.5 text-xs md:text-sm font-bold text-white transition-colors hover:bg-gray-700 shrink-0"
+              className="flex items-center gap-2 rounded-full bg-gray-800 px-2 py-1 lg:px-2.5 lg:py-1.5 text-xs lg:text-sm font-bold text-white transition-colors hover:bg-gray-700 shrink-0"
             >
               <ProfileIcon name={user?.name} />
-              <span className="hidden lg:inline">{user?.name}</span>
+              <span className="hidden xl:inline">{user?.name}</span>
             </Link>
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-gray-800 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white shadow-sm transition-colors hover:bg-gray-700 shrink-0"
+              className="rounded-full bg-gray-800 px-3 py-1.5 lg:px-4 lg:py-2 text-xs lg:text-sm font-bold text-white shadow-sm transition-colors hover:bg-gray-700 shrink-0"
             >
               Login
             </Link>
           )}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 md:hidden">
+        <div className="ml-auto flex items-center gap-2 lg:hidden">
           {isLoggedIn && (
             <Link
               href="/post-ad/buy-coin"
@@ -178,30 +178,47 @@ export default function NavBar() {
           <button
             type="button"
             aria-label="Toggle menu"
-            className="rounded-full p-2 text-white hover:bg-gray-800 transition-colors"
+            className="rounded-full p-2 text-white hover:bg-gray-800 transition-colors cursor-pointer"
             onClick={() => setMenuOpen((v) => !v)}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
+            {menuOpen ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
 
       {menuOpen && (
-        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1 border-b border-gray-800 bg-black px-4 py-3 text-white shadow-xl md:hidden animate-dropdown">
+        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1 border-b border-gray-800 bg-black/95 backdrop-blur-md px-4 py-3 text-white shadow-2xl lg:hidden">
           {navLinks.map((link) => {
             const active =
               pathname === link.href || pathname.startsWith(`${link.href}/`);

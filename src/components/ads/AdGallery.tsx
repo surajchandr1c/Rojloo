@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/cn";
 
 export default function AdGallery({
   images,
   name,
+  className,
 }: {
   images: string[];
   name: string;
+  className?: string;
 }) {
   const count = images.length;
   const [index, setIndex] = useState(0);
@@ -23,15 +26,20 @@ export default function AdGallery({
 
   if (count === 0) {
     return (
-      <div className="relative h-72 w-full overflow-hidden rounded-[1.5rem] bg-gray-50 sm:h-80 md:h-96" />
+      <div
+        className={cn(
+          "relative h-[20rem] w-full overflow-hidden rounded-[1.5rem] bg-gray-50 sm:h-[24rem] md:h-[28rem] lg:h-[32rem] xl:h-[34rem] max-h-[calc(100vh-10rem)]",
+          className
+        )}
+      />
     );
   }
 
   const go = (dir: number) => setIndex((i) => (i + dir + count) % count);
 
   return (
-    <div className="relative w-full">
-      <div className="relative h-72 w-full overflow-hidden rounded-[1.5rem] bg-gray-50 sm:h-80 md:h-96">
+    <div className={cn("relative w-full", className)}>
+      <div className="relative h-[20rem] w-full overflow-hidden rounded-[1.5rem] bg-gray-50 sm:h-[24rem] md:h-[28rem] lg:h-[32rem] xl:h-[34rem] max-h-[calc(100vh-10rem)]">
         <Image
           src={images[index]}
           alt={`${name} image ${index + 1}`}

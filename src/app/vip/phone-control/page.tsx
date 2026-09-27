@@ -322,7 +322,7 @@ export default function VipPhoneControlPage() {
             <button
               type="submit"
               disabled={saving || cities.length === 0}
-              className="rounded-xl bg-[] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[] disabled:opacity-50 transition"
+              className="rounded-xl bg-black px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-gray-900 disabled:opacity-50 transition cursor-pointer"
             >
               {saving ? "Saving..." : "Save Contact Control"}
             </button>

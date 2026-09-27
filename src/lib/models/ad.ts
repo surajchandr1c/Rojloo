@@ -58,11 +58,20 @@ async function memoryFindById(id: string): Promise<Ad | null> {
   return (store.ads.find((ad) => ad._id === id) as unknown as Ad) ?? null;
 }
 
-function buildAdIdCandidates(id: string): Array<string | ObjectId> {
-  const trimmed = id.trim();
-  const candidates: Array<string | ObjectId> = [trimmed];
-  if (ObjectId.isValid(trimmed)) {
-    candidates.unshift(new ObjectId(trimmed));
+function buildAdIdCandidates(id: unknown): Array<string | ObjectId> {
+  if (!id) return [];
+  if (id instanceof ObjectId) {
+    return [id, id.toString()];
+  }
+  const strId = typeof id === "string" ? id.trim() : String(id).trim();
+  if (!strId || strId === "[object Object]") return [];
+  const candidates: Array<string | ObjectId> = [strId];
+  if (ObjectId.isValid(strId)) {
+    try {
+      candidates.unshift(new ObjectId(strId));
+    } catch {
+      // ignore
+    }
   }
   return candidates;
 }
@@ -868,8 +877,8 @@ export function toPublicAd(ad: Ad, override?: VipPhoneOverride | null): PublicAd
   }
 
   return {
-    _id: ad._id,
-    userId: ad.userId,
+    _id: ad._id ? String(ad._id) : undefined,
+    userId: String(ad.userId ?? ""),
     name: ad.name,
     title: ad.title,
     age: ad.age,

@@ -366,9 +366,9 @@ export default function VipPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-[] px-5 py-3 font-bold text-white hover:bg-[] disabled:opacity-60 transition"
+                className="w-full rounded-xl bg-black px-5 py-3 font-bold text-white hover:bg-gray-900 disabled:opacity-60 transition cursor-pointer"
               >
-                {loading ? "Assigning..." : "assign vip access"}
+                {loading ? "Assigning..." : "Assign VIP Access"}
               </button>
             </div>
           </form>

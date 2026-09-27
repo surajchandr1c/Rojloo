@@ -578,7 +578,7 @@ export default function AdminPhoneControlPage() {
               <button
                 type="submit"
                 disabled={saving || !selectedCity}
-                className="rounded-xl bg-[] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[] disabled:opacity-50 transition flex items-center gap-2"
+                className="rounded-xl bg-black px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-gray-900 disabled:opacity-50 transition flex items-center gap-2 cursor-pointer"
               >
                 {saving && (
                   <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

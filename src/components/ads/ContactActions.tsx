@@ -7,6 +7,8 @@ type ContactActionsProps = {
   telegram?: string;
   className?: string;
   cityName?: string;
+  phoneClassName?: string;
+  whatsappClassName?: string;
 };
 
 export default function ContactActions({
@@ -15,6 +17,8 @@ export default function ContactActions({
   telegram,
   className,
   cityName,
+  phoneClassName,
+  whatsappClassName,
 }: ContactActionsProps) {
   if (!phone && !whatsapp && !telegram) return null;
 
@@ -35,6 +39,8 @@ export default function ContactActions({
     whatsappUrl = `https://wa.me/${fullNumber}?text=${encodeURIComponent(message)}`;
   }
 
+  const buttonBaseClass = "min-w-[120px] justify-center text-center";
+
   return (
     <div className={cn("flex flex-wrap", className ?? "gap-2")}>
       {phone && (
@@ -42,7 +48,11 @@ export default function ContactActions({
           href={`tel:${phone.replace(/\s/g, "")}`}
           variant="solid"
           size="sm"
-          className="!text-white"
+          className={cn(
+            "!bg-red-600 !text-white hover:!bg-red-700",
+            buttonBaseClass,
+            phoneClassName
+          )}
         >
           Call
         </Button>
@@ -52,7 +62,11 @@ export default function ContactActions({
           href={whatsappUrl}
           variant="solid"
           size="sm"
-          className="!bg-gray-600 !text-white hover:!bg-gray-700"
+          className={cn(
+            "!bg-green-600 !text-white hover:!bg-green-700",
+            buttonBaseClass,
+            whatsappClassName
+          )}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -64,7 +78,10 @@ export default function ContactActions({
           href={`https://t.me/${telegram.replace(/^@/, "")}`}
           variant="solid"
           size="sm"
-          className="!bg-gray-500 !text-white hover:!bg-gray-600"
+          className={cn(
+            "!bg-gray-500 !text-white hover:!bg-gray-600",
+            buttonBaseClass
+          )}
           target="_blank"
           rel="noopener noreferrer"
         >

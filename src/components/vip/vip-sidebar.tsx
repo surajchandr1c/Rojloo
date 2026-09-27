@@ -86,17 +86,17 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile & Tablet Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-none flex-col border-r border-gray-800 bg-black text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-none flex-col border-r border-gray-800 bg-black text-white transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{ backgroundColor: "#000000", color: "#ffffff" }}
@@ -112,7 +112,7 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg !text-white text-white hover:bg-gray-800 transition-colors"
+            className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg !text-white text-white hover:bg-gray-800 transition-colors cursor-pointer"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
