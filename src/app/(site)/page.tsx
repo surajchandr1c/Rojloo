@@ -122,7 +122,7 @@ export default async function Home() {
           <h2 className="text-2xl font-black !text-white sm:text-3xl">
             Ready to get started?
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-base leading-7 !text-white">
+          <p className="mx-auto mt-3 max-w-3xl text-base leading-7 !text-white">
             Post your ad in minutes and reach people looking for your service in
             your city.
           </p>
@@ -134,7 +134,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8 pb-16 sm:pb-20">
         <StaticSeoSection pageKey="home" inCard={false} />
       </div>
     </main>
