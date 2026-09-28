@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   findUserById,
   findUserBySessionToken,
-  issueUserSession,
   toPublicUser,
-  type PublicUser,
 } from "@/lib/models/user";
 import { verifyJWT, extractJWTFromHeader } from "@/lib/jwt";
 

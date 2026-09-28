@@ -4,7 +4,7 @@ import { listAllCities } from "@/lib/models/city";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+  const searchParams = request.nextUrl.searchParams;
   const stateFilter = searchParams.get("state")?.trim().toLowerCase();
 
   try {

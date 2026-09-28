@@ -98,6 +98,17 @@ export const getAllLocalAreaSeo = cache(async function (): Promise<LocalAreaSeo[
   return ((store.localAreaSeo ?? []) as unknown as Record<string, unknown>[]).map(normalizeRecord);
 });
 
+let localAreaSeoIndexesCreated = false;
+function ensureLocalAreaSeoIndexes(db: import("mongodb").Db) {
+  if (localAreaSeoIndexesCreated) return;
+  localAreaSeoIndexesCreated = true;
+  db.collection("local_area_seo")
+    .createIndexes([
+      { key: { citySlug: 1, areaSlug: 1 }, name: "local_area_seo_city_area_idx", unique: true },
+    ])
+    .catch(() => {});
+}
+
 export const getLocalAreaSeo = cache(async function (
   citySlug: string,
   areaSlug: string
@@ -108,6 +119,7 @@ export const getLocalAreaSeo = cache(async function (
 
   const db = await getDb();
   if (db) {
+    ensureLocalAreaSeoIndexes(db);
     try {
       const doc = await db.collection("local_area_seo").findOne({ citySlug: city, areaSlug: area });
       if (doc) return normalizeRecord(doc as unknown as Record<string, unknown>);

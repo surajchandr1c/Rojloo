@@ -1,7 +1,7 @@
 import { cache } from "react";
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
-import { ObjectId } from "mongodb";
+import { ObjectId, type Filter, type Document } from "mongodb";
 import { readStore, writeStore } from "@/lib/persist";
 import { getDb } from "@/lib/db";
 
@@ -732,7 +732,7 @@ export async function getVipScopedUsers(email: string) {
           ? { $or: [{ _id: { $in: validObjIds } }, { _id: { $in: ids } }] }
           : { _id: { $in: ids } };
 
-      const userDocs = await db.collection("users").find(queryFilter as any).toArray();
+      const userDocs = await db.collection("users").find(queryFilter as Filter<Document>).toArray();
       if (userDocs.length > 0) {
         return userDocs.map((u) => ({
           _id: String(u._id ?? ""),

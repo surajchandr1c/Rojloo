@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Button from "@/components/ui/button";
 import SearchBar from "@/components/search-bar";
-import HomeFaq from "@/components/home-faq";
 import { StaticSeoSection } from "@/components/seo/static-seo-section";
-import { getStaticSeo } from "@/lib/models/static-seo";
 import { serviceCards } from "@/lib/services";
 import { siteConfig } from "@/lib/config/site";
 
@@ -31,7 +29,6 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const homeSeo = await getStaticSeo("home");
   return (
     <main>
       {/* Part 1 — Homepage Hero */}
@@ -96,7 +93,7 @@ export default async function Home() {
                     alt={item.title}
                     fill
                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                    sizes="(max-width: 1024px) 50vw, 33vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 </div>
                 <h3 className="mt-4 px-6 text-xl font-black text-gray-950">

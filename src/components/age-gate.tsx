@@ -1,27 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "rojlo_age_verified";
 
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function getSnapshot(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function getServerSnapshot(): boolean {
+  return true;
+}
+
 export default function AgeGate() {
-  const [show, setShow] = useState(false);
+  const isVerifiedInStorage = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [manuallyAccepted, setManuallyAccepted] = useState(false);
   const [declined, setDeclined] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const acceptBtnRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    let verified = false;
-    try {
-      verified = localStorage.getItem(STORAGE_KEY) === "true";
-    } catch {
-      verified = false;
-    }
-
-    if (!verified) {
-      setShow(true);
-    }
-  }, []);
+  const show = !isVerifiedInStorage && !manuallyAccepted;
 
   useEffect(() => {
     if (!show) {
@@ -106,7 +113,7 @@ export default function AgeGate() {
       // ignore storage error
     }
     document.body.classList.remove("age-gate-locked");
-    setShow(false);
+    setManuallyAccepted(true);
   }
 
   function declineAge() {

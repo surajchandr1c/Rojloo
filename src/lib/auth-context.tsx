@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -126,48 +127,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [refreshAuthFromServer]);
 
-  const setUser = (newUser: AuthUser | null) => {
+  const setUser = useCallback((newUser: AuthUser | null) => {
     setUserState(newUser);
     if (newUser) {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
     } else {
       localStorage.removeItem(USER_STORAGE_KEY);
     }
-  };
+  }, []);
 
-  const setToken = (newToken: string | null) => {
+  const setToken = useCallback((newToken: string | null) => {
     setTokenState(newToken);
     if (newToken) {
       localStorage.setItem(STORAGE_KEY, newToken);
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUserState(null);
     setTokenState(null);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
-  };
+  }, []);
 
   const refreshAuth = useCallback(
     () => refreshAuthFromServer(token),
     [refreshAuthFromServer, token]
   );
 
+  const contextValue = useMemo(
+    () => ({
+      user,
+      token,
+      isLoading,
+      setUser,
+      setToken,
+      logout,
+      refreshAuth,
+    }),
+    [user, token, isLoading, setUser, setToken, logout, refreshAuth]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        isLoading,
-        setUser,
-        setToken,
-        logout,
-        refreshAuth,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

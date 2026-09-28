@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -76,8 +77,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     });
   }, [refresh]);
 
+  const value = useMemo(() => ({ me, refresh }), [me, refresh]);
+
   return (
-    <AdminContext.Provider value={{ me, refresh }}>
+    <AdminContext.Provider value={value}>
       {children}
     </AdminContext.Provider>
   );

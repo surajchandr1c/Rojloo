@@ -93,7 +93,7 @@ export default function NavBar() {
             width={36}
             height={36}
             className="h-9 w-9 rounded-full object-cover shadow-sm ring-1 ring-white/30"
-            priority
+            preload
           />
           <span>rojlo</span>
         </Link>

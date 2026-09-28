@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
+import GoogleAnalytics from "@/components/analytics/google-analytics";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -105,6 +106,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-full bg-gray-50 text-gray-950 font-sans">
         {children}
+        <GoogleAnalytics />
       </body>
     </html>
   );

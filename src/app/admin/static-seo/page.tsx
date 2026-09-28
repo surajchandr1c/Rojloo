@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
 import {
@@ -27,6 +28,10 @@ function StaticSeoContent() {
   const validKey = STATIC_PAGES.some((p) => p.key === initialKey) ? initialKey : "home";
 
   const [activeTab, setActiveTab] = useState<StaticPageKey>(validKey);
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -97,7 +102,7 @@ function StaticSeoContent() {
 
           setSeoMap(merged);
 
-          const cur = merged[activeTab];
+          const cur = merged[activeTabRef.current];
           if (cur) {
             setTitle(cur.title || "");
             setDescription(cur.description || "");
@@ -545,10 +550,13 @@ function StaticSeoContent() {
                   {img1?.url ? (
                     <div className="space-y-3">
                       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
-                        <img
+                        <Image
                           src={img1.url}
                           alt={img1.alt || "Image 1"}
+                          fill
                           className="h-full w-full object-cover"
+                          sizes="(max-width: 768px) 100vw, 400px"
+                          unoptimized
                         />
                       </div>
                       <div>
@@ -612,10 +620,13 @@ function StaticSeoContent() {
                   {img2?.url ? (
                     <div className="space-y-3">
                       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
-                        <img
+                        <Image
                           src={img2.url}
                           alt={img2.alt || "Image 2"}
+                          fill
                           className="h-full w-full object-cover"
+                          sizes="(max-width: 768px) 100vw, 400px"
+                          unoptimized
                         />
                       </div>
                       <div>

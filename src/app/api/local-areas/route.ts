@@ -4,7 +4,7 @@ import { listLocalAreas } from "@/lib/models/localArea";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+  const searchParams = request.nextUrl.searchParams;
   const cityName = searchParams.get("cityName") || undefined;
   const citySlug = searchParams.get("citySlug") || undefined;
   const stateName = searchParams.get("stateName") || undefined;

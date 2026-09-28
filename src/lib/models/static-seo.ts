@@ -152,6 +152,17 @@ export function invalidateStaticSeoCache(pageKey?: string): void {
   }
 }
 
+let staticSeoIndexesCreated = false;
+function ensureStaticSeoIndexes(db: import("mongodb").Db) {
+  if (staticSeoIndexesCreated) return;
+  staticSeoIndexesCreated = true;
+  db.collection("static_seo")
+    .createIndexes([
+      { key: { pageKey: 1 }, name: "static_seo_pagekey_idx", unique: true },
+    ])
+    .catch(() => {});
+}
+
 export const getStaticSeo = cache(async function (
   pageKey: string
 ): Promise<StaticSeo | null> {
@@ -167,6 +178,7 @@ export const getStaticSeo = cache(async function (
   let result: StaticSeo | null = null;
   const db = await getDb();
   if (db) {
+    ensureStaticSeoIndexes(db);
     try {
       const doc = await db.collection("static_seo").findOne({ pageKey: target });
       if (doc) {

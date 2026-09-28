@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -78,8 +79,10 @@ export function VipProvider({ children }: { children: ReactNode }) {
     });
   }, [refresh]);
 
+  const value = useMemo(() => ({ me, refresh }), [me, refresh]);
+
   return (
-    <VipContext.Provider value={{ me, refresh }}>
+    <VipContext.Provider value={value}>
       {children}
     </VipContext.Provider>
   );

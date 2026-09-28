@@ -288,8 +288,8 @@ async function LocalAreaContent({
                           alt={`${ad.name} - Services in ${area.name}`}
                           fill
                           className="object-contain transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, 360px"
-                          priority={index === 0}
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+                          preload={index === 0}
                         />
                       </div>
                     )}

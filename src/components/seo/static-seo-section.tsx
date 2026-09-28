@@ -101,11 +101,13 @@ export async function StaticSeoSection({
           </div>
           <div className="lg:col-span-5 flex justify-center">
             <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-gray-200/80 bg-gray-100 shadow-md">
-              <img
+              <Image
                 src={img1.url}
                 alt={img1.alt || "SEO Image 1"}
+                fill
                 className="h-full w-full object-cover"
-                loading="lazy"
+                sizes="(max-width: 1024px) 100vw, 450px"
+                unoptimized={!img1.url.includes("res.cloudinary.com") && !img1.url.startsWith("/")}
               />
             </div>
           </div>
@@ -115,11 +117,13 @@ export async function StaticSeoSection({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-5 flex justify-center order-last lg:order-first">
             <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-gray-200/80 bg-gray-100 shadow-md">
-              <img
+              <Image
                 src={img2.url}
                 alt={img2.alt || "SEO Image 2"}
+                fill
                 className="h-full w-full object-cover"
-                loading="lazy"
+                sizes="(max-width: 1024px) 100vw, 450px"
+                unoptimized={!img2.url.includes("res.cloudinary.com") && !img2.url.startsWith("/")}
               />
             </div>
           </div>
@@ -139,11 +143,13 @@ export async function StaticSeoSection({
         </div>
         <div className="lg:col-span-5 flex justify-center">
           <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-gray-200/80 bg-gray-100 shadow-md">
-            <img
+            <Image
               src={img1.url}
               alt={img1.alt || "SEO Image 1"}
+              fill
               className="h-full w-full object-cover"
-              loading="lazy"
+              sizes="(max-width: 1024px) 100vw, 450px"
+              unoptimized={!img1.url.includes("res.cloudinary.com") && !img1.url.startsWith("/")}
             />
           </div>
         </div>
@@ -156,11 +162,13 @@ export async function StaticSeoSection({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <div className="lg:col-span-5 flex justify-center order-last lg:order-first">
           <div className="relative aspect-[4/3] w-full max-w-md overflow-hidden rounded-2xl border border-gray-200/80 bg-gray-100 shadow-md">
-            <img
+            <Image
               src={img2.url}
               alt={img2.alt || "SEO Image 2"}
+              fill
               className="h-full w-full object-cover"
-              loading="lazy"
+              sizes="(max-width: 1024px) 100vw, 450px"
+              unoptimized={!img2.url.includes("res.cloudinary.com") && !img2.url.startsWith("/")}
             />
           </div>
         </div>

@@ -116,6 +116,18 @@ export async function getAllCitySeo(): Promise<CitySeo[]> {
 const seoCache = new Map<string, { data: CitySeo | null; expiresAt: number }>();
 const SEO_CACHE_TTL_MS = 60_000;
 
+let citySeoIndexesCreated = false;
+function ensureCitySeoIndexes(db: import("mongodb").Db) {
+  if (citySeoIndexesCreated) return;
+  citySeoIndexesCreated = true;
+  db.collection("city_seo")
+    .createIndexes([
+      { key: { slug: 1 }, name: "city_seo_slug_idx" },
+      { key: { urlSlug: 1 }, name: "city_seo_urlslug_idx" },
+    ])
+    .catch(() => {});
+}
+
 export function invalidateCitySeoCache(slug?: string): void {
   if (slug) {
     seoCache.delete(slug.toLowerCase().trim());
@@ -139,6 +151,7 @@ export const getCitySeo = cache(async function (
   let result: CitySeo | null = null;
   const db = await getDb();
   if (db) {
+    ensureCitySeoIndexes(db);
     try {
       const doc = await db.collection("city_seo").findOne({
         $or: [

@@ -117,6 +117,7 @@ export default function Services() {
                       fill
                       className="object-cover"
                       sizes="(max-width: 1024px) 100vw, 50vw"
+                      preload={index === 0}
                     />
                   </div>
                 </div>

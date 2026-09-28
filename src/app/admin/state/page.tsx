@@ -394,7 +394,7 @@ export default function AdminStates() {
   }
 
   // Delete City Handler with Instant Optimistic Purge
-  async function handleDeleteCity(id?: string, cityName?: string, stateName?: string) {
+  async function handleDeleteCity(id?: string, cityName?: string) {
     if (!id) return;
     const targetName = cityName || id;
     if (!confirm(`Delete city "${targetName}"?`)) return;
@@ -1509,14 +1509,16 @@ function InlineEditableName({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(value);
+  const [prevValue, setPrevValue] = useState(value);
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (!isEditing) {
       setText(value);
     }
-  }, [value, isEditing]);
+  }
 
   useEffect(() => {
     if (isEditing) {
