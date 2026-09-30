@@ -87,10 +87,34 @@ export const getCityBySlug = cache(async function (
     (store.deletedStates ?? []).map((s: string) => s.trim().toLowerCase())
   );
 
-  if (await isCityDeleted(slug)) return null;
+  const cleanSlug = slug.trim().toLowerCase();
+  if (await isCityDeleted(cleanSlug)) return null;
 
+  // 1. Check custom cities first (allows custom updates/additions to override static)
+  const customCities = await listCities();
+  const custom = customCities.find(
+    (c) =>
+      c.slug.toLowerCase() === cleanSlug ||
+      slugify(c.name) === cleanSlug ||
+      c.name.trim().toLowerCase() === cleanSlug
+  );
+  if (custom) {
+    if (
+      custom.state &&
+      (deletedStates.has(custom.state.trim().toLowerCase()) ||
+        deletedStates.has(slugify(custom.state)))
+    ) {
+      return null;
+    }
+    return custom;
+  }
+
+  // 2. Check static cities
   const staticCity = cityPlaces.find(
-    (c) => c.slug === slug || c.slug.toLowerCase() === slug.toLowerCase()
+    (c) =>
+      c.slug === slug ||
+      c.slug.toLowerCase() === cleanSlug ||
+      slugify(c.name) === cleanSlug
   );
   if (staticCity) {
     if (
@@ -112,10 +136,7 @@ export const getCityBySlug = cache(async function (
     };
   }
 
-  const custom = (await listCities()).find(
-    (c) => c.slug.toLowerCase() === slug.toLowerCase()
-  );
-  return custom ?? null;
+  return null;
 });
 
 export async function getCustomCityBySlug(
@@ -132,20 +153,20 @@ export type CombinedCity = CityRecord & { source: "Static" | "Custom" };
 
 let cachedCombinedCities: CombinedCity[] | null = null;
 let cachedCombinedCitiesExpiresAt = 0;
-const COMBINED_CITIES_CACHE_TTL_MS = 5 * 60_000; // 5 minutes
+const COMBINED_CITIES_CACHE_TTL_MS = 10_000; // 10 seconds
 
 export function invalidateCityCache(): void {
   cachedCombinedCities = null;
   cachedCombinedCitiesExpiresAt = 0;
 }
 
-export async function listAllCities(): Promise<CombinedCity[]> {
+export async function listAllCities(forceFresh = false): Promise<CombinedCity[]> {
   const now = Date.now();
-  if (cachedCombinedCities && now < cachedCombinedCitiesExpiresAt) {
+  if (!forceFresh && cachedCombinedCities && now < cachedCombinedCitiesExpiresAt) {
     return cachedCombinedCities;
   }
 
-  const store = await readStore();
+  const store = await readStore(forceFresh);
   const deleted = new Set(
     (store.deletedCities ?? []).map((s: string) => s.trim().toLowerCase())
   );
@@ -248,9 +269,11 @@ export async function createCity(data: {
   if (trimmedState) {
     const sNameLower = trimmedState.toLowerCase();
     const sSlugLower = slugify(trimmedState);
+    const sClean = sNameLower.replace(/[^a-z0-9]/g, "");
     store.deletedStates = (store.deletedStates ?? []).filter((s: string) => {
       const val = s.trim().toLowerCase();
-      return val !== sNameLower && val !== sSlugLower;
+      const valClean = val.replace(/[^a-z0-9]/g, "");
+      return val !== sNameLower && val !== sSlugLower && valClean !== sClean;
     });
   }
 
@@ -277,6 +300,7 @@ export async function createCity(data: {
     existing.createdAt = new Date();
     await writeStore(store);
     invalidateCityCache();
+    invalidateLocalAreasCache();
     return existing;
   }
 
@@ -294,6 +318,7 @@ export async function createCity(data: {
   store.cities.push(city as unknown as (typeof store.cities)[number]);
   await writeStore(store);
   invalidateCityCache();
+  invalidateLocalAreasCache();
 
   return city;
 }

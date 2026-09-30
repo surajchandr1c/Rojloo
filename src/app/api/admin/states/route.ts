@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const states = await listStates();
+  const states = await listStates({ fresh: true });
   return NextResponse.json({ states }, { headers: NO_CACHE_HEADERS });
 }
 

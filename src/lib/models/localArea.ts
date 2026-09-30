@@ -2,6 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 import { readStore, writeStore } from "../persist";
+import { cityPlaces } from "../places";
+import { invalidateCityCache } from "./city";
 
 export type LocalAreaRecord = {
   _id?: string;
@@ -48,7 +50,7 @@ let cachedByCitySlug: Map<string, LocalAreaRecord[]> | null = null;
 let cachedByCityName: Map<string, LocalAreaRecord[]> | null = null;
 let cachedByState: Map<string, LocalAreaRecord[]> | null = null;
 let cacheExpiresAt = 0;
-const LOCAL_AREAS_CACHE_TTL_MS = 60_000;
+const LOCAL_AREAS_CACHE_TTL_MS = 10_000;
 
 export function invalidateLocalAreasCache(): void {
   cachedLocalAreas = null;
@@ -58,7 +60,7 @@ export function invalidateLocalAreasCache(): void {
   cacheExpiresAt = 0;
 }
 
-async function getIndexedLocalAreas(): Promise<{
+async function getIndexedLocalAreas(forceFresh = false): Promise<{
   all: LocalAreaRecord[];
   byCitySlug: Map<string, LocalAreaRecord[]>;
   byCityName: Map<string, LocalAreaRecord[]>;
@@ -66,6 +68,7 @@ async function getIndexedLocalAreas(): Promise<{
 }> {
   const now = Date.now();
   if (
+    !forceFresh &&
     cachedLocalAreas &&
     cachedByCitySlug &&
     cachedByCityName &&
@@ -80,7 +83,7 @@ async function getIndexedLocalAreas(): Promise<{
     };
   }
 
-  const store = await readStore();
+  const store = await readStore(forceFresh);
   const rawAreas = (store.localAreas ?? []) as unknown as LocalAreaRecord[];
   const all = [...rawAreas].sort((a, b) =>
     String(a.name).localeCompare(String(b.name))
@@ -102,6 +105,14 @@ async function getIndexedLocalAreas(): Promise<{
       const list = byCityName.get(cName) || [];
       list.push(a);
       byCityName.set(cName, list);
+
+      // Also map slugify(a.cityName) into byCitySlug
+      const cNameSlug = slugify(a.cityName);
+      if (cNameSlug && cNameSlug !== (a.citySlug || "").toLowerCase()) {
+        const slugList = byCitySlug.get(cNameSlug) || [];
+        slugList.push(a);
+        byCitySlug.set(cNameSlug, slugList);
+      }
     }
     if (a.stateName) {
       const sName = a.stateName.toLowerCase().trim();
@@ -124,14 +135,31 @@ export const listLocalAreas = cache(async function (filters?: {
   cityName?: string;
   citySlug?: string;
   stateName?: string;
+  fresh?: boolean;
 }): Promise<LocalAreaRecord[]> {
-  const indexed = await getIndexedLocalAreas();
+  const indexed = await getIndexedLocalAreas(filters?.fresh);
 
   if (filters?.citySlug) {
-    return indexed.byCitySlug.get(filters.citySlug.trim().toLowerCase()) ?? [];
+    const targetSlug = filters.citySlug.trim().toLowerCase();
+    const bySlug = indexed.byCitySlug.get(targetSlug);
+    if (bySlug && bySlug.length > 0) return bySlug;
+
+    if (filters.cityName) {
+      const byName = indexed.byCityName.get(filters.cityName.trim().toLowerCase());
+      if (byName && byName.length > 0) return byName;
+    }
+
+    // Fallback: match by citySlug or slugified cityName
+    const fallback = indexed.all.filter(
+      (a) =>
+        a.citySlug?.toLowerCase() === targetSlug ||
+        slugify(a.cityName) === targetSlug
+    );
+    if (fallback.length > 0) return fallback;
   }
   if (filters?.cityName) {
-    return indexed.byCityName.get(filters.cityName.trim().toLowerCase()) ?? [];
+    const byName = indexed.byCityName.get(filters.cityName.trim().toLowerCase());
+    if (byName && byName.length > 0) return byName;
   }
   if (filters?.stateName) {
     const s = filters.stateName.trim().toLowerCase();
@@ -146,31 +174,70 @@ export const getLocalAreaBySlug = cache(async function (
   areaSlug: string
 ): Promise<LocalAreaRecord | null> {
   const normalizedAreaSlug = slugify(areaSlug);
-  const areas = await listLocalAreas({ citySlug });
-  return (
-    areas.find(
-      (area) =>
-        area.slug.toLowerCase() === normalizedAreaSlug ||
-        slugify(area.name) === normalizedAreaSlug
-    ) ?? null
+  const areas = await listLocalAreas({ citySlug, fresh: true });
+  let match = areas.find(
+    (area) =>
+      area.slug.toLowerCase() === normalizedAreaSlug ||
+      slugify(area.name) === normalizedAreaSlug
   );
+  if (!match) {
+    const targetClean = citySlug.trim().toLowerCase();
+    const indexed = await getIndexedLocalAreas(true);
+    match = indexed.all.find(
+      (area) =>
+        (area.citySlug?.toLowerCase() === targetClean ||
+          slugify(area.cityName) === targetClean) &&
+        (area.slug.toLowerCase() === normalizedAreaSlug ||
+          slugify(area.name) === normalizedAreaSlug)
+    );
+  }
+  return match ?? null;
 });
 
 export async function createLocalArea(data: {
   name: string;
   cityName: string;
   stateName?: string;
+  citySlug?: string;
 }): Promise<LocalAreaRecord> {
   const trimmedName = data.name.trim();
   const trimmedCity = data.cityName.trim();
-  const trimmedState = data.stateName?.trim() ?? "";
+  let trimmedState = data.stateName?.trim() ?? "";
+  let citySlug = data.citySlug ? slugify(data.citySlug) : "";
 
   if (!trimmedName) throw new Error("Local area name is required.");
   if (!trimmedCity) throw new Error("City name is required.");
 
-  const store = await readStore();
+  const store = await readStore(true);
+
+  if (!citySlug || !trimmedState) {
+    const customCity = (
+      (store.cities ?? []) as Array<{ name?: string; slug?: string; state?: string }>
+    ).find(
+      (c) =>
+        (c.name && c.name.trim().toLowerCase() === trimmedCity.toLowerCase()) ||
+        (c.slug && c.slug.toLowerCase() === slugify(trimmedCity))
+    );
+    const staticCity = !customCity
+      ? cityPlaces.find(
+          (c) =>
+            c.name.trim().toLowerCase() === trimmedCity.toLowerCase() ||
+            c.slug.toLowerCase() === slugify(trimmedCity)
+        )
+      : null;
+
+    const matchedCity = customCity || staticCity;
+    if (matchedCity) {
+      if (!citySlug && matchedCity.slug) citySlug = matchedCity.slug;
+      if (!trimmedState && matchedCity.state) trimmedState = matchedCity.state.trim();
+    }
+  }
+
+  if (!citySlug) {
+    citySlug = slugify(trimmedCity);
+  }
+
   const areaSlug = slugify(trimmedName) || `area-${Date.now()}`;
-  const citySlug = slugify(trimmedCity);
   const stateSlug = trimmedState ? slugify(trimmedState) : "";
 
   store.localAreas = (store.localAreas ?? []) as unknown as typeof store.localAreas;
@@ -178,19 +245,21 @@ export async function createLocalArea(data: {
 
   const existingIndex = existingAreas.findIndex(
     (a) =>
-      a.citySlug === citySlug &&
+      (a.citySlug === citySlug || slugify(a.cityName) === slugify(trimmedCity)) &&
       (a.slug === areaSlug || a.name.toLowerCase() === trimmedName.toLowerCase())
   );
 
   if (existingIndex >= 0) {
     const existing = existingAreas[existingIndex];
     existing.name = trimmedName;
+    if (citySlug) existing.citySlug = citySlug;
     if (trimmedState && !existing.stateName) {
       existing.stateName = trimmedState;
       existing.stateSlug = stateSlug;
     }
     await writeStore(store);
     invalidateLocalAreasCache();
+    invalidateCityCache();
     return existing;
   }
 
@@ -208,6 +277,7 @@ export async function createLocalArea(data: {
   store.localAreas.push(localArea as unknown as (typeof store.localAreas)[number]);
   await writeStore(store);
   invalidateLocalAreasCache();
+  invalidateCityCache();
   return localArea;
 }
 

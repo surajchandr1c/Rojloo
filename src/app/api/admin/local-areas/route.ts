@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
   const stateName = searchParams.get("stateName") || undefined;
 
   try {
-    const localAreas = await listLocalAreas({ cityName, citySlug, stateName });
+    const localAreas = await listLocalAreas({ cityName, citySlug, stateName, fresh: true });
     return NextResponse.json({ localAreas }, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error("listLocalAreas failed:", error);
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const { name, cityName, stateName } = body ?? {};
+  const { name, cityName, stateName, citySlug } = body ?? {};
 
   if (!name || typeof name !== "string" || !name.trim()) {
     return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
       name: String(name),
       cityName: String(cityName),
       stateName: stateName ? String(stateName) : undefined,
+      citySlug: citySlug ? String(citySlug) : undefined,
     });
     return NextResponse.json(
       { success: true, localArea },

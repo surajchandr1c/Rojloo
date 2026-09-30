@@ -59,8 +59,8 @@ export const DEFAULT_INDIAN_STATES: string[] = [
   "West Bengal",
 ];
 
-export async function listStates(): Promise<StateRecord[]> {
-  const store = await readStore();
+export async function listStates(options?: { fresh?: boolean }): Promise<StateRecord[]> {
+  const store = await readStore(options?.fresh);
   const deleted = new Set(
     (store.deletedStates ?? []).map((s: string) => s.trim().toLowerCase())
   );
@@ -114,16 +114,18 @@ export async function listStates(): Promise<StateRecord[]> {
 export async function createState(data: {
   name: string;
 }): Promise<StateRecord> {
-  const store = await readStore();
+  const store = await readStore(true);
   const trimmedName = data.name.trim();
   const slug = slugify(trimmedName) || `state-${Date.now()}`;
 
   // Un-delete state if it was in deletedStates
   const sNameLower = trimmedName.toLowerCase();
   const sSlugLower = slug.toLowerCase();
+  const sClean = sNameLower.replace(/[^a-z0-9]/g, "");
   store.deletedStates = (store.deletedStates ?? []).filter((s: string) => {
     const val = s.trim().toLowerCase();
-    return val !== sNameLower && val !== sSlugLower;
+    const valClean = val.replace(/[^a-z0-9]/g, "");
+    return val !== sNameLower && val !== sSlugLower && valClean !== sClean;
   });
 
   const states = store.states as unknown as StateRecord[];
@@ -135,6 +137,8 @@ export async function createState(data: {
     existing.name = trimmedName;
     existing.createdAt = new Date();
     await writeStore(store);
+    invalidateCityCache();
+    invalidateLocalAreasCache();
     return existing;
   }
 
@@ -146,6 +150,8 @@ export async function createState(data: {
   };
   store.states.push(state as unknown as (typeof store.states)[number]);
   await writeStore(store);
+  invalidateCityCache();
+  invalidateLocalAreasCache();
   return state;
 }
 

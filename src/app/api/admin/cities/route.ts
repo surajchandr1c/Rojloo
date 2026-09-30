@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const [cities, store] = await Promise.all([listAllCities(), readStore()]);
+  const [cities, store] = await Promise.all([listAllCities(true), readStore(true)]);
   return NextResponse.json(
     {
       cities,

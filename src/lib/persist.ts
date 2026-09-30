@@ -150,8 +150,7 @@ async function readStoreFromMongo(): Promise<StoreData> {
   }
 }
 
-let inFlightMongoWrite: Promise<void> | null = null;
-let pendingMongoWriteData: StoreData | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
 
 async function doWriteStoreToMongo(data: StoreData): Promise<void> {
   const db = await getDb();
@@ -176,27 +175,14 @@ async function doWriteStoreToMongo(data: StoreData): Promise<void> {
 }
 
 async function writeStoreToMongo(data: StoreData): Promise<void> {
-  if (inFlightMongoWrite) {
-    // Another write is currently transmitting; queue the latest data
-    pendingMongoWriteData = data;
-    return inFlightMongoWrite;
-  }
-
-  inFlightMongoWrite = (async () => {
-    try {
+  writeQueue = writeQueue
+    .then(async () => {
       await doWriteStoreToMongo(data);
-      // If another write arrived while this was transmitting, flush the latest snapshot
-      if (pendingMongoWriteData) {
-        const nextData = pendingMongoWriteData;
-        pendingMongoWriteData = null;
-        await doWriteStoreToMongo(nextData);
-      }
-    } finally {
-      inFlightMongoWrite = null;
-    }
-  })();
-
-  return inFlightMongoWrite;
+    })
+    .catch((err) => {
+      console.error("[persist] writeStoreToMongo queue error:", err);
+    });
+  return writeQueue;
 }
 
 // ---------- File (development) ----------
@@ -252,18 +238,18 @@ const CACHE_TTL_MS = 60_000; // 60 seconds (mutations immediately update storeCa
 
 // ---------- Public API ----------
 
-export async function readStore(): Promise<StoreData> {
+export async function readStore(forceFresh = false): Promise<StoreData> {
   const now = Date.now();
-  if (storeCache && now < storeCache.expiresAt) {
+  if (!forceFresh && storeCache && now < storeCache.expiresAt) {
     return storeCache.data;
   }
 
   // Deduplicate concurrent in-flight reads across server components / requests
-  if (inFlightReadStorePromise) {
+  if (!forceFresh && inFlightReadStorePromise) {
     return inFlightReadStorePromise;
   }
 
-  inFlightReadStorePromise = (async () => {
+  const readPromise = (async () => {
     try {
       const db = await getDb();
       const data = db ? await readStoreFromMongo() : await readStoreFromFile();
@@ -274,7 +260,11 @@ export async function readStore(): Promise<StoreData> {
     }
   })();
 
-  return inFlightReadStorePromise;
+  if (!forceFresh) {
+    inFlightReadStorePromise = readPromise;
+  }
+
+  return readPromise;
 }
 
 export async function writeStore(data: StoreData): Promise<void> {
@@ -294,4 +284,5 @@ export async function writeStore(data: StoreData): Promise<void> {
 
 export function invalidateStoreCache(): void {
   storeCache = null;
+  inFlightReadStorePromise = null;
 }

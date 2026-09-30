@@ -231,12 +231,25 @@ export default function AdminStates() {
             const cityKey = `${state.name}-${city.name}`;
             const cityMatches = fuzzyMatch(city.name, q);
 
-            const cityAreas = allLocalAreas.filter(
-              (a) =>
-                a.cityName.toLowerCase() === city.name.toLowerCase() &&
-                (!a.stateName ||
-                  a.stateName.toLowerCase() === state.name.toLowerCase())
-            );
+            const cityAreas = allLocalAreas.filter((a) => {
+              const aCitySlug = (a.citySlug || "").toLowerCase();
+              const cSlug = (city.slug || "").toLowerCase();
+              const cityMatch =
+                (aCitySlug && cSlug && aCitySlug === cSlug) ||
+                a.cityName.trim().toLowerCase() === city.name.trim().toLowerCase() ||
+                slugify(a.cityName) === slugify(city.name);
+
+              if (!cityMatch) return false;
+
+              if (!a.stateName || !state.name) return true;
+              const aState = a.stateName.trim().toLowerCase();
+              const sName = state.name.trim().toLowerCase();
+              return (
+                aState === sName ||
+                normalizeState(a.stateName) === normalizeState(state.name) ||
+                slugify(a.stateName) === slugify(state.name)
+              );
+            });
 
             const matchingAreas = cityAreas.filter((area) =>
               fuzzyMatch(area.name, q)
@@ -649,6 +662,39 @@ export default function AdminStates() {
     }
   }
 
+  function handleCityAdded(newCity: CityRow) {
+    setCities((prev) => {
+      const exists = prev.some(
+        (c) =>
+          c.name.trim().toLowerCase() === newCity.name.trim().toLowerCase() &&
+          (!newCity.state || !c.state || c.state.trim().toLowerCase() === newCity.state.trim().toLowerCase())
+      );
+      return exists ? prev : [...prev, newCity];
+    });
+    if (newCity.state) {
+      setExpandedStates((prev) => new Set(prev).add(newCity.state!));
+      setExpandedCities((prev) =>
+        new Set(prev).add(`${newCity.state}-${newCity.name}`)
+      );
+    }
+  }
+
+  function handleAreaAdded(newArea: LocalAreaRow) {
+    setAllLocalAreas((prev) => {
+      const exists = prev.some(
+        (a) =>
+          a.name.trim().toLowerCase() === newArea.name.trim().toLowerCase() &&
+          a.cityName.trim().toLowerCase() === newArea.cityName.trim().toLowerCase()
+      );
+      return exists ? prev : [...prev, newArea];
+    });
+    if (newArea.stateName && newArea.cityName) {
+      setExpandedCities((prev) =>
+        new Set(prev).add(`${newArea.stateName}-${newArea.cityName}`)
+      );
+    }
+  }
+
   // Handle JSON File Selection & Atomic Pre-Validation
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -832,17 +878,26 @@ export default function AdminStates() {
       }
 
       const createdCity = data.city as CityRow | undefined;
+      const targetCityName = createdCity?.name || trimmed;
       if (createdCity) {
-        setCities((prev) => [...prev, createdCity]);
+        setCities((prev) => {
+          const exists = prev.some(
+            (c) =>
+              c.name.trim().toLowerCase() === targetCityName.trim().toLowerCase() &&
+              (!selectedState || !c.state || c.state.trim().toLowerCase() === selectedState.trim().toLowerCase())
+          );
+          return exists ? prev : [...prev, createdCity];
+        });
       }
-      setSuccess(`City "${trimmed}" created successfully in ${selectedState}.`);
+      setSuccess(`City "${targetCityName}" created successfully in ${selectedState}.`);
       setNewCityName("");
       // Expand the state where city was added so admin sees it immediately
       setExpandedStates((prev) => new Set(prev).add(selectedState));
-      await load(true);
       // Select the newly created city and close inline form
-      setSelectedCity(trimmed);
+      setSelectedCity(targetCityName);
       setSelectedLocalArea("");
+      await load(true);
+      setSelectedCity(targetCityName);
     } catch {
       setError("An error occurred while creating city.");
     } finally {
@@ -867,6 +922,12 @@ export default function AdminStates() {
     setError("");
     setSuccess("");
 
+    const matchedCity = cities.find(
+      (c) =>
+        c.name.trim().toLowerCase() === selectedCity.trim().toLowerCase() &&
+        (!selectedState || !c.state || c.state.trim().toLowerCase() === selectedState.trim().toLowerCase())
+    );
+
     try {
       const res = await fetch("/api/admin/local-areas", {
         method: "POST",
@@ -874,8 +935,9 @@ export default function AdminStates() {
         credentials: "include",
         body: JSON.stringify({
           name: trimmed,
-          cityName: selectedCity,
+          cityName: matchedCity?.name || selectedCity,
           stateName: selectedState,
+          citySlug: matchedCity?.slug,
         }),
       });
 
@@ -886,19 +948,27 @@ export default function AdminStates() {
       }
 
       const createdArea = data.localArea as LocalAreaRow | undefined;
+      const targetAreaName = createdArea?.name || trimmed;
       if (createdArea) {
-        setAllLocalAreas((prev) => [...prev, createdArea]);
+        setAllLocalAreas((prev) => {
+          const exists = prev.some(
+            (a) =>
+              a.name.trim().toLowerCase() === targetAreaName.trim().toLowerCase() &&
+              a.cityName.trim().toLowerCase() === selectedCity.trim().toLowerCase()
+          );
+          return exists ? prev : [...prev, createdArea];
+        });
       }
-      setSuccess(`Local area "${trimmed}" added successfully to ${selectedCity}.`);
+      setSuccess(`Local area "${targetAreaName}" added successfully to ${selectedCity}.`);
       setNewLocalAreaName("");
       // Expand state and city in hierarchy
       setExpandedStates((prev) => new Set(prev).add(selectedState));
       setExpandedCities((prev) =>
         new Set(prev).add(`${selectedState}-${selectedCity}`)
       );
+      setSelectedLocalArea(targetAreaName);
       await load(true);
-      // Select the newly created local area and close inline form
-      setSelectedLocalArea(trimmed);
+      setSelectedLocalArea(targetAreaName);
     } catch {
       setError("An error occurred while adding local area.");
     } finally {
@@ -911,26 +981,43 @@ export default function AdminStates() {
     if (!selectedState) return [];
     const sLower = selectedState.trim().toLowerCase();
     const sNorm = normalizeState(selectedState);
+    const sSlug = slugify(selectedState);
     return cities.filter((c) => {
       if (!c.state) return false;
       const cLower = c.state.trim().toLowerCase();
-      return cLower === sLower || normalizeState(c.state) === sNorm;
+      return (
+        cLower === sLower ||
+        normalizeState(c.state) === sNorm ||
+        slugify(c.state) === sSlug
+      );
     });
   }, [cities, selectedState]);
 
   // Available Local Areas for currently selected City & State
   const areasForSelectedCity = useMemo(() => {
     if (!selectedCity || selectedCity === ADD_CITY_VALUE) return [];
-    const cLower = selectedCity.toLowerCase();
-    const sLower = selectedState.toLowerCase();
+    const cLower = selectedCity.trim().toLowerCase();
+    const cSlug = slugify(selectedCity);
+    const sLower = selectedState.trim().toLowerCase();
     const sNorm = normalizeState(selectedState);
-    return allLocalAreas.filter(
-      (a) =>
-        a.cityName.toLowerCase() === cLower &&
-        (!a.stateName ||
-          a.stateName.toLowerCase() === sLower ||
-          normalizeState(a.stateName) === sNorm)
-    );
+    const sSlug = slugify(selectedState);
+    return allLocalAreas.filter((a) => {
+      const aCity = a.cityName ? a.cityName.trim().toLowerCase() : "";
+      const aCitySlug = (a.citySlug || "").toLowerCase();
+      const cityMatch =
+        aCity === cLower ||
+        (aCitySlug && (aCitySlug === cSlug || aCitySlug === cLower)) ||
+        slugify(a.cityName) === cSlug;
+      if (!cityMatch) return false;
+
+      if (!a.stateName || !selectedState) return true;
+      const aStateLower = a.stateName.trim().toLowerCase();
+      return (
+        aStateLower === sLower ||
+        normalizeState(a.stateName) === sNorm ||
+        slugify(a.stateName) === sSlug
+      );
+    });
   }, [allLocalAreas, selectedCity, selectedState]);
 
   // Download Location Backup Handler
@@ -1480,6 +1567,8 @@ export default function AdminStates() {
                   onUpdateStateName={handleUpdateStateName}
                   onUpdateCityName={handleUpdateCityName}
                   onUpdateLocalAreaName={handleUpdateLocalAreaName}
+                  onCityAdded={handleCityAdded}
+                  onAreaAdded={handleAreaAdded}
                 />
               );
             })}
@@ -1632,6 +1721,8 @@ function StateHierarchyCard({
   onUpdateStateName,
   onUpdateCityName,
   onUpdateLocalAreaName,
+  onCityAdded,
+  onAreaAdded,
 }: {
   state: StateRecord;
   isExpanded: boolean;
@@ -1657,6 +1748,8 @@ function StateHierarchyCard({
   onUpdateStateName: (id: string, oldName: string, newName: string) => Promise<void>;
   onUpdateCityName: (id: string, oldName: string, stateName: string, newName: string) => Promise<void>;
   onUpdateLocalAreaName: (id: string | undefined, oldName: string, cityName: string, newName: string) => Promise<void>;
+  onCityAdded?: (city: CityRow) => void;
+  onAreaAdded?: (area: LocalAreaRow) => void;
 }) {
   const [cityName, setCityName] = useState("");
   const [country, setCountry] = useState("India");
@@ -1690,6 +1783,10 @@ function StateHierarchyCard({
       if (!res.ok) {
         setError((data.error as string) || "Failed to add city.");
         return;
+      }
+      const createdCity = data.city as CityRow | undefined;
+      if (createdCity && onCityAdded) {
+        onCityAdded(createdCity);
       }
       setCityName("");
       setCountry("India");
@@ -1881,6 +1978,7 @@ function StateHierarchyCard({
                       onChanged={onChanged}
                       onUpdateCityName={onUpdateCityName}
                       onUpdateLocalAreaName={onUpdateLocalAreaName}
+                      onAreaAdded={onAreaAdded}
                     />
                   );
                 }
@@ -1906,6 +2004,7 @@ function CityHierarchyItem({
   onChanged,
   onUpdateCityName,
   onUpdateLocalAreaName,
+  onAreaAdded,
 }: {
   city: CityRow;
   stateName: string;
@@ -1919,6 +2018,7 @@ function CityHierarchyItem({
   onChanged: (silent?: boolean) => Promise<void> | void;
   onUpdateCityName: (id: string, oldName: string, stateName: string, newName: string) => Promise<void>;
   onUpdateLocalAreaName: (id: string | undefined, oldName: string, cityName: string, newName: string) => Promise<void>;
+  onAreaAdded?: (area: LocalAreaRow) => void;
 }) {
   const [newArea, setNewArea] = useState("");
   const [addingArea, setAddingArea] = useState(false);
@@ -1938,12 +2038,17 @@ function CityHierarchyItem({
           name: newArea.trim(),
           cityName: city.name,
           stateName,
+          citySlug: city.slug,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setAreaError((data.error as string) || "Failed to add local area.");
         return;
+      }
+      const createdArea = data.localArea as LocalAreaRow | undefined;
+      if (createdArea && onAreaAdded) {
+        onAreaAdded(createdArea);
       }
       setNewArea("");
       await onChanged(true);
