@@ -4,6 +4,7 @@ import { cache } from "react";
 import { readStore, writeStore } from "../persist";
 import { cityPlaces } from "../places";
 import { invalidateCityCache } from "./city";
+import { slugify } from "../utils/string";
 
 export type LocalAreaRecord = {
   _id?: string;
@@ -36,14 +37,6 @@ type ParsedImportData = Array<{
     localAreas: string[];
   }>;
 }>;
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 let cachedLocalAreas: LocalAreaRecord[] | null = null;
 let cachedByCitySlug: Map<string, LocalAreaRecord[]> | null = null;

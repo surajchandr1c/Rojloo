@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { exportAllUsers } from "@/lib/models/user";
+import { NO_CACHE_HEADERS } from "@/lib/constants/http";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
         "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "no-store, no-cache, must-revalidate",
+        ...NO_CACHE_HEADERS,
       },
     });
   } catch (error) {

@@ -15,10 +15,7 @@ import {
   STATIC_PAGES,
   DEFAULT_STATIC_SEO_DATA,
 } from "@/lib/types/static-seo";
-
-function uid(): string {
-  return `b_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
+import { uid } from "@/lib/utils/string";
 
 function StaticSeoContent() {
   const searchParams = useSearchParams();

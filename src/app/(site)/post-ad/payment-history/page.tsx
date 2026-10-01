@@ -6,6 +6,7 @@ import Button from "@/components/ui/button";
 import { SectionPanel } from "@/components/ui/card";
 import { useAuthGuard } from "@/components/post-ad/use-auth-guard";
 import { PaymentHistorySkeleton } from "@/components/skeletons/post-ad-skeletons";
+import { formatDisplayDate, formatDisplayTime } from "@/lib/date";
 
 type PaymentHistoryItem = {
   _id?: string;
@@ -158,11 +159,11 @@ export default function Page() {
                   <div className="text-sm text-gray-700">
                     <p>
                       <span className="font-semibold">Date:</span>{" "}
-                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "—"}
+                      {formatDisplayDate(item.createdAt)}
                     </p>
                     <p>
                       <span className="font-semibold">Time:</span>{" "}
-                      {item.createdAt ? new Date(item.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                      {formatDisplayTime(item.createdAt)}
                     </p>
                   </div>
                 </div>

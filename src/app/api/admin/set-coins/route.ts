@@ -6,6 +6,7 @@ import {
   getAllPackagesCoins,
   saveAllPackagesCoins,
 } from "@/lib/models/coin-package";
+import { NO_CACHE_HEADERS } from "@/lib/constants/http";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,13 +23,7 @@ export async function GET(req: NextRequest) {
     const allPackagesCoins = await getAllPackagesCoins();
     return NextResponse.json(
       { packages, allPackagesCoins, success: true },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      }
+      { headers: NO_CACHE_HEADERS }
     );
   } catch (error) {
     console.error("Failed to fetch coin packages:", error);

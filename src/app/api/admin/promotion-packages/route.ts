@@ -4,6 +4,7 @@ import {
   getPromotionPackages,
   savePromotionPackages,
 } from "@/lib/models/promotion-package";
+import { NO_CACHE_HEADERS } from "@/lib/constants/http";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -19,13 +20,7 @@ export async function GET(req: NextRequest) {
     const packages = await getPromotionPackages();
     return NextResponse.json(
       { packages, success: true },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      }
+      { headers: NO_CACHE_HEADERS }
     );
   } catch (error) {
     console.error("Failed to fetch admin promotion packages:", error);

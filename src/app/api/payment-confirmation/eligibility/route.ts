@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 import { checkCoinPurchaseEligibility } from "@/lib/models/payment-request";
+import { NO_CACHE_HEADERS } from "@/lib/constants/http";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +30,7 @@ export async function GET(req: NextRequest) {
         email,
         ...eligibility,
       },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-        },
-      }
+      { headers: NO_CACHE_HEADERS }
     );
   } catch (error) {
     console.error("[eligibility] error checking coin purchase eligibility:", error);

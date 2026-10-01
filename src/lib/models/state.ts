@@ -4,6 +4,7 @@ import { readStore, writeStore } from "../persist";
 import { cityPlaces } from "../places";
 import { invalidateCityCache } from "./city";
 import { invalidateLocalAreasCache } from "./localArea";
+import { slugify } from "../utils/string";
 
 export type StateRecord = {
   _id?: string;
@@ -11,14 +12,6 @@ export type StateRecord = {
   slug: string;
   createdAt: Date | string;
 };
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 export const DEFAULT_INDIAN_STATES: string[] = [
   "Andaman and Nicobar Islands",

@@ -9,14 +9,9 @@ import {
 import { listStates, createState } from "@/lib/models/state";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { readStore } from "@/lib/persist";
+import { NO_CACHE_HEADERS } from "@/lib/constants/http";
 
 export const dynamic = "force-dynamic";
-
-const NO_CACHE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-  Pragma: "no-cache",
-  Expires: "0",
-};
 
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);

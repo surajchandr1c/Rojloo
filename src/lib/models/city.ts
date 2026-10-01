@@ -2,6 +2,7 @@ import { cache } from "react";
 import { readStore, writeStore } from "../persist";
 import { cityPlaces } from "../places";
 import { invalidateLocalAreasCache } from "./localArea";
+import { slugify } from "../utils/string";
 
 export type CityRecord = {
   _id?: string;
@@ -15,14 +16,6 @@ export type CityRecord = {
   createdAt: Date | string;
   updatedAt?: Date | string;
 };
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 export async function listCities(): Promise<CityRecord[]> {
   const store = await readStore();

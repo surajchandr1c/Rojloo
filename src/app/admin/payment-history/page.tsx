@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
 import { AdminPaymentHistoryCardsSkeleton } from "@/components/skeletons/admin-skeletons";
+import Modal from "@/components/ui/modal";
 
 type PaymentHistory = {
   _id?: string;
@@ -330,99 +331,91 @@ export default function PaymentHistoryPage() {
         </div>
       </div>
 
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-modal-backdrop">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-gray-200 animate-modal-content">
-            <div className="flex items-start justify-between border-b border-gray-100 pb-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-950">Delete Payment History</h2>
-                <p className="mt-1 text-xs text-gray-700">Permanently remove records from the database.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setIsDeleteModalOpen(false); setDeleteError(""); }}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 cursor-pointer"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteError("");
+        }}
+        title="Delete Payment History"
+        description="Permanently remove records from the database."
+        maxWidth="lg"
+      >
+        {deleteError && (
+          <div className="rounded-lg bg-gray-100 p-3 text-xs font-semibold text-gray-900 border border-gray-200">
+            {deleteError}
+          </div>
+        )}
+
+        {/* Option 1: Date Range Deletion */}
+        <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+          <h3 className="text-sm font-bold text-gray-950">Option 1: Delete by Date Range</h3>
+          <p className="mt-1 text-xs text-gray-700">
+            Select from which date to date to delete payment history.
+          </p>
+
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-900 mb-1">From Date</label>
+              <input
+                type="date"
+                value={deleteStartDate}
+                onChange={(e) => setDeleteStartDate(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 focus:border-gray-500 focus:outline-none"
+              />
             </div>
-
-            {deleteError && (
-              <div className="mt-4 rounded-lg bg-gray-100 p-3 text-xs font-semibold text-gray-900 border border-gray-200">
-                {deleteError}
-              </div>
-            )}
-
-            {/* Option 1: Date Range Deletion */}
-            <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
-              <h3 className="text-sm font-bold text-gray-950">Option 1: Delete by Date Range</h3>
-              <p className="mt-1 text-xs text-gray-700">
-                Select from which date to date to delete payment history.
-              </p>
-
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-900 mb-1">From Date</label>
-                  <input
-                    type="date"
-                    value={deleteStartDate}
-                    onChange={(e) => setDeleteStartDate(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 focus:border-gray-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-900 mb-1">To Date</label>
-                  <input
-                    type="date"
-                    value={deleteEndDate}
-                    onChange={(e) => setDeleteEndDate(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 focus:border-gray-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                disabled={deleting || (!deleteStartDate && !deleteEndDate)}
-                onClick={handleDeleteByRange}
-                className="mt-4 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold !text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              >
-                {deleting ? "Deleting from database..." : "Delete History in Selected Date Range"}
-              </button>
-            </div>
-
-            {/* Option 2: Delete All */}
-            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-100/60 p-4">
-              <h3 className="text-sm font-bold text-gray-950">Option 2: Delete All Payment History</h3>
-              <p className="mt-1 text-xs text-gray-800">
-                ⚠️ This will permanently delete <strong>all payment history records</strong> from the database.
-              </p>
-
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={handleDeleteAll}
-                className="mt-3 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-bold !text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              >
-                {deleting ? "Deleting from database..." : "Delete All Payment History"}
-              </button>
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => { setIsDeleteModalOpen(false); setDeleteError(""); }}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
-              >
-                Cancel
-              </button>
+            <div>
+              <label className="block text-xs font-semibold text-gray-900 mb-1">To Date</label>
+              <input
+                type="date"
+                value={deleteEndDate}
+                onChange={(e) => setDeleteEndDate(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-950 focus:border-gray-500 focus:outline-none"
+              />
             </div>
           </div>
+
+          <button
+            type="button"
+            disabled={deleting || (!deleteStartDate && !deleteEndDate)}
+            onClick={handleDeleteByRange}
+            className="mt-4 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold !text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            {deleting ? "Deleting from database..." : "Delete History in Selected Date Range"}
+          </button>
         </div>
-      )}
+
+        {/* Option 2: Delete All */}
+        <div className="mt-4 rounded-xl border border-gray-200 bg-gray-100/60 p-4">
+          <h3 className="text-sm font-bold text-gray-950">Option 2: Delete All Payment History</h3>
+          <p className="mt-1 text-xs text-gray-800">
+            ⚠️ This will permanently delete <strong>all payment history records</strong> from the database.
+          </p>
+
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={handleDeleteAll}
+            className="mt-3 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-bold !text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            {deleting ? "Deleting from database..." : "Delete All Payment History"}
+          </button>
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={() => {
+              setIsDeleteModalOpen(false);
+              setDeleteError("");
+            }}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      </Modal>
     </main>
   );
 }

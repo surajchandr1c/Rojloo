@@ -8,6 +8,7 @@ import {
 } from "@/lib/models/payment-request";
 import { createPaymentHistory } from "@/lib/models/payment-history";
 import { findUserById, findUserByEmail } from "@/lib/models/user";
+import { NO_CACHE_HEADERS } from "@/lib/constants/http";
 
 export async function GET(req: NextRequest) {
   const ctx = await getAdminContext(req);
@@ -19,11 +20,7 @@ export async function GET(req: NextRequest) {
   const requests = await listPaymentRequests();
   return NextResponse.json(
     { requests, success: true },
-    {
-      headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-      },
-    }
+    { headers: NO_CACHE_HEADERS }
   );
 }
 

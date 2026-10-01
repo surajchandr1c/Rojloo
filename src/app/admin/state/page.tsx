@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminStateHierarchySkeleton } from "@/components/skeletons/admin-skeletons";
+import { slugify } from "@/lib/utils/string";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type StateRecord = {
   _id?: string;
@@ -17,14 +19,6 @@ type CityRow = {
   state?: string;
   source?: "Custom" | "Static";
 };
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 type LocalAreaRow = {
   _id?: string;
@@ -101,15 +95,7 @@ export default function AdminStates() {
 
   // Search input & debounced search term
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // Debounce search input (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+  const debouncedSearch = useDebounce(search.trim(), 300);
 
   // Collapsible state tracking
   const [expandedStates, setExpandedStates] = useState<Set<string>>(new Set());

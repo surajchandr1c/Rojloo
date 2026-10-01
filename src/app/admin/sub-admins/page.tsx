@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { formatDisplayDateTime } from "@/lib/date";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
+import Modal from "@/components/ui/modal";
 import {
   SUBADMIN_PERMISSION_OPTIONS,
   PERMISSION_LABELS_MAP,
@@ -281,35 +282,31 @@ export default function SubAdminList() {
       )}
 
       {/* Edit Access Modal */}
-      {editingAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-gray-100 max-h-[92vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-950 flex items-center gap-2">
-                  <span>Edit Sub-Admin Access</span>
-                  <span className="rounded-lg bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-900">
-                    {editPermissions.length} / {SUBADMIN_PERMISSION_OPTIONS.length} active
-                  </span>
-                </h2>
-                <p className="mt-1 text-xs text-gray-600">
-                  Select which admin sections <strong className="text-gray-900 font-semibold">{editingAdmin.email}</strong> is allowed to access.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeEditModal}
-                disabled={editSaving}
-                className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
-              >
-                ✕
-              </button>
+      <Modal
+        isOpen={Boolean(editingAdmin)}
+        onClose={closeEditModal}
+        maxWidth="2xl"
+        className="max-h-[92vh] flex flex-col"
+        title={
+          editingAdmin ? (
+            <div className="flex items-center gap-2">
+              <span>Edit Sub-Admin Access</span>
+              <span className="rounded-lg bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-900">
+                {editPermissions.length} / {SUBADMIN_PERMISSION_OPTIONS.length} active
+              </span>
             </div>
-
-            {/* Modal Body / Permissions List */}
-            <form onSubmit={handleSavePermissions} className="flex flex-col flex-1 min-h-0 pt-4 space-y-5">
+          ) : undefined
+        }
+        description={
+          editingAdmin ? (
+            <>
+              Select which admin sections <strong className="text-gray-900 font-semibold">{editingAdmin.email}</strong> is allowed to access.
+            </>
+          ) : undefined
+        }
+      >
+        {editingAdmin && (
+          <form onSubmit={handleSavePermissions} className="flex flex-col flex-1 min-h-0 pt-1 space-y-5">
               {/* Quick Select Buttons */}
               <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-50 p-2.5 rounded-2xl border border-gray-200/80">
                 <span className="text-xs font-bold text-gray-700 ml-1">
@@ -424,10 +421,9 @@ export default function SubAdminList() {
                   )}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+          </form>
+        )}
+      </Modal>
     </main>
   );
 }

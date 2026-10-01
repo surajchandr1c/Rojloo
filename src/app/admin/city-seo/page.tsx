@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
 import { AdminCitySeoSkeleton } from "@/components/skeletons/admin-skeletons";
+import { slugify, uid } from "@/lib/utils/string";
+import CityNavTabs from "@/components/admin/city-nav-tabs";
 
 type BlockType = "h1" | "h2" | "h3" | "p";
 
@@ -19,18 +21,6 @@ type FaqItem = {
   question: string;
   answer: string;
 };
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
-function uid(): string {
-  return `b_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
 
 function Counter({ value, min, max }: { value: number; min: number; max: number }) {
   const ok = value >= min && value <= max;
@@ -994,27 +984,7 @@ function CitySeoContent() {
             Write and optimise SEO content for the city page and configure local area inheritance.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/admin/city"
-            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
-          >
-            City List
-          </Link>
-          <Link
-            href="/admin/city-seo"
-            className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold !text-white transition shadow-sm"
-            style={{ color: "#ffffff" }}
-          >
-            City SEO
-          </Link>
-          <Link
-            href="/admin/dynamic-seo"
-            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
-          >
-            Dynamic SEO
-          </Link>
-        </div>
+        <CityNavTabs activeTab="city-seo" />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

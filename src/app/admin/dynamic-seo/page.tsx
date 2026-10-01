@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { uid } from "@/lib/utils/string";
+import { useDebounce } from "@/hooks/use-debounce";
+import CityNavTabs from "@/components/admin/city-nav-tabs";
 
 type City = { name: string; slug: string; state?: string };
 type Area = {
@@ -49,8 +52,76 @@ type CitySeoRecord = {
   status?: string;
 };
 
-function uid(): string {
-  return `b_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+/**
+ * Check if a city matches query by name, slug, or state name
+ */
+function cityMatchesQuery(city: City, query: string): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase().trim();
+  const name = (city.name || "").toLowerCase().trim();
+  const slug = (city.slug || "").toLowerCase().trim();
+  const state = (city.state || "").toLowerCase().trim();
+
+  // 1. Direct substring
+  if (name.includes(q) || slug.includes(q) || state.includes(q)) return true;
+
+  // 2. Normalized slug match (e.g. "navi mumbai" vs "navi-mumbai")
+  const normQ = q.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  if (normQ && (slug.includes(normQ) || slug.replace(/-/g, " ").includes(q))) return true;
+
+  // 3. Multi-word search (all words in query appear in name, slug, or state)
+  const tokens = q.split(/[\s\-_,]+/).filter(Boolean);
+  if (tokens.length > 1) {
+    const combined = `${name} ${slug} ${state}`;
+    if (tokens.every((t) => combined.includes(t))) return true;
+  }
+
+  // 4. Word-prefix match (e.g. "mum" matches "Mumbai", "raj" matches "Rajasthan")
+  const words = `${name} ${state}`.split(/[\s\-_,]+/).filter(Boolean);
+  if (words.some((w) => w.startsWith(q))) return true;
+
+  return false;
+}
+
+/**
+ * Check if a local area matches query by area name, area slug, city name, or state name
+ */
+function areaMatchesQuery(area: Area, city: City | undefined, query: string): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase().trim();
+  const aName = (area.name || "").toLowerCase().trim();
+  const aSlug = (area.slug || "").toLowerCase().trim();
+  const cName = (area.cityName || city?.name || "").toLowerCase().trim();
+  const cSlug = (area.citySlug || city?.slug || "").toLowerCase().trim();
+  const sName = (area.stateName || city?.state || "").toLowerCase().trim();
+
+  // 1. Direct substring in area name, area slug, city name, or state name
+  if (
+    aName.includes(q) ||
+    aSlug.includes(q) ||
+    cName.includes(q) ||
+    cSlug.includes(q) ||
+    sName.includes(q)
+  ) {
+    return true;
+  }
+
+  // 2. Normalized slug match (e.g. "koramangala 4th block" vs "koramangala-4th-block")
+  const normQ = q.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  if (normQ && (aSlug.includes(normQ) || aSlug.replace(/-/g, " ").includes(q))) return true;
+
+  // 3. Multi-word token match across area name + city + state (e.g. "whitefield bengaluru" or "andheri west maharashtra")
+  const tokens = q.split(/[\s\-_,]+/).filter(Boolean);
+  if (tokens.length > 1) {
+    const combined = `${aName} ${aSlug} ${cName} ${cSlug} ${sName}`;
+    if (tokens.every((t) => combined.includes(t))) return true;
+  }
+
+  // 4. Word-prefix match
+  const words = `${aName} ${cName} ${sName}`.split(/[\s\-_,]+/).filter(Boolean);
+  if (words.some((w) => w.startsWith(q))) return true;
+
+  return false;
 }
 
 function DynamicSeoContent() {
@@ -70,7 +141,14 @@ function DynamicSeoContent() {
   // Filters & Search
   const [activeTab, setActiveTab] = useState<"all" | "custom" | "pure_inherit">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery.trim(), 200);
   const [expandedCities, setExpandedCities] = useState<Record<string, boolean>>({});
+  const [showAllInCity, setShowAllInCity] = useState<Record<string, boolean>>({});
+
+  // Reset showAllInCity when search changes
+  useEffect(() => {
+    setShowAllInCity({});
+  }, [debouncedSearchQuery]);
 
   // Modal Editing State
   const [editingArea, setEditingArea] = useState<{ city: City; area: Area } | null>(null);
@@ -94,18 +172,30 @@ function DynamicSeoContent() {
       setError("");
       try {
         const [citiesRes, areasRes, seoRes, citySeoRes] = await Promise.all([
-          fetch("/api/admin/cities", { credentials: "include" }).then((r) => r.json()),
-          fetch("/api/admin/local-areas", { credentials: "include" }).then((r) => r.json()),
-          fetch("/api/admin/dynamic-seo", { credentials: "include" }).then((r) => r.json()),
-          fetch("/api/admin/city-seo", { credentials: "include" }).then((r) => r.json()),
+          fetch("/api/admin/cities", { credentials: "include", cache: "no-store" }).then((r) => r.json()),
+          fetch("/api/admin/local-areas", { credentials: "include", cache: "no-store" }).then((r) => r.json()),
+          fetch("/api/admin/dynamic-seo", { credentials: "include", cache: "no-store" }).then((r) => r.json()),
+          fetch("/api/admin/city-seo", { credentials: "include", cache: "no-store" }).then((r) => r.json()),
         ]);
 
         if (cancelled) return;
 
         const loadedCities = (citiesRes.cities ?? []) as City[];
-        const loadedAreas = (areasRes.localAreas ?? []) as Area[];
+        const rawAreas = (areasRes.localAreas ?? []) as Area[];
         const loadedSeo = (seoRes.seo ?? []) as SeoRecord[];
         const loadedCitySeo = (citySeoRes.seo ?? []) as CitySeoRecord[];
+
+        const cityStateMap = new Map<string, string>();
+        loadedCities.forEach((c) => {
+          if (c.state) {
+            cityStateMap.set(c.slug.toLowerCase(), c.state);
+          }
+        });
+
+        const loadedAreas = rawAreas.map((a) => ({
+          ...a,
+          stateName: a.stateName || cityStateMap.get((a.citySlug || "").toLowerCase()) || "",
+        }));
 
         setCities(loadedCities);
         setAreas(loadedAreas);
@@ -197,9 +287,9 @@ function DynamicSeoContent() {
   }, [seoList]);
   const pureInheritedCitiesCount = totalCitiesCount - customCitiesCount;
 
-  // Filtered Cities list
+  // Filtered Cities list: matches city name, city slug, state name, or any local area in the city
   const filteredCities = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
+    const q = debouncedSearchQuery.toLowerCase().trim();
     return cities.filter((city) => {
       const hasCustom = cityHasIndividualSeo(city.slug);
 
@@ -207,12 +297,68 @@ function DynamicSeoContent() {
       if (activeTab === "pure_inherit" && hasCustom) return false;
 
       if (!q) return true;
-      if (city.name.toLowerCase().includes(q) || city.slug.toLowerCase().includes(q)) return true;
 
-      const cityAreas = areas.filter((a) => a.citySlug.toLowerCase() === city.slug.toLowerCase());
-      return cityAreas.some((a) => a.name.toLowerCase().includes(q) || a.slug.toLowerCase().includes(q));
+      // 1. Matches City Name, City Slug, or State Name
+      if (cityMatchesQuery(city, q)) return true;
+
+      // 2. Matches any Local Area in this city (by Area Name, Slug, City Name, or State Name)
+      const cityAreas = areas.filter(
+        (a) => a.citySlug.toLowerCase() === city.slug.toLowerCase()
+      );
+      return cityAreas.some((a) => areaMatchesQuery(a, city, q));
     });
-  }, [cities, areas, activeTab, searchQuery, cityHasIndividualSeo]);
+  }, [cities, areas, activeTab, debouncedSearchQuery, cityHasIndividualSeo]);
+
+  // Total matching local areas count for search summary indicator
+  const totalMatchingAreasCount = useMemo(() => {
+    const q = debouncedSearchQuery.toLowerCase().trim();
+    if (!q) return totalAreasCount;
+    let count = 0;
+    for (const city of filteredCities) {
+      const allCityAreas = areas.filter(
+        (a) => a.citySlug.toLowerCase() === city.slug.toLowerCase()
+      );
+      if (cityMatchesQuery(city, q)) {
+        count += allCityAreas.length;
+      } else {
+        count += allCityAreas.filter((a) => areaMatchesQuery(a, city, q)).length;
+      }
+    }
+    return count;
+  }, [filteredCities, areas, debouncedSearchQuery, totalAreasCount]);
+
+  // Check if all filtered cities are currently expanded
+  const allExpanded = useMemo(() => {
+    return (
+      filteredCities.length > 0 &&
+      filteredCities.every((c) => expandedCities[c.slug.toLowerCase()])
+    );
+  }, [filteredCities, expandedCities]);
+
+  // Toggle expand / collapse for all currently visible filtered cities
+  const toggleAllAccordions = useCallback(() => {
+    const nextState = !allExpanded;
+    setExpandedCities((prev) => {
+      const next = { ...prev };
+      filteredCities.forEach((c) => {
+        next[c.slug.toLowerCase()] = nextState;
+      });
+      return next;
+    });
+  }, [allExpanded, filteredCities]);
+
+  // When a search query is active, auto-expand matching cities so areas are instantly visible
+  useEffect(() => {
+    if (debouncedSearchQuery) {
+      setExpandedCities((prev) => {
+        const next = { ...prev };
+        filteredCities.forEach((c) => {
+          next[c.slug.toLowerCase()] = true;
+        });
+        return next;
+      });
+    }
+  }, [debouncedSearchQuery, filteredCities]);
 
   // Toggle Single Area Mode Immediately
   async function toggleAreaMode(area: Area, targetMode: "inherit" | "individual") {
@@ -506,40 +652,43 @@ function DynamicSeoContent() {
           <span>{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="text-gray-400 hover:text-white text-xs font-bold"
+            className="text-gray-400 hover:text-white text-xs font-bold cursor-pointer"
           >
             ✕
           </button>
         </div>
       )}
 
-      {/* HEADER SECTION */}
-      <div className="mb-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-gray-950">
-            Dynamic SEO
-          </h1>
-          <span className="rounded-full border border-gray-200 bg-gray-100 px-3 py-0.5 text-xs font-semibold text-gray-700">
-            Parent-Child Architecture
-          </span>
+      {/* Top Navigation Tabs */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-gray-950">
+              Dynamic SEO
+            </h1>
+            <span className="rounded-full border border-gray-200 bg-gray-100 px-3 py-0.5 text-xs font-semibold text-gray-700">
+              Parent-Child Architecture
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-gray-600 max-w-4xl leading-relaxed">
+            Manage whether Local Areas inherit their parent city&apos;s SEO content or have custom individual SEO. Cities with local areas having individual SEO are marked with a <span className="inline-flex items-center gap-1 font-semibold text-emerald-700"><span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />green dot</span>.
+          </p>
         </div>
-        <p className="mt-2 text-sm text-gray-600 max-w-4xl leading-relaxed">
-          Manage whether Local Areas inherit their parent city&apos;s SEO content or have custom individual SEO. Cities with local areas having individual SEO are marked with a <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">🟢 green dot</span>.
-        </p>
+        <CityNavTabs activeTab="dynamic-seo" />
+      </div>
 
-        {/* STATS PILLS ROW */}
-        <div className="mt-4 flex flex-wrap items-center gap-2.5">
-          <span className="rounded-full bg-black px-4 py-1.5 text-xs font-bold text-white shadow-xs">
-            {totalCitiesCount} Cities • {totalAreasCount} Local Areas
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/90 px-4 py-1.5 text-xs font-bold text-emerald-800 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            {customCitiesCount} Cities with Custom SEO
-          </span>
-          <span className="rounded-full border border-purple-200 bg-purple-50 px-4 py-1.5 text-xs font-bold text-purple-800 shadow-xs">
-            {individualAreasCount} Individual Local Areas
-          </span>
-        </div>
+      {/* STATS PILLS ROW */}
+      <div className="mb-6 flex flex-wrap items-center gap-2.5">
+        <span className="rounded-full bg-black px-4 py-1.5 text-xs font-bold text-white shadow-xs">
+          {totalCitiesCount} Cities • {totalAreasCount} Local Areas
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/90 px-4 py-1.5 text-xs font-bold text-emerald-800 shadow-xs">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          {customCitiesCount} Cities with Custom SEO
+        </span>
+        <span className="rounded-full border border-purple-200 bg-purple-50 px-4 py-1.5 text-xs font-bold text-purple-800 shadow-xs">
+          {individualAreasCount} Individual Local Areas
+        </span>
       </div>
 
       {/* 3 EXPLANATION CARDS */}
@@ -586,55 +735,113 @@ function DynamicSeoContent() {
       </div>
 
       {/* FILTER TABS & SEARCH BAR */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab("all")}
-            className={`rounded-full px-4 py-2 text-xs font-bold transition cursor-pointer ${
-              activeTab === "all"
-                ? "bg-black text-white shadow-xs"
-                : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            All Cities ({totalCitiesCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("custom")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition cursor-pointer ${
-              activeTab === "custom"
-                ? "bg-emerald-700 text-white shadow-xs"
-                : "border border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50"
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Cities with Custom SEO ({customCitiesCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("pure_inherit")}
-            className={`rounded-full px-4 py-2 text-xs font-bold transition cursor-pointer ${
-              activeTab === "pure_inherit"
-                ? "bg-black text-white shadow-xs"
-                : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            Pure Inherited Cities ({pureInheritedCitiesCount})
-          </button>
+      <div className="mb-6 space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className={`rounded-full px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                activeTab === "all"
+                  ? "bg-black text-white shadow-xs"
+                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              All Cities ({totalCitiesCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("custom")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                activeTab === "custom"
+                  ? "bg-emerald-700 text-white shadow-xs"
+                  : "border border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50"
+              }`}
+            >
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Cities with Custom SEO ({customCitiesCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("pure_inherit")}
+              className={`rounded-full px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                activeTab === "pure_inherit"
+                  ? "bg-black text-white shadow-xs"
+                  : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              Pure Inherited Cities ({pureInheritedCitiesCount})
+            </button>
+            {filteredCities.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleAllAccordions}
+                className="rounded-full border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer shadow-xs whitespace-nowrap ml-auto sm:ml-0"
+              >
+                {allExpanded ? "Collapse All" : "Expand All"}
+              </button>
+            )}
+          </div>
+
+          {/* Search Bar: City, State, or Local Area Name */}
+          <div className="relative w-full md:w-96">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+              <svg
+                className="h-4 w-4 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by city, state, or local area name..."
+              className="w-full rounded-xl border border-gray-200 bg-white pl-10 pr-9 py-2.5 text-xs sm:text-sm text-gray-950 placeholder-gray-400 outline-none transition focus:border-gray-500 focus:ring-1 focus:ring-gray-500 shadow-xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer text-xs"
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="w-full sm:w-80">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by city or local area name..."
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs text-gray-950 placeholder-gray-400 outline-none focus:border-gray-400 shadow-xs"
-          />
-        </div>
+        {/* Search Feedback Summary */}
+        {debouncedSearchQuery && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-2.5 text-xs text-blue-900 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-500" />
+              <span>
+                Found <strong className="text-gray-950">{filteredCities.length}</strong> matching {filteredCities.length === 1 ? "city" : "cities"} and{" "}
+                <strong className="text-gray-950">{totalMatchingAreasCount}</strong> matching local {totalMatchingAreasCount === 1 ? "area" : "areas"} for &ldquo;<span className="font-semibold text-gray-950">{debouncedSearchQuery}</span>&rdquo;
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="font-semibold text-blue-700 hover:text-blue-900 underline cursor-pointer"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -649,21 +856,57 @@ function DynamicSeoContent() {
           Loading cities and local area SEO data...
         </div>
       ) : filteredCities.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center text-sm text-gray-500">
-          No cities found matching your search or filter.
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500 mb-3">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <h3 className="text-base font-bold text-gray-900">No results found</h3>
+          <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
+            No cities, states, or local areas matched &ldquo;{searchQuery}&rdquo;{activeTab !== "all" ? ` under the current filter tab` : ""}.
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="rounded-full bg-black px-4 py-1.5 text-xs font-semibold text-white hover:bg-gray-800 transition cursor-pointer"
+              >
+                Clear Search
+              </button>
+            )}
+            {activeTab !== "all" && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("all")}
+                className="rounded-full border border-gray-200 bg-white px-4 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+              >
+                View All Cities
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
           {filteredCities.map((city) => {
-            const cityAreas = areas.filter(
+            const allCityAreas = areas.filter(
               (a) => a.citySlug.toLowerCase() === city.slug.toLowerCase()
             );
+            const q = debouncedSearchQuery.toLowerCase().trim();
+            const isCityStateMatch = !q || cityMatchesQuery(city, q);
+            const isShowingAllForCity =
+              isCityStateMatch || Boolean(showAllInCity[city.slug.toLowerCase()]);
+            const cityAreas = isShowingAllForCity
+              ? allCityAreas
+              : allCityAreas.filter((a) => areaMatchesQuery(a, city, q));
+
             const hasCustom = cityHasIndividualSeo(city.slug);
             const isExpanded = Boolean(expandedCities[city.slug.toLowerCase()]);
-            const individualCount = cityAreas.filter((a) =>
+            const individualCount = allCityAreas.filter((a) =>
               areaHasIndividualSeo(city.slug, a.slug)
             ).length;
-            const inheritedCount = cityAreas.length - individualCount;
+            const inheritedCount = allCityAreas.length - individualCount;
 
             return (
               <div
@@ -697,9 +940,21 @@ function DynamicSeoContent() {
                           </span>
                         )}
                       </h2>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {cityAreas.length} Local Areas ({individualCount} Individual • {inheritedCount} Inherited)
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                        <p className="text-xs text-gray-500">
+                          {allCityAreas.length} Local Areas ({individualCount} Individual • {inheritedCount} Inherited)
+                        </p>
+                        {q && !isCityStateMatch && (
+                          <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-[11px] font-bold">
+                            {cityAreas.length} matching area{cityAreas.length === 1 ? "" : "s"}
+                          </span>
+                        )}
+                        {q && isCityStateMatch && (
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[11px] font-bold">
+                            City / State match
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -743,9 +998,34 @@ function DynamicSeoContent() {
                 {/* EXPANDED TABLE OF LOCAL AREAS */}
                 {isExpanded && (
                   <div className="border-t border-gray-100 overflow-x-auto">
+                    {/* Partial matches header banner */}
+                    {q && !isCityStateMatch && allCityAreas.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 bg-blue-50/70 border-b border-blue-100 px-6 py-2.5 text-xs text-blue-900">
+                        <span>
+                          Showing <strong>{cityAreas.length}</strong> matching local {cityAreas.length === 1 ? "area" : "areas"} in {city.name} (out of {allCityAreas.length})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowAllInCity((prev) => ({
+                              ...prev,
+                              [city.slug.toLowerCase()]: !prev[city.slug.toLowerCase()],
+                            }))
+                          }
+                          className="font-semibold text-blue-700 hover:text-blue-900 underline cursor-pointer"
+                        >
+                          {showAllInCity[city.slug.toLowerCase()]
+                            ? `Show only matching (${allCityAreas.filter((a) => areaMatchesQuery(a, city, q)).length})`
+                            : `Show all ${allCityAreas.length} local areas`}
+                        </button>
+                      </div>
+                    )}
+
                     {cityAreas.length === 0 ? (
                       <p className="px-6 py-6 text-xs text-gray-500 text-center">
-                        No local areas registered for this city yet.
+                        {allCityAreas.length === 0
+                          ? "No local areas registered for this city yet."
+                          : `No local areas in ${city.name} matched "${debouncedSearchQuery}".`}
                       </p>
                     ) : (
                       <table className="w-full text-left text-xs">
@@ -845,7 +1125,7 @@ function DynamicSeoContent() {
                                       href={`/places/${city.slug}/${area.slug}`}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="rounded-full bg-[#0f8b4d] hover:bg-[#0d7842] px-3.5 py-1.5 text-xs font-bold !text-white transition shadow-xs inline-flex items-center"
+                                      className="rounded-full bg-[#0f8b4d] hover:bg-[#0d7842] px-3.5 py-1.5 text-xs font-bold !text-white transition shadow-xs inline-flex items-center cursor-pointer"
                                       style={{ color: "#ffffff" }}
                                     >
                                       View
@@ -894,7 +1174,7 @@ function DynamicSeoContent() {
               <button
                 type="button"
                 onClick={() => setEditingArea(null)}
-                className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 text-sm font-bold"
+                className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 text-sm font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -940,7 +1220,7 @@ function DynamicSeoContent() {
                 <button
                   type="button"
                   onClick={copyFromParentCityInModal}
-                  className="rounded-full border border-gray-300 bg-white px-3 py-1 text-xs font-bold text-gray-800 hover:bg-gray-50 transition shadow-xs"
+                  className="rounded-full border border-gray-300 bg-white px-3 py-1 text-xs font-bold text-gray-800 hover:bg-gray-50 transition shadow-xs cursor-pointer"
                 >
                   📋 Copy from {editingArea.city.name} SEO
                 </button>
@@ -1033,7 +1313,7 @@ function DynamicSeoContent() {
                         onClick={() =>
                           setEditContentBlocks((prev) => [...prev, { id: uid(), type: "h2", text: "" }])
                         }
-                        className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                        className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
                       >
                         + H2
                       </button>
@@ -1042,7 +1322,7 @@ function DynamicSeoContent() {
                         onClick={() =>
                           setEditContentBlocks((prev) => [...prev, { id: uid(), type: "p", text: "" }])
                         }
-                        className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                        className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
                       >
                         + Paragraph
                       </button>
@@ -1089,7 +1369,7 @@ function DynamicSeoContent() {
                       onClick={() =>
                         setEditFaqs((prev) => [...prev, { id: uid(), question: "", answer: "" }])
                       }
-                      className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                      className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
                     >
                       + Add FAQ
                     </button>
@@ -1142,7 +1422,7 @@ function DynamicSeoContent() {
                     <select
                       value={editStatus}
                       onChange={(e) => setEditStatus(e.target.value as "draft" | "published")}
-                      className="ml-2 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-semibold"
+                      className="ml-2 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-semibold cursor-pointer"
                     >
                       <option value="draft">Draft (Inactive)</option>
                       <option value="published">Published (Active)</option>

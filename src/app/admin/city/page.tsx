@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDisplayDate } from "@/lib/date";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
+import CityNavTabs from "@/components/admin/city-nav-tabs";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type DynamicCity = {
   _id?: string;
@@ -88,18 +90,10 @@ export default function AdminCities() {
   const [individualCities, setIndividualCities] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search.trim(), 300);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const loadRef = useRef(0);
   const router = useRouter();
-
-  // 300ms Debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   // City update statistics
   const stats = useMemo(() => {
@@ -346,27 +340,7 @@ export default function AdminCities() {
             Manage cities available on the platform and monitor local area SEO status.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/admin/city"
-            className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold !text-white text-white transition shadow-sm"
-            style={{ color: "#ffffff" }}
-          >
-            City List
-          </Link>
-          <Link
-            href="/admin/city-seo"
-            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
-          >
-            City SEO
-          </Link>
-          <Link
-            href="/admin/dynamic-seo"
-            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition"
-          >
-            Dynamic SEO
-          </Link>
-        </div>
+        <CityNavTabs activeTab="city-list" />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -555,7 +529,7 @@ export default function AdminCities() {
                           <button
                             type="button"
                             onClick={() => router.push(`/places/${city.slug}`)}
-                            className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-gray-700"
+                            className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-gray-700 cursor-pointer"
                           >
                             View
                           </button>
@@ -564,7 +538,7 @@ export default function AdminCities() {
                           href={`/admin/city-seo?city=${encodeURIComponent(
                             city.slug
                           )}`}
-                          className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-gray-700"
+                          className="rounded-full bg-gray-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-gray-700 cursor-pointer"
                         >
                           Edit SEO
                         </Link>
@@ -572,14 +546,14 @@ export default function AdminCities() {
                           href={`/admin/dynamic-seo?city=${encodeURIComponent(
                             city.slug
                           )}`}
-                          className="rounded-full bg-green-700 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-green-800 transition shadow-xs"
+                          className="rounded-full bg-green-700 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-green-800 transition shadow-xs cursor-pointer"
                         >
                           Dynamic SEO
                         </Link>
                         <button
                           type="button"
                           onClick={() => remove(cityIdentifier)}
-                          className="rounded-full bg-red-600 !text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700 transition"
+                          className="rounded-full bg-red-600 !text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700 transition cursor-pointer"
                         >
                           Delete
                         </button>
