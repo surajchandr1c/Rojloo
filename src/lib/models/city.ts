@@ -13,6 +13,7 @@ export type CityRecord = {
   famousFood: string;
   seoDescription: string;
   createdAt: Date | string;
+  updatedAt?: Date | string;
 };
 
 function slugify(value: string): string {
@@ -540,6 +541,7 @@ export async function updateCityName(data: {
     cityState = foundRecord.state || cityState;
     foundRecord.name = trimmedNewName;
     foundRecord.slug = newSlug;
+    foundRecord.updatedAt = new Date().toISOString();
   } else {
     // 2. Check static city
     const staticMatch = cityPlaces.find((c) => {
@@ -571,6 +573,7 @@ export async function updateCityName(data: {
         famousFood: staticMatch.famousFood || "",
         seoDescription: staticMatch.seoDescription || "",
         createdAt: new Date(),
+        updatedAt: new Date().toISOString(),
       };
       cities.push(foundRecord);
     } else {
@@ -587,6 +590,7 @@ export async function updateCityName(data: {
         famousFood: "",
         seoDescription: "",
         createdAt: new Date(),
+        updatedAt: new Date().toISOString(),
       };
       cities.push(foundRecord);
     }

@@ -3,6 +3,14 @@ import { revalidatePath } from "next/cache";
 import { getAllCitySeo, upsertCitySeo } from "@/lib/models/city-seo";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 
+export const dynamic = "force-dynamic";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (!ctx || !canAccess(ctx, "city-seo")) {
@@ -10,7 +18,7 @@ export async function GET(request: NextRequest) {
   }
 
   const seo = await getAllCitySeo();
-  return NextResponse.json({ seo });
+  return NextResponse.json({ seo }, { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(request: NextRequest) {

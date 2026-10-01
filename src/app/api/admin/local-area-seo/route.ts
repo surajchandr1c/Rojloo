@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { getAllLocalAreaSeo, upsertLocalAreaSeo } from "@/lib/models/local-area-seo";
 
+export const dynamic = "force-dynamic";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 export async function GET(request: NextRequest) {
   const context = await getAdminContext(request);
   if (
@@ -13,7 +21,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  return NextResponse.json({ seo: await getAllLocalAreaSeo() });
+  return NextResponse.json({ seo: await getAllLocalAreaSeo() }, { headers: NO_CACHE_HEADERS });
 }
 
 export async function POST(request: NextRequest) {

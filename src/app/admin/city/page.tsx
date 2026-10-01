@@ -26,67 +26,65 @@ type SeoInfo = {
 };
 
 /**
- * Dependency-free fuzzy matching:
- * Supports direct substring, multi-token match, character-order subsequence,
- * and edit-distance typo tolerance.
+ * High-performance city and state filter:
+ * Matches city name, slug (with hyphen normalization), and state.
+ * Supports multi-token search and word prefixes without noisy Levenshtein false positives.
  */
-function fuzzyMatch(target: string, query: string): boolean {
+function matchesCity(city: DynamicCity, query: string): boolean {
   if (!query) return true;
-  if (!target) return false;
-  const t = target.toLowerCase().trim();
   const q = query.toLowerCase().trim();
+  const name = (city.name || "").toLowerCase().trim();
+  const slug = (city.slug || "").toLowerCase().trim();
+  const state = (city.state || "").toLowerCase().trim();
 
-  // 1. Direct substring
-  if (t.includes(q)) return true;
-
-  // 2. Token / word-level match (all words in query must be in target)
-  const tokens = q.split(/[\s\-_,]+/).filter(Boolean);
-  if (tokens.length > 0 && tokens.every((token) => t.includes(token))) {
+  // 1. Direct match on name, slug, or state
+  if (name.includes(q) || slug.includes(q) || state.includes(q)) {
     return true;
   }
 
-  // 3. Subsequence matching (letters in query appear in order in target)
-  let tIdx = 0;
-  let qIdx = 0;
-  while (tIdx < t.length && qIdx < q.length) {
-    if (t[tIdx] === q[qIdx]) {
-      qIdx++;
-    }
-    tIdx++;
-  }
-  if (qIdx === q.length) return true;
-
-  // 4. Levenshtein edit distance for typo tolerance
-  function lev(s1: string, s2: string): number {
-    const m = s1.length;
-    const n = s2.length;
-    const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        if (s1[i - 1] === s2[j - 1]) dp[i][j] = dp[i - 1][j - 1];
-        else dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-      }
-    }
-    return dp[m][n];
+  // 2. Normalized slug / phrase match (e.g. query "navi mumbai" vs slug "navi-mumbai")
+  const normQ = q.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  if (normQ && (slug.includes(normQ) || slug.replace(/-/g, " ").includes(q))) {
+    return true;
   }
 
-  const maxDistance = q.length <= 3 ? 0 : q.length <= 5 ? 1 : 2;
-  if (lev(t.slice(0, q.length), q) <= maxDistance) return true;
+  // 3. Multi-word search: all words in query must appear in name, slug, or state
+  const tokens = q.split(/[\s\-_,]+/).filter(Boolean);
+  if (tokens.length > 1) {
+    const combined = `${name} ${slug} ${state}`;
+    if (tokens.every((token) => combined.includes(token))) {
+      return true;
+    }
+  }
 
-  const targetWords = t.split(/[\s\-_,]+/).filter(Boolean);
-  for (const word of targetWords) {
-    if (lev(word.slice(0, q.length), q) <= maxDistance) return true;
-    if (lev(word, q) <= maxDistance) return true;
+  // 4. Word-prefix match on name or state (e.g. "mum" matches "Mumbai")
+  const words = `${name} ${state}`.split(/[\s\-_,]+/).filter(Boolean);
+  if (words.some((w) => w.startsWith(q))) {
+    return true;
   }
 
   return false;
 }
 
+function getCityUpdateTime(
+  c: DynamicCity,
+  seoMap: Record<string, SeoInfo>,
+  dynUpdateMap?: Record<string, number>
+): number {
+  const slugKey = (c.slug || "").trim().toLowerCase();
+  const seo = seoMap[c.slug] || seoMap[slugKey];
+  const seoTime = seo?.updatedAt ? new Date(seo.updatedAt).getTime() : 0;
+  const cityTime = c.updatedAt ? new Date(c.updatedAt).getTime() : 0;
+  const dynTime = dynUpdateMap ? (dynUpdateMap[slugKey] || 0) : 0;
+  const validSeoTime = isNaN(seoTime) ? 0 : seoTime;
+  const validCityTime = isNaN(cityTime) ? 0 : cityTime;
+  return Math.max(validSeoTime, validCityTime, dynTime);
+}
+
 export default function AdminCities() {
   const [allCities, setAllCities] = useState<DynamicCity[]>([]);
   const [seoMap, setSeoMap] = useState<Record<string, SeoInfo>>({});
+  const [dynUpdateMap, setDynUpdateMap] = useState<Record<string, number>>({});
   const [individualCities, setIndividualCities] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -103,43 +101,46 @@ export default function AdminCities() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Debounced Fuzzy Filtered Cities (checks name, state, slug, region, country)
-  // Sorted so that cities with the latest update move to the last (bottom) of the list.
+  // City update statistics
+  const stats = useMemo(() => {
+    let updated = 0;
+    for (const c of allCities) {
+      if (getCityUpdateTime(c, seoMap, dynUpdateMap) > 0) updated++;
+    }
+    return {
+      total: allCities.length,
+      updated,
+      notUpdated: allCities.length - updated,
+    };
+  }, [allCities, seoMap, dynUpdateMap]);
+
+  // Filtered and Sorted Cities:
+  // 1. Not updated cities stay at the TOP.
+  // 2. Updated cities move towards the BOTTOM.
+  // 3. Every time an admin updates any city, it receives the latest timestamp and automatically moves to the bottom / last.
   const filteredCities = useMemo(() => {
     const q = debouncedSearch.trim();
     const list = !q
       ? [...allCities]
-      : allCities.filter(
-          (c) =>
-            fuzzyMatch(c.name, q) ||
-            (c.state && fuzzyMatch(c.state, q)) ||
-            fuzzyMatch(c.slug, q) ||
-            fuzzyMatch(c.region, q) ||
-            (c.country && fuzzyMatch(c.country, q))
-        );
+      : allCities.filter((c) => matchesCity(c, q));
 
     return list.sort((a, b) => {
-      const getCityTime = (c: DynamicCity) => {
-        const slugKey = (c.slug || "").trim().toLowerCase();
-        const seo = seoMap[c.slug] || seoMap[slugKey];
-        const seoTime = seo?.updatedAt ? new Date(seo.updatedAt).getTime() : 0;
-        const cityTime = c.updatedAt
-          ? new Date(c.updatedAt).getTime()
-          : c.createdAt
-          ? new Date(c.createdAt).getTime()
-          : 0;
-        return Math.max(seoTime, cityTime);
-      };
+      const timeA = getCityUpdateTime(a, seoMap, dynUpdateMap);
+      const timeB = getCityUpdateTime(b, seoMap, dynUpdateMap);
 
-      const timeA = getCityTime(a);
-      const timeB = getCityTime(b);
+      // 1. Un-updated cities (time === 0) stay at the TOP
+      if (timeA === 0 && timeB > 0) return -1;
+      if (timeA > 0 && timeB === 0) return 1;
 
+      // 2. Both updated: older updates first, most recently updated city at the VERY LAST (bottom)
       if (timeA !== timeB) {
-        return timeA - timeB; // Ascending: oldest or un-updated first, latest updated at the very end
+        return timeA - timeB;
       }
+
+      // 3. Alphabetical sort among un-updated or same timestamp
       return a.name.localeCompare(b.name);
     });
-  }, [allCities, debouncedSearch, seoMap]);
+  }, [allCities, debouncedSearch, seoMap, dynUpdateMap]);
 
   const selectableIds = useMemo(
     () =>
@@ -157,9 +158,9 @@ export default function AdminCities() {
     setLoading(true);
     try {
       const [citiesRes, seoRes, dynamicSeoRes] = await Promise.all([
-        fetch("/api/admin/cities", { credentials: "include" }),
-        fetch("/api/admin/city-seo", { credentials: "include" }),
-        fetch("/api/admin/dynamic-seo", { credentials: "include" }),
+        fetch("/api/admin/cities", { credentials: "include", cache: "no-store" }),
+        fetch("/api/admin/city-seo", { credentials: "include", cache: "no-store" }),
+        fetch("/api/admin/dynamic-seo", { credentials: "include", cache: "no-store" }),
       ]);
 
       if (loadId !== loadRef.current) return;
@@ -200,12 +201,23 @@ export default function AdminCities() {
       if (dynamicSeoRes.ok) {
         const dynData = await dynamicSeoRes.json();
         const ind = new Set<string>();
-        (dynData.seo ?? []).forEach((s: { citySlug: string; mode: string }) => {
-          if (s.mode === "individual") {
-            ind.add(s.citySlug.toLowerCase());
+        const dynMap: Record<string, number> = {};
+        (dynData.seo ?? []).forEach(
+          (s: { citySlug: string; mode: string; updatedAt?: string }) => {
+            const cSlug = (s.citySlug || "").toLowerCase().trim();
+            if (s.mode === "individual") {
+              ind.add(cSlug);
+            }
+            if (s.updatedAt) {
+              const t = new Date(s.updatedAt).getTime();
+              if (!isNaN(t) && t > 0) {
+                dynMap[cSlug] = Math.max(dynMap[cSlug] || 0, t);
+              }
+            }
           }
-        });
+        );
         setIndividualCities(ind);
+        setDynUpdateMap(dynMap);
       }
     } finally {
       if (loadRef.current === loadId) setLoading(false);
@@ -216,6 +228,12 @@ export default function AdminCities() {
     queueMicrotask(() => {
       void load();
     });
+
+    const onFocus = () => {
+      void load();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [load]);
 
   async function remove(id?: string) {
@@ -351,25 +369,51 @@ export default function AdminCities() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs text-gray-500">
-            Cities with a <span className="inline-flex items-center gap-1 font-semibold text-green-700"><span className="inline-block h-2 w-2 rounded-full bg-green-500"></span>green dot</span> contain local areas with individual SEO content.
+            Cities with a{" "}
+            <span className="inline-flex items-center gap-1 font-semibold text-green-700">
+              <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+              green dot
+            </span>{" "}
+            contain local areas with individual SEO content.
           </p>
         </div>
-        <span className="rounded-full bg-gray-600 px-4 py-2 text-sm font-semibold text-white">
-          Total Cities: {allCities.length}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white">
+            Total: {stats.total}
+          </span>
+          <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1.5 text-xs font-semibold">
+            Not Updated: {stats.notUpdated} (Top)
+          </span>
+          <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 text-xs font-semibold">
+            Updated: {stats.updated} (Bottom)
+          </span>
+        </div>
       </div>
 
       <div className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <input
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-gray-950 outline-none focus:border-gray-500 sm:w-72"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by city name"
-          />
+          <div className="relative w-full sm:w-80">
+            <input
+              type="text"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-3.5 pr-8 py-2.5 text-sm text-gray-950 placeholder-gray-400 outline-none transition focus:border-gray-500 focus:bg-white"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by city name or state..."
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xs p-1 rounded-full cursor-pointer"
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
             {selectedIds.size > 0 && (
               <button
@@ -393,6 +437,12 @@ export default function AdminCities() {
             )}
           </div>
         </div>
+        {debouncedSearch && (
+          <p className="mt-2 text-xs text-gray-500">
+            Showing <span className="font-semibold text-gray-800">{filteredCities.length}</span> of{" "}
+            <span className="font-semibold text-gray-800">{allCities.length}</span> cities matching &ldquo;{debouncedSearch}&rdquo;
+          </p>
+        )}
       </div>
 
       {loading ? (
@@ -478,13 +528,26 @@ export default function AdminCities() {
                       {city.country || "—"}
                     </td>
                     <td className="px-4 py-3 text-gray-900">
-                      {seo?.hasSeo ? (
-                        <span className="text-xs text-gray-400">
-                          {seo.updatedAt ? formatDisplayDate(seo.updatedAt) : "—"}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">Not set</span>
-                      )}
+                      {(() => {
+                        const updateTime = getCityUpdateTime(city, seoMap, dynUpdateMap);
+                        if (updateTime > 0) {
+                          const updateDate =
+                            seo?.updatedAt ||
+                            city.updatedAt ||
+                            dynUpdateMap[city.slug.toLowerCase()];
+                          return (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              {updateDate ? formatDisplayDate(updateDate) : "Updated"}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+                            Not updated
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">

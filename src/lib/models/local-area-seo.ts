@@ -77,7 +77,7 @@ function normalizeRecord(raw: Record<string, unknown>): LocalAreaSeo {
       : [],
     status: raw.status === "published" ? "published" : "draft",
     mode: raw.mode === "individual" ? "individual" : "inherit",
-    updatedAt: raw.updatedAt ? String(raw.updatedAt) : new Date().toISOString(),
+    updatedAt: raw.updatedAt ? String(raw.updatedAt) : undefined,
   };
 }
 
@@ -133,7 +133,12 @@ export const getLocalAreaSeo = cache(async function (
 });
 
 export async function upsertLocalAreaSeo(data: LocalAreaSeo): Promise<LocalAreaSeo> {
-  const record = normalizeRecord({ ...data, citySlug: data.citySlug, areaSlug: data.areaSlug });
+  const record = normalizeRecord({
+    ...data,
+    citySlug: data.citySlug,
+    areaSlug: data.areaSlug,
+    updatedAt: new Date().toISOString(),
+  });
   const db = await getDb();
   if (db) {
     try {
