@@ -96,7 +96,25 @@ export const getCityBySlug = cache(async function (
     (c) =>
       c.slug.toLowerCase() === cleanSlug ||
       slugify(c.name) === cleanSlug ||
-      c.name.trim().toLowerCase() === cleanSlug
+      c.name.trim().toLowerCase() === cleanSlug ||
+      (cleanSlug === "purnea" && c.slug.toLowerCase() === "purnia") ||
+      (cleanSlug === "chandigarh-city" && c.slug.toLowerCase() === "chandigarh") ||
+      (cleanSlug === "mahesana" && c.slug.toLowerCase() === "mehsana") ||
+      (cleanSlug === "vasco-da-gama" && c.slug.toLowerCase() === "vasco") ||
+      (cleanSlug === "bardez" && c.slug.toLowerCase() === "mapusa") ||
+      (cleanSlug === "tiswadi" && c.slug.toLowerCase() === "panaji") ||
+      (cleanSlug === "salcete" && c.slug.toLowerCase() === "margao") ||
+      (cleanSlug === "sattari" && c.slug.toLowerCase() === "valpoi") ||
+      (cleanSlug === "lahaul-spiti" && c.slug.toLowerCase() === "lahaul-and-spiti") ||
+      (cleanSlug === "bokaro-steel-city" && c.slug.toLowerCase() === "bokaro") ||
+      (cleanSlug === "belagavi" && c.slug.toLowerCase() === "belgaum") ||
+      (cleanSlug === "ballari" && c.slug.toLowerCase() === "bellary") ||
+      (cleanSlug === "vijayapura" && c.slug.toLowerCase() === "bijapur") ||
+      (cleanSlug === "kalaburagi" && c.slug.toLowerCase() === "gulbarga") ||
+      (cleanSlug === "shivamogga" && c.slug.toLowerCase() === "shimoga") ||
+      (cleanSlug === "tumakuru" && c.slug.toLowerCase() === "tumkur") ||
+      (cleanSlug === "hubballi-dharwad" && c.slug.toLowerCase() === "hubli") ||
+      (cleanSlug === "hubballi" && c.slug.toLowerCase() === "hubli")
   );
   if (custom) {
     if (
