@@ -99,7 +99,10 @@ export default function Services() {
                         "Massage services are designed for relaxation, stress relief, and overall wellness through professional body care."}
                     </p>
 
-                    <div className="mt-6">
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                      <Button href="/places" variant="solid" className="!text-white">
+                        Explore Locations
+                      </Button>
                       <Button href="/post-ad/new" variant="soft">
                         Post a Service
                       </Button>

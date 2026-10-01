@@ -4,6 +4,14 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "rojlo_age_verified";
 
+const SEARCH_ENGINE_BOT_REGEX =
+  /googlebot|bingbot|yandex|baiduspider|duckduckbot|slurp|facebookexternalhit|facebot|linkedinbot|twitterbot|pinterest|whatsapp|telegrambot|applebot/i;
+
+function isSearchBot(): boolean {
+  if (typeof navigator === "undefined" || !navigator.userAgent) return false;
+  return SEARCH_ENGINE_BOT_REGEX.test(navigator.userAgent);
+}
+
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
   return () => window.removeEventListener("storage", callback);
@@ -11,6 +19,7 @@ function subscribe(callback: () => void) {
 
 function getSnapshot(): boolean {
   try {
+    if (isSearchBot()) return true;
     return localStorage.getItem(STORAGE_KEY) === "true";
   } catch {
     return false;
@@ -28,7 +37,7 @@ export default function AgeGate() {
   const modalRef = useRef<HTMLDivElement>(null);
   const acceptBtnRef = useRef<HTMLButtonElement>(null);
 
-  const show = !isVerifiedInStorage && !manuallyAccepted;
+  const show = !isVerifiedInStorage && !manuallyAccepted && !isSearchBot();
 
   useEffect(() => {
     if (!show) {

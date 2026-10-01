@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import Button from "@/components/ui/button";
 import SearchBar from "@/components/search-bar";
 import { StaticSeoSection } from "@/components/seo/static-seo-section";
@@ -56,6 +57,9 @@ export default async function Home() {
               <Button href="/services" variant="solid" className="!text-white">
                 Explore Services
               </Button>
+              <Button href="/places" variant="solid" className="!text-white">
+                Explore Places
+              </Button>
               <Button href="/post-ad/new" variant="solid" className="!text-white px-6 py-3">
                 Post an Ad
               </Button>
@@ -97,13 +101,29 @@ export default async function Home() {
                   />
                 </div>
                 <h3 className="mt-4 px-6 text-xl font-black text-gray-950">
-                  {item.title}
+                  <Link
+                    href={`/services#${item.id}-section`}
+                    className="hover:underline transition-colors"
+                  >
+                    {item.title}
+                  </Link>
                 </h3>
                 <p className="mt-2 px-6 pb-6 text-sm leading-7 text-gray-900">
                   {item.description}
                 </p>
-                <div className="px-6 pb-6">
-                  <Button href="/post-ad/new" variant="soft">
+                <div className="px-6 pb-6 flex flex-wrap items-center gap-2">
+                  <Button
+                    href={`/services#${item.id}-section`}
+                    variant="solid"
+                    className="!text-white text-xs sm:text-sm px-4 py-2"
+                  >
+                    Learn More
+                  </Button>
+                  <Button
+                    href="/post-ad/new"
+                    variant="soft"
+                    className="text-xs sm:text-sm px-4 py-2"
+                  >
                     Post a Service
                   </Button>
                 </div>

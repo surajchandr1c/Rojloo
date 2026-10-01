@@ -5,20 +5,20 @@ import { navLinks, policyLinks } from "@/lib/nav";
 const POPULAR_CITIES = [
   { name: "Mumbai", slug: "mumbai" },
   { name: "Delhi", slug: "delhi" },
-  { name: "Bengaluru", slug: "bengaluru" },
-  { name: "Hyderabad", slug: "hyderabad" },
   { name: "Ahmedabad", slug: "ahmedabad" },
-  { name: "Chennai", slug: "chennai" },
-  { name: "Kolkata", slug: "kolkata" },
   { name: "Pune", slug: "pune" },
   { name: "Jaipur", slug: "jaipur" },
   { name: "Surat", slug: "surat" },
-  { name: "Lucknow", slug: "lucknow" },
-  { name: "Chandigarh", slug: "chandigarh" },
-  { name: "Goa", slug: "goa" },
-  { name: "Indore", slug: "indore" },
   { name: "Patna", slug: "patna" },
   { name: "Nagpur", slug: "nagpur" },
+  { name: "Visakhapatnam", slug: "visakhapatnam" },
+  { name: "Vijayawada", slug: "vijayawada" },
+  { name: "Guwahati", slug: "guwahati" },
+  { name: "Raipur", slug: "raipur" },
+  { name: "Vadodara", slug: "vadodara" },
+  { name: "Rajkot", slug: "rajkot" },
+  { name: "Ranchi", slug: "ranchi" },
+  { name: "Jamshedpur", slug: "jamshedpur" },
 ];
 
 export default function Footer() {
