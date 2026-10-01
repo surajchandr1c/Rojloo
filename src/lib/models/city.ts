@@ -114,7 +114,29 @@ export const getCityBySlug = cache(async function (
       (cleanSlug === "shivamogga" && c.slug.toLowerCase() === "shimoga") ||
       (cleanSlug === "tumakuru" && c.slug.toLowerCase() === "tumkur") ||
       (cleanSlug === "hubballi-dharwad" && c.slug.toLowerCase() === "hubli") ||
-      (cleanSlug === "hubballi" && c.slug.toLowerCase() === "hubli")
+      (cleanSlug === "hubballi" && c.slug.toLowerCase() === "hubli") ||
+      (cleanSlug === "trivandrum" && c.slug.toLowerCase() === "thiruvananthapuram") ||
+      (cleanSlug === "cochin" && c.slug.toLowerCase() === "kochi") ||
+      (cleanSlug === "calicut" && c.slug.toLowerCase() === "kozhikode") ||
+      (cleanSlug === "alleppey" && c.slug.toLowerCase() === "alappuzha") ||
+      (cleanSlug === "quilon" && c.slug.toLowerCase() === "kollam") ||
+      (cleanSlug === "palghat" && c.slug.toLowerCase() === "palakkad") ||
+      (cleanSlug === "cannannore" && c.slug.toLowerCase() === "kannur") ||
+      (cleanSlug === "cannanore" && c.slug.toLowerCase() === "kannur") ||
+      (cleanSlug === "trichur" && c.slug.toLowerCase() === "thrissur") ||
+      (cleanSlug === "chhatrapati-sambhajinagar" && c.slug.toLowerCase() === "aurangabad") ||
+      (cleanSlug === "sambhajinagar" && c.slug.toLowerCase() === "aurangabad") ||
+      (cleanSlug === "ahilyanagar" && c.slug.toLowerCase() === "ahmednagar") ||
+      (cleanSlug === "dharashiv" && c.slug.toLowerCase() === "osmanabad") ||
+      (cleanSlug === "bombay" && c.slug.toLowerCase() === "mumbai") ||
+      (cleanSlug === "poona" && c.slug.toLowerCase() === "pune") ||
+      (cleanSlug === "ferozepur" && c.slug.toLowerCase() === "firozpur") ||
+      (cleanSlug === "rupnagar" && c.slug.toLowerCase() === "ropar") ||
+      (cleanSlug === "sas-nagar" && c.slug.toLowerCase() === "mohali") ||
+      (cleanSlug === "sahibzada-ajit-singh-nagar" && c.slug.toLowerCase() === "mohali") ||
+      (cleanSlug === "sbs-nagar" && c.slug.toLowerCase() === "shaheed-bhagat-singh-nagar") ||
+      (cleanSlug === "nawanshahr" && c.slug.toLowerCase() === "shaheed-bhagat-singh-nagar") ||
+      (cleanSlug === "sri-ganganagar" && c.slug.toLowerCase() === "ganganagar")
   );
   if (custom) {
     if (
@@ -132,7 +154,29 @@ export const getCityBySlug = cache(async function (
     (c) =>
       c.slug === slug ||
       c.slug.toLowerCase() === cleanSlug ||
-      slugify(c.name) === cleanSlug
+      slugify(c.name) === cleanSlug ||
+      (cleanSlug === "trivandrum" && c.slug.toLowerCase() === "thiruvananthapuram") ||
+      (cleanSlug === "cochin" && c.slug.toLowerCase() === "kochi") ||
+      (cleanSlug === "calicut" && c.slug.toLowerCase() === "kozhikode") ||
+      (cleanSlug === "alleppey" && c.slug.toLowerCase() === "alappuzha") ||
+      (cleanSlug === "quilon" && c.slug.toLowerCase() === "kollam") ||
+      (cleanSlug === "palghat" && c.slug.toLowerCase() === "palakkad") ||
+      (cleanSlug === "cannannore" && c.slug.toLowerCase() === "kannur") ||
+      (cleanSlug === "cannanore" && c.slug.toLowerCase() === "kannur") ||
+      (cleanSlug === "trichur" && c.slug.toLowerCase() === "thrissur") ||
+      (cleanSlug === "chhatrapati-sambhajinagar" && c.slug.toLowerCase() === "aurangabad") ||
+      (cleanSlug === "sambhajinagar" && c.slug.toLowerCase() === "aurangabad") ||
+      (cleanSlug === "ahilyanagar" && c.slug.toLowerCase() === "ahmednagar") ||
+      (cleanSlug === "dharashiv" && c.slug.toLowerCase() === "osmanabad") ||
+      (cleanSlug === "bombay" && c.slug.toLowerCase() === "mumbai") ||
+      (cleanSlug === "poona" && c.slug.toLowerCase() === "pune") ||
+      (cleanSlug === "ferozepur" && c.slug.toLowerCase() === "firozpur") ||
+      (cleanSlug === "rupnagar" && c.slug.toLowerCase() === "ropar") ||
+      (cleanSlug === "sas-nagar" && c.slug.toLowerCase() === "mohali") ||
+      (cleanSlug === "sahibzada-ajit-singh-nagar" && c.slug.toLowerCase() === "mohali") ||
+      (cleanSlug === "sbs-nagar" && c.slug.toLowerCase() === "shaheed-bhagat-singh-nagar") ||
+      (cleanSlug === "nawanshahr" && c.slug.toLowerCase() === "shaheed-bhagat-singh-nagar") ||
+      (cleanSlug === "sri-ganganagar" && c.slug.toLowerCase() === "ganganagar")
   );
   if (staticCity) {
     if (
