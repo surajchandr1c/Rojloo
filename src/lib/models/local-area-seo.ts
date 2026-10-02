@@ -29,7 +29,11 @@ export type LocalAreaSeo = {
   updatedAt?: string;
 };
 
-function normalizeRecord(raw: Record<string, unknown>): LocalAreaSeo {
+export function normalizeLocalAreaSeoDoc(raw: Record<string, unknown>): LocalAreaSeo {
+  return normalizeRecord(raw);
+}
+
+export function normalizeRecord(raw: Record<string, unknown>): LocalAreaSeo {
   const citySlug = String(raw.citySlug || "").trim().toLowerCase();
   const areaSlug = String(raw.areaSlug || raw.slug || "").trim().toLowerCase();
   const secondaryKeywords = Array.isArray(raw.secondaryKeywords)

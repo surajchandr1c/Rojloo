@@ -38,7 +38,7 @@ export type CitySeo = {
   updatedAt?: string;
 };
 
-function normalizeSeoDoc(raw: Record<string, unknown>): CitySeo {
+export function normalizeSeoDoc(raw: Record<string, unknown>): CitySeo {
   return {
     slug: String(raw.slug || ""),
     name: String(raw.name || raw.slug || ""),

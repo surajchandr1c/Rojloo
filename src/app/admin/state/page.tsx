@@ -36,6 +36,9 @@ type JsonSummary = {
   newStates: number;
   newCities: number;
   newLocalAreas: number;
+  stateSeoCount?: number;
+  citySeoCount?: number;
+  localAreaSeoCount?: number;
 };
 
 const COUNTRY_OPTIONS = ["India"];
@@ -748,8 +751,14 @@ export default function AdminStates() {
       }
 
       const summary = data.summary as JsonSummary;
+      const seoDetails: string[] = [];
+      if (summary.stateSeoCount) seoDetails.push(`${summary.stateSeoCount} state SEO`);
+      if (summary.citySeoCount) seoDetails.push(`${summary.citySeoCount} city SEO`);
+      if (summary.localAreaSeoCount) seoDetails.push(`${summary.localAreaSeoCount} local area SEO`);
+      const seoMsg = seoDetails.length > 0 ? ` with ${seoDetails.join(", ")} records` : "";
+
       setSuccess(
-        `Import complete! Processed ${summary.totalStates} states (${summary.newStates} new), ${summary.totalCities} cities (${summary.newCities} new), and ${summary.totalLocalAreas} local areas (${summary.newLocalAreas} new).`
+        `Import complete! Processed ${summary.totalStates} states (${summary.newStates} new), ${summary.totalCities} cities (${summary.newCities} new), and ${summary.totalLocalAreas} local areas (${summary.newLocalAreas} new)${seoMsg}.`
       );
       setImportSummary(null);
       setPendingPayload(null);
@@ -1026,7 +1035,7 @@ export default function AdminStates() {
 
       const blob = await res.blob();
       const today = new Date().toISOString().split("T")[0];
-      const filename = `rojlo-locations-backup-${today}.json`;
+      const filename = `rojlo-locations-seo-backup-${today}.json`;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -1035,9 +1044,9 @@ export default function AdminStates() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      setSuccess("Location JSON backup downloaded successfully.");
+      setSuccess("Location & SEO JSON data downloaded successfully.");
     } catch {
-      setError("An error occurred while downloading location backup.");
+      setError("An error occurred while downloading locations and SEO JSON.");
     } finally {
       setDownloadingBackup(false);
     }
@@ -1173,7 +1182,7 @@ export default function AdminStates() {
             onClick={handleDownloadBackup}
             className="rounded-full border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-950 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {downloadingBackup ? "Exporting..." : "Download JSON Backup"}
+            {downloadingBackup ? "Exporting..." : "Download JSON"}
           </button>
         </div>
       </form>
@@ -1401,21 +1410,39 @@ export default function AdminStates() {
               <div className="flex justify-between">
                 <span>States:</span>
                 <span className="font-bold">
-                  {importSummary.totalStates} ({importSummary.newStates} new)
+                  {importSummary.totalStates} ({importSummary.newStates} new
+                  {importSummary.stateSeoCount ? `, ${importSummary.stateSeoCount} with SEO` : ""})
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Cities:</span>
                 <span className="font-bold">
-                  {importSummary.totalCities} ({importSummary.newCities} new)
+                  {importSummary.totalCities} ({importSummary.newCities} new
+                  {importSummary.citySeoCount ? `, ${importSummary.citySeoCount} with SEO` : ""})
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Local Areas:</span>
                 <span className="font-bold">
-                  {importSummary.totalLocalAreas} ({importSummary.newLocalAreas} new)
+                  {importSummary.totalLocalAreas} ({importSummary.newLocalAreas} new
+                  {importSummary.localAreaSeoCount ? `, ${importSummary.localAreaSeoCount} with SEO` : ""})
                 </span>
               </div>
+              {(Boolean(importSummary.stateSeoCount || importSummary.citySeoCount || importSummary.localAreaSeoCount)) && (
+                <div className="pt-2 border-t border-gray-200 text-xs text-green-700 font-semibold flex items-center gap-1.5">
+                  <span className="text-sm">✓</span>
+                  <span>
+                    Detected SEO content:{" "}
+                    {[
+                      importSummary.stateSeoCount ? `${importSummary.stateSeoCount} states` : "",
+                      importSummary.citySeoCount ? `${importSummary.citySeoCount} cities` : "",
+                      importSummary.localAreaSeoCount ? `${importSummary.localAreaSeoCount} local areas` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button

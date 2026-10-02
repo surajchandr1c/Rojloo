@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const jsonString = JSON.stringify(data, null, 2);
 
     const today = new Date().toISOString().split("T")[0];
-    const filename = "rojlo-locations-backup-" + today + ".json";
+    const filename = "rojlo-locations-seo-backup-" + today + ".json";
 
     return new NextResponse(jsonString, {
       status: 200,
