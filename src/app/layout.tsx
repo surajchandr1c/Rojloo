@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import GoogleAnalytics from "@/components/analytics/google-analytics";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -107,6 +108,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-full bg-gray-50 text-gray-950 font-sans">
         {children}
         <GoogleAnalytics />
+        <Analytics />
       </body>
     </html>
   );
